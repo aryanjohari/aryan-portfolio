@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+@theme inline {
+  --color-background: var(--site-color-background);
+  --color-surface: var(--site-color-surface);
+  --color-acid-accent: var(--site-color-acid-accent);
+  --color-foreground: var(--site-color-text-primary);
+  --color-muted: var(--site-color-text-muted);
+  --font-heading: var(--font-heading-stack);
+  --font-mono: var(--font-mono-stack);
+}
+
+body {
+  @apply min-h-full bg-background text-foreground font-mono antialiased;
+}
