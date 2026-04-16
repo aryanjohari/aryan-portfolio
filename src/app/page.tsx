@@ -9,6 +9,19 @@ import { usePrefersWideViewport } from "@/hooks/usePrefersWideViewport";
 
 gsap.registerPlugin(ScrollTrigger);
 
+/** Per-character spans so chromatic hover stays tight (not whole words). */
+function TextGlyphs({ text }: { text: string }) {
+  return (
+    <>
+      {Array.from(text).map((char, i) => (
+        <span key={`${i}-${char}`} className="chromatic-glyph">
+          {char === " " ? "\u00A0" : char}
+        </span>
+      ))}
+    </>
+  );
+}
+
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
 }
@@ -105,6 +118,8 @@ export default function Home() {
   const scrollPromptOpacity = backgroundReady ? smoothstep(92, 100, loadingValue) : 0;
   const introEnabled = isWide && !introComplete;
   const controlledRevealProgress = introEnabled ? revealProgress : 1;
+  /** Hero copy only after WebGL is up and the load counter has finished (blur cleared). */
+  const backgroundStable = backgroundReady && loadingValue >= 100;
   const shaderOpacity = useMemo(() => {
     if (!isWide) return 1;
     if (!backgroundReady) return 0;
@@ -116,41 +131,85 @@ export default function Home() {
     return (1 - smoothstep(18, 100, loadingValue)) * 10;
   }, [backgroundReady, introComplete, isWide, loadingValue]);
 
+  /** Blur on the loader as it scrolls away (opacity is still `loaderOpacity`). */
+  const loaderDissolveBlurPx =
+    isWide && !introComplete ? smoothstep(0.08, 0.62, revealProgress) * 14 : 0;
+
+  const heroTitleOpacity = isWide ? (backgroundStable ? heroOpacity : 0) : heroOpacity;
+
   const heroOverlay = (
     <main className="pointer-events-none relative z-10 h-full min-h-dvh">
-      <div className="flex h-full min-h-dvh justify-start p-4 sm:p-6 md:p-8">
+      <div
+        className={
+          isWide
+            ? "relative h-full min-h-dvh w-full"
+            : "flex h-full min-h-dvh justify-start p-4 sm:p-6 md:p-8"
+        }
+      >
         <div
           className="pointer-events-none transition-opacity duration-300"
           style={{
-            opacity: heroOpacity,
+            opacity: heroTitleOpacity,
             transform: `translate3d(0, ${heroShift}px, 0)`,
           }}
         >
-          <h1 className="floating-title select-none text-left">
-            <span className="floating-title-line">Aryan</span>
-            <span className="floating-title-line">Johari</span>
-          </h1>
+          {isWide ? (
+            <h1 className="floating-title hero-screen-title select-none">
+              <span className="floating-title-line floating-title-line--aryan">
+                <TextGlyphs text="Aryan" />
+              </span>
+              <div className="hero-screen-face-links" aria-label="Quick links">
+                <a
+                  href="https://github.com/aryanjohari"
+                  className="hero-face-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <TextGlyphs text="github" />
+                </a>
+                <span className="hero-face-sep" aria-hidden>
+                  <TextGlyphs text="|" />
+                </span>
+                <a href="#contact" className="hero-face-link">
+                  <TextGlyphs text="contact" />
+                </a>
+              </div>
+              <span className="floating-title-line floating-title-line--johari">
+                <TextGlyphs text="Johari" />
+              </span>
+            </h1>
+          ) : (
+            <h1 className="floating-title select-none text-left">
+              <span className="floating-title-line">
+                <TextGlyphs text="Aryan" />
+              </span>
+              <span className="floating-title-line">
+                <TextGlyphs text="Johari" />
+              </span>
+            </h1>
+          )}
         </div>
       </div>
       <nav
         className="game-nav transition-opacity duration-300"
         aria-label="Main navigation"
         style={{
-          opacity: heroOpacity,
-          pointerEvents: heroOpacity > 0.72 ? "auto" : "none",
+          opacity: isWide ? (backgroundStable ? heroOpacity : 0) : heroOpacity,
+          pointerEvents:
+            (isWide ? backgroundStable && heroOpacity > 0.72 : heroOpacity > 0.72) ? "auto" : "none",
         }}
       >
         <a href="#about" className="game-nav-link">
-          about
+          <TextGlyphs text="about" />
         </a>
         <a href="#projects" className="game-nav-link">
-          projects
+          <TextGlyphs text="projects" />
         </a>
         <a href="#blog" className="game-nav-link">
-          blog
+          <TextGlyphs text="blog" />
         </a>
         <a href="#contact" className="game-nav-link">
-          contact
+          <TextGlyphs text="contact" />
         </a>
       </nav>
     </main>
@@ -187,11 +246,25 @@ export default function Home() {
           <div
             className="intro-loader-shell pointer-events-none absolute inset-0 z-20"
             aria-hidden={loaderOpacity <= 0.02}
-            style={{ opacity: loaderOpacity }}
+            style={{
+              opacity: loaderOpacity,
+              filter: loaderDissolveBlurPx > 0.2 ? `blur(${loaderDissolveBlurPx}px)` : undefined,
+            }}
           >
             <div className="intro-loader-center">
-              <div className="intro-loader-percent">
-                {loadingValue.toString().padStart(3, "0")}
+              <div
+                className="intro-loader-percent"
+                aria-label={`${loadingValue} percent loaded`}
+              >
+                {loadingValue
+                  .toString()
+                  .padStart(3, "0")
+                  .split("")
+                  .map((digit, index) => (
+                    <span key={index} className="intro-loader-digit chromatic-glyph">
+                      {digit}
+                    </span>
+                  ))}
               </div>
               <div
                 className="intro-loader-scroll"
