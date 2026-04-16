@@ -20,18 +20,39 @@ export type LayerEffectParams = {
 
 export type LayerEffectsMap = Record<LayerId, LayerEffectParams>;
 
+/** Up to four text layers (matches image-synth / webgl shader slots T0–T3). */
+export type TextLayer = {
+  id: string;
+  text: string;
+  color: string;
+  fontSize: number;
+  offsetX: number;
+  offsetY: number;
+  scale: number;
+  effectsLinked: boolean;
+};
+
+/**
+ * v1: single overlay via overlayText + offsets.
+ * v2: textLayers + optional per-layer effect overrides in textLayerEffects.
+ */
 export type SynthParams = {
-  overlayText: string;
-  textColor: string;
-  textSize: number;
   decalScale: number;
   decalOffsetX: number;
   decalOffsetY: number;
   linkDecalToMath: boolean;
-  textOffsetX: number;
-  textOffsetY: number;
-  textScale: number;
   linkTextToMath: boolean;
+  /** v1 */
+  overlayText?: string;
+  textColor?: string;
+  textSize?: number;
+  textOffsetX?: number;
+  textOffsetY?: number;
+  textScale?: number;
+  /** v2 */
+  textLayers?: TextLayer[];
+  selectedTextLayerId?: string;
+  textLayerEffects?: Record<string, Partial<LayerEffectParams>>;
 };
 
 export type PresetViewport = {

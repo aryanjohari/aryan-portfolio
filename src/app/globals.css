@@ -1,23 +1,129 @@
+@import url("https://fonts.googleapis.com/css2?family=Geo:ital@0;1&display=swap");
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
 
 body {
   margin: 0;
+  background: #000;
 }
 
-@keyframes hero-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(1.25rem);
-    filter: blur(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
+.floating-title {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin: 0;
+  width: min(44vw, 44vh);
+  min-width: 220px;
+  color: rgba(246, 248, 252, 0.95);
+  font-family: "Geo", sans-serif;
+  font-size: clamp(5.7375rem, 18.5625vw, 17.71875rem);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 0.76;
+  text-transform: lowercase;
+  transform: perspective(900px) translateZ(-20px);
+  transform-origin: top left;
+  opacity: 0.98;
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 0.85),
+    0 14px 28px rgba(0, 0, 0, 0.45);
 }
 
-.hero-reveal-text {
-  animation: hero-reveal 1.15s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+.floating-title-line {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.game-nav {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  transform: perspective(900px) translateZ(-12px) rotateY(-4deg);
+  transform-origin: top right;
+  box-shadow: none;
+}
+
+.game-nav-link {
+  position: relative;
+  display: block;
+  min-width: 7.5rem;
+  padding: 0.2rem 0.15rem 0.2rem 0.8rem;
+  color: rgba(245, 248, 255, 0.92);
+  font-family: "Geo", sans-serif;
+  font-size: clamp(1.1rem, 2vw, 1.45rem);
+  letter-spacing: 0;
+  line-height: 0.95;
+  text-transform: lowercase;
+  text-decoration: none;
+  transition:
+    transform 140ms ease,
+    color 140ms ease,
+    text-shadow 140ms ease;
+}
+
+.game-nav-link::before {
+  content: ">";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  color: rgba(120, 195, 255, 0.9);
+  transform: translateY(-50%) translateX(-3px);
+  opacity: 0;
+  transition:
+    opacity 130ms ease,
+    transform 130ms ease;
+}
+
+.game-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0.8rem;
+  right: 0.15rem;
+  bottom: 0.2rem;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(118, 194, 255, 0.85) 0%,
+    rgba(220, 145, 255, 0.8) 100%
+  );
+  opacity: 0;
+  transform: scaleX(0.35);
+  transform-origin: right center;
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.game-nav-link:hover,
+.game-nav-link:focus-visible {
+  color: rgba(255, 255, 255, 1);
+  transform: translateX(-3px) translateY(-1px);
+  text-shadow:
+    -6px 0 12px rgba(99, 190, 255, 0.35),
+    0 0 2px rgba(255, 255, 255, 0.85),
+    0 8px 16px rgba(0, 0, 0, 0.45);
+  outline: none;
+}
+
+.game-nav-link:hover::before,
+.game-nav-link:focus-visible::before {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.game-nav-link:hover::after,
+.game-nav-link:focus-visible::after {
+  opacity: 1;
+  transform: scaleX(1);
+  transform-origin: left center;
 }

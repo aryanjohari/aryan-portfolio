@@ -1,3 +1,4 @@
+/** Image plane uses object-fit: cover (full-bleed); text slots T0–T3; boot reveal. */
 export const synthFragmentShader = /* glsl */ `
 precision highp float;
 
@@ -5,14 +6,27 @@ uniform sampler2D u_texture;
 uniform sampler2D u_decalTexture;
 uniform vec3 u_decalTransform;
 uniform float u_linkDecalToMath;
-uniform sampler2D u_textTexture;
-uniform vec3 u_textTransform;
 uniform float u_linkTextToMath;
+
+uniform sampler2D u_textSlot0;
+uniform vec3 u_textTransform0;
+uniform float u_textActive0;
+uniform sampler2D u_textSlot1;
+uniform vec3 u_textTransform1;
+uniform float u_textActive1;
+uniform sampler2D u_textSlot2;
+uniform vec3 u_textTransform2;
+uniform float u_textActive2;
+uniform sampler2D u_textSlot3;
+uniform vec3 u_textTransform3;
+uniform float u_textActive3;
 
 uniform vec2 u_resolution;
 uniform vec2 u_imageResolution;
+/** 0 = black; 1 = unmodified scene (must match JSON output exactly). */
+uniform float u_bootReveal;
 
-// Per-layer effect uniforms: L0 = background, L1 = decal, L2 = text
+// Per-layer effect uniforms: L0 = background, L1 = decal; T0–T3 = text slots
 uniform float u_L0_t;
 uniform float u_L0_melt;
 uniform float u_L0_bleed;
@@ -43,20 +57,65 @@ uniform float u_L1_colorCycle;
 uniform float u_L1_halftone;
 uniform float u_L1_scanline;
 
-uniform float u_L2_t;
-uniform float u_L2_melt;
-uniform float u_L2_bleed;
-uniform float u_L2_noise;
-uniform float u_L2_posterize;
-uniform vec2 u_L2_maskCenter;
-uniform float u_L2_maskRadius;
-uniform float u_L2_twirl;
-uniform vec3 u_L2_colorA;
-uniform vec3 u_L2_colorB;
-uniform float u_L2_duotoneBlend;
-uniform float u_L2_colorCycle;
-uniform float u_L2_halftone;
-uniform float u_L2_scanline;
+uniform float u_T0_t;
+uniform float u_T0_melt;
+uniform float u_T0_bleed;
+uniform float u_T0_noise;
+uniform float u_T0_posterize;
+uniform vec2 u_T0_maskCenter;
+uniform float u_T0_maskRadius;
+uniform float u_T0_twirl;
+uniform vec3 u_T0_colorA;
+uniform vec3 u_T0_colorB;
+uniform float u_T0_duotoneBlend;
+uniform float u_T0_colorCycle;
+uniform float u_T0_halftone;
+uniform float u_T0_scanline;
+
+uniform float u_T1_t;
+uniform float u_T1_melt;
+uniform float u_T1_bleed;
+uniform float u_T1_noise;
+uniform float u_T1_posterize;
+uniform vec2 u_T1_maskCenter;
+uniform float u_T1_maskRadius;
+uniform float u_T1_twirl;
+uniform vec3 u_T1_colorA;
+uniform vec3 u_T1_colorB;
+uniform float u_T1_duotoneBlend;
+uniform float u_T1_colorCycle;
+uniform float u_T1_halftone;
+uniform float u_T1_scanline;
+
+uniform float u_T2_t;
+uniform float u_T2_melt;
+uniform float u_T2_bleed;
+uniform float u_T2_noise;
+uniform float u_T2_posterize;
+uniform vec2 u_T2_maskCenter;
+uniform float u_T2_maskRadius;
+uniform float u_T2_twirl;
+uniform vec3 u_T2_colorA;
+uniform vec3 u_T2_colorB;
+uniform float u_T2_duotoneBlend;
+uniform float u_T2_colorCycle;
+uniform float u_T2_halftone;
+uniform float u_T2_scanline;
+
+uniform float u_T3_t;
+uniform float u_T3_melt;
+uniform float u_T3_bleed;
+uniform float u_T3_noise;
+uniform float u_T3_posterize;
+uniform vec2 u_T3_maskCenter;
+uniform float u_T3_maskRadius;
+uniform float u_T3_twirl;
+uniform vec3 u_T3_colorA;
+uniform vec3 u_T3_colorB;
+uniform float u_T3_duotoneBlend;
+uniform float u_T3_colorCycle;
+uniform float u_T3_halftone;
+uniform float u_T3_scanline;
 
 varying vec2 v_uv;
 
@@ -163,12 +222,56 @@ vec3 layerShade(
   return clamp(rgb, 0.0, 1.0);
 }
 
+vec4 shadeTextSlot(
+  sampler2D tex,
+  vec2 textRaw,
+  vec2 screenUV,
+  vec2 canvas,
+  float tAnim,
+  float melt,
+  vec2 maskCenter,
+  float maskRadius,
+  float twirl,
+  float bleed,
+  float posterize,
+  vec3 cA,
+  vec3 cB,
+  float duoBlend,
+  float cycle,
+  float halftone,
+  float scanline,
+  float noiseLevel
+) {
+  vec2 uv = layerWarp(textRaw, tAnim, melt, maskCenter, maskRadius, twirl);
+  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+    return vec4(0.0);
+  }
+  vec4 t = texture2D(tex, uv);
+  vec3 rgb = layerShade(
+    t.rgb,
+    uv,
+    screenUV,
+    canvas,
+    tAnim,
+    bleed,
+    posterize,
+    cA,
+    cB,
+    duoBlend,
+    cycle,
+    halftone,
+    scanline,
+    noiseLevel
+  );
+  return vec4(rgb, t.a);
+}
+
 void main() {
   vec2 canvas = max(u_resolution, vec2(1.0));
   vec2 image = max(u_imageResolution, vec2(1.0));
   float canvasAspect = canvas.x / canvas.y;
   float imageAspect = image.x / image.y;
-  // object-fit: cover — fill the canvas, crop overflow (no letterboxing)
+  // object-fit: cover — fill the canvas, crop overflow.
   float coverScale;
   if (canvasAspect > imageAspect) {
     coverScale = canvas.x / image.x;
@@ -178,7 +281,6 @@ void main() {
   vec2 canvasCoord = v_uv * canvas;
   vec2 center = canvas * 0.5;
   vec2 delta = canvasCoord - center;
-
   vec2 baseUV = delta / (image * coverScale) + 0.5;
 
   // --- Layer 0: background ---
@@ -232,36 +334,135 @@ void main() {
 
   vec3 withDecal = mix(bgRgb, decalPixel.rgb, decalPixel.a);
 
-  // --- Layer 2: text ---
   vec2 gridText = mix(baseUV, uv0, u_linkTextToMath);
-  float textSc = max(u_textTransform.z, 0.0001);
-  vec2 textRaw = (gridText - vec2(u_textTransform.x, u_textTransform.y) - 0.5) / textSc + 0.5;
-  vec4 textPixel = vec4(0.0);
-  if (textRaw.x >= 0.0 && textRaw.x <= 1.0 && textRaw.y >= 0.0 && textRaw.y <= 1.0) {
-    vec2 uv2 = layerWarp(textRaw, u_L2_t, u_L2_melt, u_L2_maskCenter, u_L2_maskRadius, u_L2_twirl);
-    vec4 t2 = texture2D(u_textTexture, uv2);
-    if (uv2.x >= 0.0 && uv2.x <= 1.0 && uv2.y >= 0.0 && uv2.y <= 1.0) {
-      vec3 xRgb = layerShade(
-        t2.rgb,
-        uv2,
+  vec3 outRgb = withDecal;
+
+  if (u_textActive0 > 0.5) {
+    float sc0 = max(u_textTransform0.z, 0.0001);
+    vec2 raw0 = (gridText - vec2(u_textTransform0.x, u_textTransform0.y) - 0.5) / sc0 + 0.5;
+    if (raw0.x >= 0.0 && raw0.x <= 1.0 && raw0.y >= 0.0 && raw0.y <= 1.0) {
+      vec4 tp0 = shadeTextSlot(
+        u_textSlot0,
+        raw0,
         v_uv,
         canvas,
-        u_L2_t,
-        u_L2_bleed,
-        u_L2_posterize,
-        u_L2_colorA,
-        u_L2_colorB,
-        u_L2_duotoneBlend,
-        u_L2_colorCycle,
-        u_L2_halftone,
-        u_L2_scanline,
-        u_L2_noise
+        u_T0_t,
+        u_T0_melt,
+        u_T0_maskCenter,
+        u_T0_maskRadius,
+        u_T0_twirl,
+        u_T0_bleed,
+        u_T0_posterize,
+        u_T0_colorA,
+        u_T0_colorB,
+        u_T0_duotoneBlend,
+        u_T0_colorCycle,
+        u_T0_halftone,
+        u_T0_scanline,
+        u_T0_noise
       );
-      textPixel = vec4(xRgb, t2.a);
+      outRgb = mix(outRgb, tp0.rgb, tp0.a);
     }
   }
 
-  vec3 outRgb = mix(withDecal, textPixel.rgb, textPixel.a);
-  gl_FragColor = vec4(outRgb, 1.0);
+  if (u_textActive1 > 0.5) {
+    float sc1 = max(u_textTransform1.z, 0.0001);
+    vec2 raw1 = (gridText - vec2(u_textTransform1.x, u_textTransform1.y) - 0.5) / sc1 + 0.5;
+    if (raw1.x >= 0.0 && raw1.x <= 1.0 && raw1.y >= 0.0 && raw1.y <= 1.0) {
+      vec4 tp1 = shadeTextSlot(
+        u_textSlot1,
+        raw1,
+        v_uv,
+        canvas,
+        u_T1_t,
+        u_T1_melt,
+        u_T1_maskCenter,
+        u_T1_maskRadius,
+        u_T1_twirl,
+        u_T1_bleed,
+        u_T1_posterize,
+        u_T1_colorA,
+        u_T1_colorB,
+        u_T1_duotoneBlend,
+        u_T1_colorCycle,
+        u_T1_halftone,
+        u_T1_scanline,
+        u_T1_noise
+      );
+      outRgb = mix(outRgb, tp1.rgb, tp1.a);
+    }
+  }
+
+  if (u_textActive2 > 0.5) {
+    float sc2 = max(u_textTransform2.z, 0.0001);
+    vec2 raw2 = (gridText - vec2(u_textTransform2.x, u_textTransform2.y) - 0.5) / sc2 + 0.5;
+    if (raw2.x >= 0.0 && raw2.x <= 1.0 && raw2.y >= 0.0 && raw2.y <= 1.0) {
+      vec4 tp2 = shadeTextSlot(
+        u_textSlot2,
+        raw2,
+        v_uv,
+        canvas,
+        u_T2_t,
+        u_T2_melt,
+        u_T2_maskCenter,
+        u_T2_maskRadius,
+        u_T2_twirl,
+        u_T2_bleed,
+        u_T2_posterize,
+        u_T2_colorA,
+        u_T2_colorB,
+        u_T2_duotoneBlend,
+        u_T2_colorCycle,
+        u_T2_halftone,
+        u_T2_scanline,
+        u_T2_noise
+      );
+      outRgb = mix(outRgb, tp2.rgb, tp2.a);
+    }
+  }
+
+  if (u_textActive3 > 0.5) {
+    float sc3 = max(u_textTransform3.z, 0.0001);
+    vec2 raw3 = (gridText - vec2(u_textTransform3.x, u_textTransform3.y) - 0.5) / sc3 + 0.5;
+    if (raw3.x >= 0.0 && raw3.x <= 1.0 && raw3.y >= 0.0 && raw3.y <= 1.0) {
+      vec4 tp3 = shadeTextSlot(
+        u_textSlot3,
+        raw3,
+        v_uv,
+        canvas,
+        u_T3_t,
+        u_T3_melt,
+        u_T3_maskCenter,
+        u_T3_maskRadius,
+        u_T3_twirl,
+        u_T3_bleed,
+        u_T3_posterize,
+        u_T3_colorA,
+        u_T3_colorB,
+        u_T3_duotoneBlend,
+        u_T3_colorCycle,
+        u_T3_halftone,
+        u_T3_scanline,
+        u_T3_noise
+      );
+      outRgb = mix(outRgb, tp3.rgb, tp3.a);
+    }
+  }
+
+  vec3 sceneRgb = outRgb;
+
+  float p = clamp(u_bootReveal, 0.0, 1.0);
+  float front = mix(-0.22, 1.32, p);
+  float soft = 0.042 + (1.0 - p) * 0.018;
+  float wavy =
+    sin(v_uv.x * 23.5 + u_L0_t * 2.75) * 0.048 +
+    cos(v_uv.x * 7.2 - u_L0_t * 1.4) * sin(v_uv.y * 11.0 + u_L0_t * 1.9) * 0.022;
+  vec2 meltCell = floor(v_uv * vec2(canvas.x * 0.11, canvas.y * 0.09));
+  float grit = (hash21(meltCell * 0.37 + vec2(u_L0_t * 0.47, u_L0_t * 0.31)) - 0.5) * 0.032 * (1.0 - p);
+  float cut = front + wavy + grit;
+  float revealMask = 1.0 - smoothstep(cut - soft, cut + soft, v_uv.y);
+  vec3 melted = mix(vec3(0.0), sceneRgb, revealMask);
+  vec3 finalRgb = mix(melted, sceneRgb, step(1.0, p));
+  gl_FragColor = vec4(finalRgb, 1.0);
 }
 `;
