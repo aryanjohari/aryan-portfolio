@@ -109,7 +109,7 @@ export default function Home() {
     if (!isWide) return 1;
     if (!backgroundReady) return 0;
     if (introComplete) return 1;
-    return 0.18 + smoothstep(10, 100, loadingValue) * 0.62;
+    return clamp01(loadingValue / 100);
   }, [backgroundReady, introComplete, isWide, loadingValue]);
   const shaderBlurPx = useMemo(() => {
     if (!isWide || !backgroundReady || introComplete) return 0;
@@ -170,7 +170,7 @@ export default function Home() {
   return (
     <div className="relative bg-black">
       <div
-        className="fixed inset-0 z-0 transition-opacity duration-150"
+        className="fixed inset-0 z-0"
         style={{
           opacity: shaderOpacity,
           filter: shaderBlurPx > 0 ? `blur(${shaderBlurPx}px)` : "none",

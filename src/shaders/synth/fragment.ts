@@ -472,16 +472,11 @@ void main() {
     mix(u_L0_colorA, vec3(0.02, 0.0, 0.08), chaos),
     mix(u_L0_colorB, vec3(0.18, 0.32, 1.0), chaos),
     mix(u_L0_duotoneBlend, 0.92, chaos),
-    mix(u_L0_colorCycle, 4.4, chaos),
+    u_L0_colorCycle,
     mix(u_L0_halftone, 0.0, chaos),
     mix(u_L0_scanline, 0.18, chaos),
-    mix(u_L0_noise, 0.22, chaos)
+    mix(u_L0_noise, 0.0, chaos)
   );
-  float grain = hash21(
-    floor(v_uv * vec2(canvas.x * 0.18, canvas.y * 0.18)) +
-    vec2(u_L0_t * 19.0, u_L0_t * 13.0)
-  ) - 0.5;
-  chaosRgb += vec3(grain * 0.32 * chaos);
   chaosRgb = clamp(chaosRgb, 0.0, 1.0);
   float stabilize = smoothstep(0.0, 1.0, p);
   vec3 finalRgb = mix(chaosRgb, sceneRgb, stabilize);
