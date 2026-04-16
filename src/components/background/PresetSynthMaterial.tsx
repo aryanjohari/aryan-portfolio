@@ -22,7 +22,11 @@ import {
   resolveTextLayerEffects,
 } from "@/lib/synth/textLayers";
 import { createTextTexture } from "@/lib/synth/textTexture";
-import type { LayerEffectParams, LayerEffectsMap, SynthParams } from "@/lib/synth/types";
+import type {
+  LayerEffectParams,
+  LayerEffectsMap,
+  SynthParams,
+} from "@/lib/synth/types";
 import { synthFragmentShader } from "@/shaders/synth/fragment";
 import { synthVertexShader } from "@/shaders/synth/vertex";
 
@@ -53,8 +57,6 @@ transparentFallbackTexture.magFilter = LinearFilter;
 transparentFallbackTexture.colorSpace = SRGBColorSpace;
 transparentFallbackTexture.needsUpdate = true;
 
-const BOOT_REVEAL_DURATION_SEC = 2.0;
-
 function applyLayerUniforms(
   mat: ShaderMaterial,
   prefix: string,
@@ -68,7 +70,10 @@ function applyLayerUniforms(
   u[`u_${prefix}_bleed`].value = p.colorBleed;
   u[`u_${prefix}_noise`].value = p.noiseLevel;
   u[`u_${prefix}_posterize`].value = p.posterizeSteps;
-  (u[`u_${prefix}_maskCenter`].value as Vector2).set(p.maskCenterX, p.maskCenterY);
+  (u[`u_${prefix}_maskCenter`].value as Vector2).set(
+    p.maskCenterX,
+    p.maskCenterY,
+  );
   u[`u_${prefix}_maskRadius`].value = p.maskRadius;
   u[`u_${prefix}_twirl`].value = p.twirlIntensity;
   (u[`u_${prefix}_colorA`].value as Color).setStyle(p.colorA);
@@ -79,7 +84,11 @@ function applyLayerUniforms(
   u[`u_${prefix}_scanline`].value = p.scanlineIntensity;
 }
 
-function seedLayerUniforms(prefix: string, p: LayerEffectParams, baseTime: number) {
+function seedLayerUniforms(
+  prefix: string,
+  p: LayerEffectParams,
+  baseTime: number,
+) {
   const t = baseTime * p.timeScale;
   return {
     [`u_${prefix}_t`]: { value: t },
@@ -87,7 +96,9 @@ function seedLayerUniforms(prefix: string, p: LayerEffectParams, baseTime: numbe
     [`u_${prefix}_bleed`]: { value: p.colorBleed },
     [`u_${prefix}_noise`]: { value: p.noiseLevel },
     [`u_${prefix}_posterize`]: { value: p.posterizeSteps },
-    [`u_${prefix}_maskCenter`]: { value: new Vector2(p.maskCenterX, p.maskCenterY) },
+    [`u_${prefix}_maskCenter`]: {
+      value: new Vector2(p.maskCenterX, p.maskCenterY),
+    },
     [`u_${prefix}_maskRadius`]: { value: p.maskRadius },
     [`u_${prefix}_twirl`]: { value: p.twirlIntensity },
     [`u_${prefix}_colorA`]: { value: new Color(p.colorA) },
@@ -99,7 +110,10 @@ function seedLayerUniforms(prefix: string, p: LayerEffectParams, baseTime: numbe
   };
 }
 
-function buildTextSlotUniforms(le: { text: LayerEffectParams }, baseTime: number) {
+function buildTextSlotUniforms(
+  le: { text: LayerEffectParams },
+  baseTime: number,
+) {
   let out: Record<string, unknown> = {};
   for (const prefix of TEXT_PREFIXES) {
     out = { ...out, ...seedLayerUniforms(prefix, le.text, baseTime) };
@@ -115,6 +129,8 @@ export type PresetSynthMaterialProps = {
   decalTexture: Texture | null;
   /** Continues animation phase from exported snapshot (seconds). */
   initialTimeOffsetSeconds?: number;
+  revealProgress?: number;
+  introEnabled?: boolean;
 };
 
 export function PresetSynthMaterial({
@@ -124,11 +140,16 @@ export function PresetSynthMaterial({
   backgroundTexture,
   decalTexture,
   initialTimeOffsetSeconds = 0,
+  revealProgress = 1,
+  introEnabled = false,
 }: PresetSynthMaterialProps) {
   const materialRef = useRef<ShaderMaterial>(null);
-  const textTextureRefs = useRef<(CanvasTexture | null)[]>([null, null, null, null]);
-  const bootRevealStartRef = useRef<number | null>(null);
-  const bootRevealDoneRef = useRef(false);
+  const textTextureRefs = useRef<(CanvasTexture | null)[]>([
+    null,
+    null,
+    null,
+    null,
+  ]);
   const { size } = useThree();
 
   const textState = useMemo(() => normalizedTextLayers(synth), [synth]);
@@ -164,7 +185,8 @@ export function PresetSynthMaterial({
       ...seedLayerUniforms("L0", le.background, baseTime),
       ...seedLayerUniforms("L1", le.decal, baseTime),
       ...buildTextSlotUniforms(le, baseTime),
-      u_bootReveal: { value: 0 },
+      u_bootReveal: { value: revealProgress },
+      u_introProgress: { value: revealProgress },
     };
   }, [
     size.width,
@@ -173,6 +195,7 @@ export function PresetSynthMaterial({
     imageResolution.height,
     backgroundTexture,
     layerEffects,
+    revealProgress,
     synth,
   ]);
 
@@ -213,10 +236,11 @@ export function PresetSynthMaterial({
   }, [textState, size.width, size.height]);
 
   useEffect(() => {
+    const textureRefs = textTextureRefs.current;
     return () => {
       for (let i = 0; i < MAX_TEXT_LAYERS; i++) {
-        textTextureRefs.current[i]?.dispose();
-        textTextureRefs.current[i] = null;
+        textureRefs[i]?.dispose();
+        textureRefs[i] = null;
       }
     };
   }, []);
@@ -236,24 +260,29 @@ export function PresetSynthMaterial({
         : state.clock.elapsedTime + initialTimeOffsetSeconds;
 
     mat.uniforms.u_resolution.value.set(state.size.width, state.size.height);
-    mat.uniforms.u_imageResolution.value.set(imageResolution.width, imageResolution.height);
+    mat.uniforms.u_imageResolution.value.set(
+      imageResolution.width,
+      imageResolution.height,
+    );
 
     const tex = backgroundTexture ?? fallbackTexture;
-    if (backgroundTexture) {
-      backgroundTexture.needsUpdate = true;
-    }
     mat.uniforms.u_texture.value = tex;
+    const activeBackgroundTexture = mat.uniforms.u_texture.value as Texture;
+    activeBackgroundTexture.needsUpdate = true;
 
     applyLayerUniforms(mat, "L0", le.background, baseTime);
     applyLayerUniforms(mat, "L1", le.decal, baseTime);
 
     const uploadedDecal = decalTexture;
     const decalTex = uploadedDecal ?? transparentFallbackTexture;
-    if (uploadedDecal) {
-      uploadedDecal.needsUpdate = true;
-    }
     mat.uniforms.u_decalTexture.value = decalTex;
-    mat.uniforms.u_decalTransform.value.set(synth.decalOffsetX, synth.decalOffsetY, synth.decalScale);
+    const activeDecalTexture = mat.uniforms.u_decalTexture.value as Texture;
+    activeDecalTexture.needsUpdate = true;
+    mat.uniforms.u_decalTransform.value.set(
+      synth.decalOffsetX,
+      synth.decalOffsetY,
+      synth.decalScale,
+    );
     mat.uniforms.u_linkDecalToMath.value = synth.linkDecalToMath ? 1.0 : 0.0;
 
     const hasUploadedDecal = uploadedDecal != null;
@@ -279,7 +308,9 @@ export function PresetSynthMaterial({
       const active = layer && trimmed.length > 0 ? 1.0 : 0.0;
       mat.uniforms[`u_textActive${i}`].value = active;
       mat.uniforms[`u_textSlot${i}`].value =
-        active > 0.5 ? (slotTex ?? transparentFallbackTexture) : transparentFallbackTexture;
+        active > 0.5
+          ? (slotTex ?? transparentFallbackTexture)
+          : transparentFallbackTexture;
       if (slotTex) {
         slotTex.needsUpdate = true;
       }
@@ -301,19 +332,11 @@ export function PresetSynthMaterial({
       mat.uniforms[`u_textTransform${i}`].value.set(ox, oy, sc);
     }
 
-    if (!bootRevealDoneRef.current) {
-      if (bootRevealStartRef.current === null) {
-        bootRevealStartRef.current = state.clock.elapsedTime;
-      }
-      const elapsed = state.clock.elapsedTime - bootRevealStartRef.current;
-      const linear = Math.min(1, elapsed / BOOT_REVEAL_DURATION_SEC);
-      const eased = linear * linear * (3 - 2 * linear);
-      mat.uniforms.u_bootReveal.value = eased;
-      if (linear >= 1) {
-        bootRevealDoneRef.current = true;
-        mat.uniforms.u_bootReveal.value = 1;
-      }
-    }
+    const controlledReveal = introEnabled
+      ? Math.max(0, Math.min(1, revealProgress))
+      : 1;
+    mat.uniforms.u_bootReveal.value = controlledReveal;
+    mat.uniforms.u_introProgress.value = controlledReveal;
   });
 
   return (

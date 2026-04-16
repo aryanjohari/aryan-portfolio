@@ -1,4 +1,4 @@
-/** Image plane uses object-fit: cover (full-bleed); text slots T0–T3; boot reveal. */
+/** Image plane uses object-fit: cover (full-bleed); text slots T0–T3; intro reveal. */
 export const synthFragmentShader = /* glsl */ `
 precision highp float;
 
@@ -23,8 +23,9 @@ uniform float u_textActive3;
 
 uniform vec2 u_resolution;
 uniform vec2 u_imageResolution;
-/** 0 = black; 1 = unmodified scene (must match JSON output exactly). */
+/** 0 = chaotic intro, 1 = unmodified scene (must match JSON output exactly). */
 uniform float u_bootReveal;
+uniform float u_introProgress;
 
 // Per-layer effect uniforms: L0 = background, L1 = decal; T0–T3 = text slots
 uniform float u_L0_t;
@@ -450,19 +451,40 @@ void main() {
   }
 
   vec3 sceneRgb = outRgb;
-
+  float introP = clamp(u_introProgress, 0.0, 1.0);
   float p = clamp(u_bootReveal, 0.0, 1.0);
-  float front = mix(-0.22, 1.32, p);
-  float soft = 0.042 + (1.0 - p) * 0.018;
-  float wavy =
-    sin(v_uv.x * 23.5 + u_L0_t * 2.75) * 0.048 +
-    cos(v_uv.x * 7.2 - u_L0_t * 1.4) * sin(v_uv.y * 11.0 + u_L0_t * 1.9) * 0.022;
-  vec2 meltCell = floor(v_uv * vec2(canvas.x * 0.11, canvas.y * 0.09));
-  float grit = (hash21(meltCell * 0.37 + vec2(u_L0_t * 0.47, u_L0_t * 0.31)) - 0.5) * 0.032 * (1.0 - p);
-  float cut = front + wavy + grit;
-  float revealMask = 1.0 - smoothstep(cut - soft, cut + soft, v_uv.y);
-  vec3 melted = mix(vec3(0.0), sceneRgb, revealMask);
-  vec3 finalRgb = mix(melted, sceneRgb, step(1.0, p));
+  float chaos = 1.0 - introP;
+
+  vec2 chaosWarp = vec2(
+    sin(v_uv.y * 19.0 + u_L0_t * 2.7) + cos(v_uv.x * 8.5 - u_L0_t * 1.6),
+    cos(v_uv.x * 17.0 - u_L0_t * 2.1) + sin(v_uv.y * 11.0 + u_L0_t * 1.3)
+  ) * 0.035 * chaos;
+  vec2 chaosUV = clamp(baseUV + chaosWarp, 0.0, 1.0);
+  vec3 chaosBase = texture2D(u_texture, chaosUV).rgb;
+  vec3 chaosRgb = layerShade(
+    chaosBase,
+    chaosUV,
+    v_uv,
+    canvas,
+    u_L0_t * mix(1.4, 1.0, introP) + chaos * 2.8,
+    mix(u_L0_bleed, max(u_L0_bleed, 0.95), chaos),
+    mix(u_L0_posterize, 5.0, chaos),
+    mix(u_L0_colorA, vec3(0.02, 0.0, 0.08), chaos),
+    mix(u_L0_colorB, vec3(0.18, 0.32, 1.0), chaos),
+    mix(u_L0_duotoneBlend, 0.92, chaos),
+    mix(u_L0_colorCycle, 4.4, chaos),
+    mix(u_L0_halftone, 0.0, chaos),
+    mix(u_L0_scanline, 0.18, chaos),
+    mix(u_L0_noise, 0.22, chaos)
+  );
+  float grain = hash21(
+    floor(v_uv * vec2(canvas.x * 0.18, canvas.y * 0.18)) +
+    vec2(u_L0_t * 19.0, u_L0_t * 13.0)
+  ) - 0.5;
+  chaosRgb += vec3(grain * 0.32 * chaos);
+  chaosRgb = clamp(chaosRgb, 0.0, 1.0);
+  float stabilize = smoothstep(0.0, 1.0, p);
+  vec3 finalRgb = mix(chaosRgb, sceneRgb, stabilize);
   gl_FragColor = vec4(finalRgb, 1.0);
 }
 `;

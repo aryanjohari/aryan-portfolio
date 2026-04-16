@@ -39,13 +39,24 @@ function isSynthPreset(x: unknown): x is SynthPreset {
   return false;
 }
 
-export default function WebGLBackground() {
+type WebGLBackgroundProps = {
+  revealProgress?: number;
+  introEnabled?: boolean;
+  onHydratedChange?: (ready: boolean) => void;
+};
+
+export default function WebGLBackground({
+  revealProgress = 1,
+  introEnabled = false,
+  onHydratedChange,
+}: WebGLBackgroundProps) {
   const [hydrated, setHydrated] = useState<HydratedSynthPreset | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hydratedRef = useRef<HydratedSynthPreset | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    onHydratedChange?.(false);
 
     (async () => {
       try {
@@ -69,9 +80,13 @@ export default function WebGLBackground() {
         }
         hydratedRef.current = h;
         setHydrated(h);
+        onHydratedChange?.(true);
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to load synth preset");
+          onHydratedChange?.(false);
+          setError(
+            e instanceof Error ? e.message : "Failed to load synth preset",
+          );
         }
       }
     })();
@@ -83,8 +98,9 @@ export default function WebGLBackground() {
         disposeHydratedTextures(h);
         hydratedRef.current = null;
       }
+      onHydratedChange?.(false);
     };
-  }, []);
+  }, [onHydratedChange]);
 
   if (error) {
     return (
@@ -115,7 +131,11 @@ export default function WebGLBackground() {
         }}
         style={{ width: "100%", height: "100%" }}
       >
-        <PresetSynthScene hydrated={hydrated} />
+        <PresetSynthScene
+          hydrated={hydrated}
+          revealProgress={revealProgress}
+          introEnabled={introEnabled}
+        />
       </Canvas>
     </div>
   );

@@ -6,7 +6,17 @@ import type { HydratedSynthPreset } from "@/lib/synth/hydratePreset";
 
 import { PresetSynthMaterial } from "./PresetSynthMaterial";
 
-export function PresetSynthScene({ hydrated }: { hydrated: HydratedSynthPreset }) {
+type PresetSynthSceneProps = {
+  hydrated: HydratedSynthPreset;
+  revealProgress?: number;
+  introEnabled?: boolean;
+};
+
+export function PresetSynthScene({
+  hydrated,
+  revealProgress = 1,
+  introEnabled = false,
+}: PresetSynthSceneProps) {
   const { preset, backgroundTexture, decalTexture } = hydrated;
   const { size } = useThree();
   const sx = size.width / 2;
@@ -23,6 +33,8 @@ export function PresetSynthScene({ hydrated }: { hydrated: HydratedSynthPreset }
         backgroundTexture={backgroundTexture}
         decalTexture={decalTexture}
         initialTimeOffsetSeconds={preset.baseTimeSeconds ?? 0}
+        revealProgress={revealProgress}
+        introEnabled={introEnabled}
       />
     </mesh>
   );
