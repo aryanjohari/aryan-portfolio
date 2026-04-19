@@ -9,19 +9,6 @@ import { usePrefersWideViewport } from "@/hooks/usePrefersWideViewport";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** Per-character spans so chromatic hover stays tight (not whole words). */
-function TextGlyphs({ text }: { text: string }) {
-  return (
-    <>
-      {Array.from(text).map((char, i) => (
-        <span key={`${i}-${char}`} className="chromatic-glyph">
-          {char === " " ? "\u00A0" : char}
-        </span>
-      ))}
-    </>
-  );
-}
-
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
 }
@@ -156,7 +143,7 @@ export default function Home() {
           {isWide ? (
             <h1 className="floating-title hero-screen-title select-none">
               <span className="floating-title-line floating-title-line--aryan">
-                <TextGlyphs text="Aryan" />
+                Aryan
               </span>
               <div className="hero-screen-face-links" aria-label="Quick links">
                 <a
@@ -165,27 +152,23 @@ export default function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <TextGlyphs text="github" />
+                  github
                 </a>
                 <span className="hero-face-sep" aria-hidden>
-                  <TextGlyphs text="|" />
+                  |
                 </span>
                 <a href="#contact" className="hero-face-link">
-                  <TextGlyphs text="contact" />
+                  contact
                 </a>
               </div>
               <span className="floating-title-line floating-title-line--johari">
-                <TextGlyphs text="Johari" />
+                Johari
               </span>
             </h1>
           ) : (
             <h1 className="floating-title select-none text-left">
-              <span className="floating-title-line">
-                <TextGlyphs text="Aryan" />
-              </span>
-              <span className="floating-title-line">
-                <TextGlyphs text="Johari" />
-              </span>
+              <span className="floating-title-line">Aryan</span>
+              <span className="floating-title-line">Johari</span>
             </h1>
           )}
         </div>
@@ -200,16 +183,16 @@ export default function Home() {
         }}
       >
         <a href="#about" className="game-nav-link">
-          <TextGlyphs text="about" />
+          about
         </a>
         <a href="#projects" className="game-nav-link">
-          <TextGlyphs text="projects" />
+          projects
         </a>
         <a href="#blog" className="game-nav-link">
-          <TextGlyphs text="blog" />
+          blog
         </a>
         <a href="#contact" className="game-nav-link">
-          <TextGlyphs text="contact" />
+          contact
         </a>
       </nav>
     </main>
@@ -261,7 +244,7 @@ export default function Home() {
                   .padStart(3, "0")
                   .split("")
                   .map((digit, index) => (
-                    <span key={index} className="intro-loader-digit chromatic-glyph">
+                    <span key={index} className="intro-loader-digit">
                       {digit}
                     </span>
                   ))}

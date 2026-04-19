@@ -2,7 +2,7 @@
 @config "../../tailwind.config.ts";
 
 /**
- * Array & Clash Display via Fontshare (Indian Type Foundry).
+ * Array & Clash Display & Chillax via Fontshare (Indian Type Foundry).
  * Files: public/fonts/*.woff2
  */
 @font-face {
@@ -24,6 +24,14 @@
 @font-face {
   font-family: "ClashDisplay-Variable";
   src: url("/fonts/ClashDisplay-Variable.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Chillax-Variable";
+  src: url("/fonts/Chillax-Variable.woff2") format("woff2");
   font-weight: 200 700;
   font-style: normal;
   font-display: swap;
@@ -63,6 +71,26 @@ body {
   line-height: 1;
 }
 
+/**
+ * Chromatic aberration–style glow: intro loader percent digits only.
+ */
+:root {
+  --text-chromatic-glow:
+    0 0 0.018em rgba(252, 250, 246, 0.58),
+    -0.022em 0 0.035em rgba(228, 208, 218, 0.48),
+    0.022em 0 0.035em rgba(200, 218, 232, 0.5),
+    -0.038em 0 0.075em rgba(216, 198, 210, 0.28),
+    0.038em 0 0.075em rgba(190, 210, 224, 0.3),
+    -0.055em 0 0.12em rgba(205, 192, 202, 0.16),
+    0.055em 0 0.12em rgba(185, 202, 216, 0.17),
+    -0.01em 0.003em 0.045em rgba(222, 214, 220, 0.12),
+    0.012em -0.004em 0.045em rgba(208, 218, 228, 0.13),
+    -0.016em -0.002em 0.05em rgba(218, 210, 216, 0.09),
+    0.014em 0.005em 0.05em rgba(212, 220, 228, 0.1),
+    0 0 0.1em rgba(235, 230, 238, 0.22),
+    0 0.038em 0.1em rgba(0, 0, 0, 0.3);
+}
+
 .intro-loader-digit {
   display: inline-block;
   color: inherit;
@@ -70,9 +98,21 @@ body {
   /* Wider hit area without shifting layout (shell is pointer-events: none). */
   padding: 0.22em 0.2em;
   margin: -0.22em -0.2em;
+  transition: text-shadow 160ms ease;
   text-shadow:
     0 0 1px rgba(255, 255, 255, 0.55),
     0 8px 22px rgba(0, 0, 0, 0.32);
+}
+
+@media (hover: hover) {
+  .intro-loader-digit:hover {
+    text-shadow: var(--text-chromatic-glow);
+  }
+}
+
+.intro-loader-digit:focus-visible {
+  text-shadow: var(--text-chromatic-glow);
+  outline: none;
 }
 
 .intro-loader-scroll {
@@ -86,54 +126,6 @@ body {
   text-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
 }
 
-/**
- * Shared chromatic aberration–style glow: hero/nav glyphs + loader digits.
- * Desaturated, lifted (“high exposure”) tints — not full‑saturation primaries.
- * Extra micro‑offsets read as subtle grain/noise next to the letterforms.
- */
-:root {
-  --text-chromatic-glow:
-    /* Core edge read */
-    0 0 0.018em rgba(252, 250, 246, 0.58),
-    /* Primary CA fringe — warm / cool, low chroma */
-    -0.022em 0 0.035em rgba(228, 208, 218, 0.48),
-    0.022em 0 0.035em rgba(200, 218, 232, 0.5),
-    /* Secondary fringe — wider, softer */
-    -0.038em 0 0.075em rgba(216, 198, 210, 0.28),
-    0.038em 0 0.075em rgba(190, 210, 224, 0.3),
-    /* Far bloom — “pushed” exposure */
-    -0.055em 0 0.12em rgba(205, 192, 202, 0.16),
-    0.055em 0 0.12em rgba(185, 202, 216, 0.17),
-    /* Micro stagger — breaks up flat colour (noise‑like) */
-    -0.01em 0.003em 0.045em rgba(222, 214, 220, 0.12),
-    0.012em -0.004em 0.045em rgba(208, 218, 228, 0.13),
-    -0.016em -0.002em 0.05em rgba(218, 210, 216, 0.09),
-    0.014em 0.005em 0.05em rgba(212, 220, 228, 0.1),
-    /* Soft halo */
-    0 0 0.1em rgba(235, 230, 238, 0.22),
-    0 0.038em 0.1em rgba(0, 0, 0, 0.3);
-}
-
-.chromatic-glyph {
-  display: inline-block;
-  transition: text-shadow 160ms ease;
-}
-
-.floating-title .chromatic-glyph {
-  cursor: default;
-}
-
-@media (hover: hover) {
-  .chromatic-glyph:hover {
-    text-shadow: var(--text-chromatic-glow);
-  }
-}
-
-.hero-face-link:focus-visible .chromatic-glyph,
-.game-nav-link:focus-visible .chromatic-glyph {
-  text-shadow: var(--text-chromatic-glow);
-}
-
 .floating-title {
   display: flex;
   flex-direction: column;
@@ -143,9 +135,9 @@ body {
   width: min(44vw, 44vh);
   min-width: 220px;
   color: #f4f5f0;
-  font-family: "ClashDisplay-Variable", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Chillax-Variable", ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(5.7375rem, 18.5625vw, 17.71875rem);
-  font-weight: 500;
+  font-weight: 1000;
   font-variation-settings: "wght" 500;
   letter-spacing: -4.5px;
   line-height: 0.76;
