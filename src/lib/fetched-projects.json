@@ -1,11 +1,33 @@
 {
-  "fetchedAt": "2026-07-02T21:33:59.104Z",
+  "fetchedAt": "2026-07-02T21:54:58.697Z",
   "results": [
     {
       "slug": "background-studio",
-      "status": "missing_yaml",
-      "repo": "aryanjohari/background-studio",
-      "message": "portfolio.yaml not found on branch \"main\""
+      "status": "ok",
+      "yaml": {
+        "title": "Background Studio",
+        "summary": "A browser tool for creating animated full-screen hero backgrounds and exporting looks as JSON for your own site.",
+        "description": "Upload a hero image and adjust motion, color, and texture effects while the background animates live in the browser. Choose from 14 preset looks or describe a mood to restyle the scene. Export preset JSON to reuse the same look on a portfolio or landing page, or save a WebM loop or PNG still for sharing. Everything renders on one WebGL canvas that composites the hero image, optional overlay, and preview text in a single pass.",
+        "stack": [
+          "TypeScript",
+          "React",
+          "Vite",
+          "Three.js",
+          "React Three Fiber",
+          "GLSL",
+          "Zustand",
+          "Tailwind CSS",
+          "GSAP"
+        ],
+        "status": "active",
+        "links": {
+          "github": "https://github.com/aryanjohari/web-image-editor",
+          "demo": "https://image.arkhives.nz",
+          "docs": "https://github.com/aryanjohari/web-image-editor/blob/main/src/lib/preset/PORTING.md"
+        },
+        "slug": "background-studio"
+      },
+      "fetchedAt": "2026-07-02T21:54:57.092Z"
     },
     {
       "slug": "sound-visualiser",
@@ -29,25 +51,82 @@
           "demo": "https://music.arkhives.nz"
         }
       },
-      "fetchedAt": "2026-07-02T21:33:57.465Z"
+      "fetchedAt": "2026-07-02T21:54:57.640Z"
     },
     {
       "slug": "pii-gateway",
-      "status": "missing_yaml",
-      "repo": "aryanjohari/pii-gateway",
-      "message": "portfolio.yaml not found on branch \"main\""
+      "status": "ok",
+      "yaml": {
+        "title": "PII Gateway",
+        "summary": "Self-hosted API that redacts personal data from JSON, text, and batch files before downstream use.",
+        "description": "PII Gateway helps engineering teams keep sensitive data out of analytics, logs, and third-party tools by centralizing redaction behind one API and one policy file. Call it over HTTP for live sanitization, or let it poll PostgreSQL exports and CSV or JSON inbox files on a schedule. Microsoft Presidio detects entities like emails and names in free text; structured JSON fields follow per-field rules such as redact, tokenize, or mask. Sanitized results can be returned inline or written to local disk or S3-compatible storage.",
+        "stack": [
+          "Python",
+          "FastAPI",
+          "Presidio",
+          "PostgreSQL",
+          "Docker",
+          "APScheduler"
+        ],
+        "status": "active",
+        "links": {
+          "github": "https://github.com/aryanjohari/pii-gateway"
+        }
+      },
+      "fetchedAt": "2026-07-02T21:54:57.887Z"
     },
     {
       "slug": "ada",
-      "status": "missing_yaml",
-      "repo": "aryanjohari/ada",
-      "message": "portfolio.yaml not found on branch \"main\""
+      "status": "ok",
+      "yaml": {
+        "title": "ADA",
+        "summary": "Local Python agent for edge devices—chat, background goals, RSS ingest, and SEO page publishing.",
+        "description": "ADA is a headless Python agent you run on your own hardware, such as a Raspberry Pi. One install supports interactive chat, a background worker for queued goals, offline ingest from RSS and Search Console, and deterministic workflows that draft and publish SEO pages to S3. All state lives in a single SQLite database per profile, with allowlisted shell commands and token budgets for cost control. Built for operators who want a local AI assistant with optional programmatic content pipelines—not a hosted SaaS.",
+        "stack": [
+          "Python",
+          "asyncio",
+          "Google GenAI (Gemini)",
+          "SQLite",
+          "aiosqlite",
+          "Pydantic",
+          "httpx",
+          "boto3",
+          "Streamlit",
+          "pytest"
+        ],
+        "status": "active",
+        "links": {
+          "github": "https://github.com/aryanjohari/ADA",
+          "docs": "https://github.com/aryanjohari/ADA/tree/main/docs"
+        }
+      },
+      "fetchedAt": "2026-07-02T21:54:58.130Z"
     },
     {
       "slug": "gstf",
-      "status": "missing_yaml",
-      "repo": "aryanjohari/gstf",
-      "message": "portfolio.yaml not found on branch \"main\""
+      "status": "ok",
+      "yaml": {
+        "title": "GSTF",
+        "summary": "Video forensics pipeline that detects deepfakes and attributes clips to the generator that produced them.",
+        "description": "GSTF (Generalized Spatio-Temporal Fingerprinting) is a four-phase research pipeline for deepfake forensics. It reads short face video clips, extracts motion patterns with an R(2+1)D backbone, and uses ArcFace metric learning to separate clips by generator on datasets like FaceForensics++ and DFDM. A continual-learning stage with Elastic Weight Consolidation lets the model adapt to new generators without wiping earlier training. Grad-CAM heatmaps and UMAP plots show where the model looks when it assigns attribution. On held-out FaceForensics++ clips, the ArcFace attribution stage reaches 86.5% accuracy.",
+        "stack": [
+          "Python",
+          "PyTorch",
+          "R(2+1)D",
+          "ArcFace",
+          "Elastic Weight Consolidation",
+          "OpenCV",
+          "Grad-CAM",
+          "scikit-learn",
+          "UMAP",
+          "PyYAML"
+        ],
+        "status": "active",
+        "links": {
+          "github": "https://github.com/aryanjohari/GSTF"
+        }
+      },
+      "fetchedAt": "2026-07-02T21:54:58.696Z"
     }
   ]
 }

@@ -1,7 +1,10 @@
 const contactLinks = [
-  { href: "mailto:aryan@example.com", label: "email" },
+  { href: "mailto:johari.aryan16@gmail.com", label: "email" },
   { href: "https://github.com/aryanjohari", label: "github" },
-  { href: "https://linkedin.com/in/aryanjohari", label: "linkedin" },
+  {
+    href: "https://www.linkedin.com/in/aryan-johari-627b4023a/",
+    label: "linkedin",
+  },
 ];
 
 export function SiteFooter() {

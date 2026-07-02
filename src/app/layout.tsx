@@ -13,7 +13,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Aryan Johari — Workshop Index",
+  title: "Aryan Johari",
   description: "Curated portfolio of software projects and experiments.",
 };
 
