@@ -18,9 +18,10 @@ type DemoConfig =
   | { type: "edge"; proxyPath: string };
 
 type RegistryEntry = {
-  repo: string;      // "owner/repo-name"
-  slug: string;      // URL slug, kebab-case
-  demo?: DemoConfig; // omit = no live demo UI
+  repo: string;       // "owner/repo-name"
+  slug: string;       // URL slug, kebab-case
+  branch?: string;    // default "main"
+  demo?: DemoConfig;  // omit = no live demo UI
 };
 ```
 
@@ -33,16 +34,21 @@ type RegistryEntry = {
 {
   repo: "aryanjohari/my-new-project",
   slug: "my-new-project",
+  // branch optional — defaults to "main"
   // demo optional — omit until ready
 },
 ```
 
-3. **Add mock content** (scaffold only) in `src/lib/mock-projects.ts` until GitHub fetch is implemented.
+3. **Fetch content** — run `npm run fetch:projects` (or let `prebuild` run it on deploy). Repos without yaml yet show a "yaml not configured" state but still appear on the index.
 4. **Rebuild** — the index and project page generate automatically from the registry.
+
+### Dev without fetch
+
+Set `PORTFOLIO_FETCH_SKIP=true` in `.env.local` to use mock data from `src/lib/mock-projects.ts` instead of live fetch. Add a mock entry there only when developing UI without GitHub access.
 
 ## Removing a project
 
-Delete the entry from `registry.ts` and remove the mock entry from `mock-projects.ts`. The project page will 404 and the index row disappears on next build.
+Delete the entry from `registry.ts`. The project page will 404 and the index row disappears on next build.
 
 ## Slug conventions
 
@@ -69,15 +75,7 @@ For deployed frontends. **Implemented and live** — `DemoPanel` embeds the URL 
 
 The index table shows **try demo** when `demo` is set. If the target site blocks embedding (X-Frame-Options / CSP), the panel shows a fallback with an **open in new tab** link instead of a broken empty frame.
 
-To wire another iframe demo (e.g. sound-visualiser):
-
-```typescript
-{
-  repo: "aryanjohari/sound-visualiser",
-  slug: "sound-visualiser",
-  demo: { type: "iframe", url: "https://your-deployed-demo.example.com" },
-},
-```
+Iframe demos work regardless of whether `portfolio.yaml` is configured.
 
 ### api
 
@@ -127,7 +125,7 @@ Device URL and credentials live only in server environment variables.
 |---------|--------|
 | Which projects appear | Registry |
 | Title, summary, description, stack, status | YAML (`portfolio.yaml`) |
-| GitHub link | YAML |
+| GitHub link | YAML (placeholder from registry repo when yaml missing) |
 | External demo link (plain `<a>`) | YAML `links.demo` |
 | Embedded demo (iframe, API, exhibit, edge) | Registry `demo` only |
 
@@ -138,7 +136,7 @@ Device URL and credentials live only in server environment variables.
 | Slug | Repo | Demo |
 |------|------|------|
 | `background-studio` | `aryanjohari/background-studio` | iframe → `https://music.arkhives.nz` |
-| `sound-visualiser` | `aryanjohari/sound-visualiser` | not wired |
+| `sound-visualiser` | `aryanjohari/sound-visualiser` | iframe → `https://image.arkhives.nz` |
 | `pii-gateway` | `aryanjohari/pii-gateway` | not wired |
 | `ada` | `aryanjohari/ada` | not wired |
 | `gstf` | `aryanjohari/gstf` | not wired |
@@ -146,8 +144,8 @@ Device URL and credentials live only in server environment variables.
 ## Checklist for new projects
 
 - [ ] `portfolio.yaml` committed to project repo
-- [ ] Registry entry added with correct `repo` and `slug`
-- [ ] Mock entry added (until fetch is live)
+- [ ] Registry entry added with correct `repo`, `slug`, and optional `branch`
+- [ ] `npm run fetch:projects` succeeds (or shows `missing_yaml` until yaml is added)
 - [ ] Demo wired in registry (if applicable)
 - [ ] Proxy route created (for `api` / `edge` types)
 - [ ] Build passes: `npm run build`

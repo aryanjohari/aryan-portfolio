@@ -2,6 +2,8 @@
 
 Each curated project repo should include a `portfolio.yaml` at its root. This file is the **visitor-facing content contract** — not a replacement for the README.
 
+To generate this file in a project repo, use the Cursor prompt in [create-portfolio-yaml.md](./create-portfolio-yaml.md).
+
 ## Schema
 
 ```yaml

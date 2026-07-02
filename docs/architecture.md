@@ -4,7 +4,7 @@
 
 The portfolio merges two sources at build time:
 
-1. **Portfolio registry** (`src/data/registry.ts`) — manual curation: which repos appear, slug overrides, demo wiring.
+1. **Portfolio registry** (`src/data/registry.ts`) — manual curation: which repos appear, slug overrides, branch overrides, demo wiring.
 2. **Project YAML** (`portfolio.yaml` in each repo) — narrative content: title, summary, description, stack, status, links.
 
 The registry always wins for embedded demo configuration. YAML `links.demo` is an optional external URL fallback when no registry demo is wired.
@@ -14,27 +14,51 @@ The registry always wins for embedded demo configuration. YAML `links.demo` is a
 ```mermaid
 flowchart TD
   Registry["registry.ts\nmanual curation + demo config"]
-  Fetch["build: fetch portfolio.yaml\nraw.githubusercontent.com"]
-  Merge["merge registry + YAML\nsrc/lib/projects.ts"]
+  Fetch["prebuild: fetch-portfolio-yaml.ts"]
+  Raw["raw.githubusercontent.com"]
+  API["api.github.com/contents"]
+  JSON["fetched-projects.json"]
+  Merge["merge registry + fetch results\nsrc/lib/projects.ts"]
   IndexPage["/ index"]
   ProjectPage["/projects/slug"]
   Registry --> Fetch
-  Fetch --> Merge
+  Fetch --> Raw
+  Raw -->|404 or auth fail| API
+  Fetch --> JSON
+  JSON --> Merge
+  Registry --> Merge
   Merge --> IndexPage
   Merge --> ProjectPage
 ```
 
-### Build-time fetch (Phase 2)
+### Build-time fetch
 
-For each entry in `registry`:
+For each entry in `registry`, `scripts/fetch-portfolio-yaml.ts` runs before `next build` (via `prebuild`):
 
-```
-GET https://raw.githubusercontent.com/{owner}/{repo}/main/portfolio.yaml
-```
+1. **Public repos:** `GET https://raw.githubusercontent.com/{owner}/{repo}/{branch}/portfolio.yaml`
+2. **Private repos or raw 404/401/403:** `GET https://api.github.com/repos/{owner}/{repo}/contents/portfolio.yaml?ref={branch}` with `Authorization: Bearer ${GITHUB_TOKEN}`
 
-Parse YAML, validate against [contract.md](./contract.md), merge with registry entry via `mergeProject()`.
+Parse YAML, validate against [contract.md](./contract.md), write results to `src/lib/fetched-projects.json`.
 
-**Current scaffold:** uses `src/lib/mock-projects.ts` instead of live fetch.
+**Per-repo error handling** — build continues even when individual repos fail:
+
+| Status | Meaning |
+|--------|---------|
+| `ok` | Valid portfolio.yaml fetched |
+| `missing_yaml` | File not found (expected for repos without yaml yet) |
+| `invalid_yaml` | Parse or validation failure |
+| `fetch_error` | Network or auth error |
+
+**Dev fallback:** set `PORTFOLIO_FETCH_SKIP=true` to skip fetch and use `src/lib/mock-projects.ts` instead.
+
+### Environment variables
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `GITHUB_TOKEN` | For private repos | GitHub API access during fetch |
+| `PORTFOLIO_FETCH_SKIP` | No | Skip fetch; use mock data (dev only) |
+
+Copy [`.env.example`](../.env.example) to `.env.local` for local development. On Vercel, add `GITHUB_TOKEN` in project environment variables (Production + Preview). Never expose the token in client code.
 
 ## Demo wiring flow
 
@@ -53,6 +77,8 @@ flowchart LR
   Panel -->|exhibit| Assets["static artifacts"]
   Panel -->|edge| EdgeProxy["proxied Pi endpoint"]
 ```
+
+Demo wiring is independent of yaml fetch status — iframe demos work even when `contentStatus !== "ok"`.
 
 ### Demo types
 
@@ -73,6 +99,7 @@ export const revalidate = 3600; // 1 hour ISR
 - Project pages regenerate at most once per hour when visited.
 - Index page can use the same revalidation or be fully static depending on fetch strategy.
 - `generateStaticParams()` pre-builds all known slugs from the registry.
+- `prebuild` runs `npm run fetch:projects` on every production build.
 
 ### Optional deploy hook (Phase 3)
 
@@ -81,6 +108,7 @@ A GitHub Action in each project repo can POST to a Vercel deploy hook when `port
 ## Security
 
 - **Never** put API keys, Pi URLs, or private endpoints in client bundles.
+- **Never** commit `GITHUB_TOKEN` — use `.env.local` locally and Vercel env vars in production.
 - `api` and `edge` demo types use Next.js API route proxies (`src/app/api/...`).
 - Proxy routes validate input, rate-limit, and attach credentials server-side only.
 - YAML `links.demo` external URLs are plain `<a>` links, not embedded unless registry wires an iframe.
@@ -90,6 +118,8 @@ A GitHub Action in each project repo can POST to a Vercel deploy hook when `port
 ```
 aryan-portfolio/
 ├── docs/                          # Source of truth (you are here)
+├── scripts/
+│   └── fetch-portfolio-yaml.ts    # Build-time GitHub fetch
 ├── public/
 │   └── resume.pdf                 # Expected location; add manually
 ├── src/
@@ -108,17 +138,21 @@ aryan-portfolio/
 │   ├── data/
 │   │   └── registry.ts            # Curated project list + demo config
 │   └── lib/
+│       ├── portfolio-schema.ts    # YAML types + validation
 │       ├── projects.ts            # Types, merge helper, getters
-│       └── mock-projects.ts       # Static YAML-shaped data (scaffold only)
-└── package.json                   # Next.js + React + Tailwind + TS only
+│       ├── fetched-projects.json  # Build output from fetch script
+│       └── mock-projects.ts       # Dev fallback when fetch skipped
+└── package.json                   # Next.js + React + Tailwind + TS + yaml
 ```
 
 ## Dependencies
 
-Minimal runtime stack:
+Runtime stack:
 
 - `next`, `react`, `react-dom`
+- `yaml` (portfolio.yaml parsing at build time)
 - `tailwindcss` (dev)
+- `tsx` (dev — runs fetch script)
 - IBM Plex Mono via `next/font/google` (no npm package)
 
 **Explicitly excluded from the portfolio shell:** Three.js, React Three Fiber, GSAP, Lenis, animation libraries, scroll hijacking.
@@ -127,6 +161,6 @@ Minimal runtime stack:
 
 | Phase | Scope |
 |-------|-------|
-| 1 (current) | Static shell, mock data, docs, placeholder demo panel |
-| 2 | GitHub YAML fetch at build time, first live demos, API proxies |
-| 3 | Deploy hooks, exhibit assets, edge proxy for ADA |
+| 1 (done) | Static shell, mock data, docs, placeholder demo panel |
+| 2 (partial) | GitHub YAML fetch at build time, content status UI, iframe demos live |
+| 3 | Deploy hooks, exhibit assets, edge proxy for ADA, API proxies |

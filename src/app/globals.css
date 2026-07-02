@@ -182,6 +182,42 @@ code {
   margin-top: 2px;
 }
 
+.project-summary--missing {
+  font-style: italic;
+}
+
+.content-warn {
+  margin-left: 0.35rem;
+  color: var(--color-muted);
+  cursor: help;
+}
+
+.content-notice {
+  border: 1px solid var(--color-border);
+  padding: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-3);
+}
+
+.content-notice-heading {
+  font-weight: 600;
+  margin: 0 0 var(--space-1);
+}
+
+.content-notice-message {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  margin: 0 0 var(--space-1);
+}
+
+.content-notice-body {
+  font-size: 0.875rem;
+  margin: 0 0 var(--space-2);
+}
+
+.content-notice-link {
+  font-size: 0.8125rem;
+}
+
 .project-stack {
   max-width: 200px;
 }

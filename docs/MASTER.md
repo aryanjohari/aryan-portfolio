@@ -38,20 +38,22 @@ Visitors should understand what a project does, see its stack and status, and tr
 |----------|---------|
 | [architecture.md](./architecture.md) | Data flow, build strategy, folder structure, security |
 | [contract.md](./contract.md) | `portfolio.yaml` schema, validation, examples |
+| [create-portfolio-yaml.md](./create-portfolio-yaml.md) | Cursor prompt to generate portfolio.yaml in project repos |
 | [ui.md](./ui.md) | Design tokens, wireframes, components, responsive rules |
 | [registry.md](./registry.md) | How to add/remove projects and wire demos |
 
 ## Current phase
 
-**Phase 1 (this scaffold):** Static UI shell, mock project data, full documentation. No GitHub fetch, no live demos, no API proxies.
+**Phase 1 (done):** Static UI shell, mock project data, full documentation.
 
-**Phase 2 (next):** Build-time fetch of `portfolio.yaml` from GitHub, ISR revalidation, first wired demos.
+**Phase 2 (in progress / partial):** Build-time fetch of `portfolio.yaml` from GitHub, per-project content status UI, iframe demos live. API proxies and exhibit assets remain.
 
 **Phase 3 (later):** GitHub Action deploy hook, additional demo types, production hardening.
 
 ## Quick reference
 
 - **Add a project:** [registry.md](./registry.md)
+- **Generate yaml for a project:** [create-portfolio-yaml.md](./create-portfolio-yaml.md)
 - **Change design:** [ui.md](./ui.md)
 - **Change data contract:** [contract.md](./contract.md)
 - **Understand build flow:** [architecture.md](./architecture.md)

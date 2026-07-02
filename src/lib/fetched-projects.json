@@ -1,0 +1,53 @@
+{
+  "fetchedAt": "2026-07-02T21:33:59.104Z",
+  "results": [
+    {
+      "slug": "background-studio",
+      "status": "missing_yaml",
+      "repo": "aryanjohari/background-studio",
+      "message": "portfolio.yaml not found on branch \"main\""
+    },
+    {
+      "slug": "sound-visualiser",
+      "status": "ok",
+      "yaml": {
+        "title": "Sound Visualiser",
+        "summary": "WebGL music visualizer that maps live audio to 3D shaders, camera motion, and particle effects in real time.",
+        "description": "A browser-based audio visualizer that turns music into moving 3D graphics. Load a track, use your microphone, or try the built-in demos — the app reads loudness and frequency bands and drives camera moves, a fluid background, particle knots, lighting, and color shifts in sync with the beat. Peaks are smoothed and self-calibrate to each track so the motion feels musical rather than jittery. Built for anyone curious how audio features connect to real-time WebGL rendering.",
+        "stack": [
+          "TypeScript",
+          "Vite",
+          "Three.js",
+          "GLSL",
+          "Meyda",
+          "GSAP",
+          "postprocessing"
+        ],
+        "status": "active",
+        "links": {
+          "github": "https://github.com/aryanjohari/sound-visualiser",
+          "demo": "https://music.arkhives.nz"
+        }
+      },
+      "fetchedAt": "2026-07-02T21:33:57.465Z"
+    },
+    {
+      "slug": "pii-gateway",
+      "status": "missing_yaml",
+      "repo": "aryanjohari/pii-gateway",
+      "message": "portfolio.yaml not found on branch \"main\""
+    },
+    {
+      "slug": "ada",
+      "status": "missing_yaml",
+      "repo": "aryanjohari/ada",
+      "message": "portfolio.yaml not found on branch \"main\""
+    },
+    {
+      "slug": "gstf",
+      "status": "missing_yaml",
+      "repo": "aryanjohari/gstf",
+      "message": "portfolio.yaml not found on branch \"main\""
+    }
+  ]
+}
