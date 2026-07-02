@@ -12,7 +12,7 @@ export type RegistryEntry = {
 
 export const registry: RegistryEntry[] = [
   { repo: "aryanjohari/background-studio", slug: "background-studio", demo: { type: "iframe", url: "https://music.arkhives.nz" } },
-  { repo: "aryanjohari/sound-visualiser", slug: "sound-visualiser" },
+  { repo: "aryanjohari/sound-visualiser", slug: "sound-visualiser", demo: { type: "iframe", url: "https://image.arkhives.nz" } },
   { repo: "aryanjohari/pii-gateway", slug: "pii-gateway" },
   { repo: "aryanjohari/ada", slug: "ada" },
   { repo: "aryanjohari/gstf", slug: "gstf" },

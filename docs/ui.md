@@ -69,25 +69,29 @@ Applied via `.site-header-accent` pseudo-element on `SiteHeader`:
 
 ### Project page (`/projects/[slug]`)
 
+Wider shell (`max-width: 1400px`) than index/about. Desktop grid is **1fr : 3fr** (~25% narrative, ~75% sandbox).
+
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ header (same as index)                                      │
-├──────────────────────────┬──────────────────────────────────┤
-│                          │                                  │
-│  PII Gateway             │  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐  │
-│  active                  │  │                            │  │
-│                          │  │   demo not wired           │  │
-│  FastAPI middleware…     │  │                            │  │
-│                          │  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘  │
-│  Stack: Python, FastAPI  │                                  │
-│  GitHub →                │                                  │
-│                          │                                  │
-├──────────────────────────┴──────────────────────────────────┤
-│ footer                                                      │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│ header (960px)                                                           │
+├──────────────┬───────────────────────────────────────────────────────────┤
+│              │                                                           │
+│  Background  │  ┌ sandbox ─────────────── open in new tab ────────────┐ │
+│  Studio      │  │                                                       │ │
+│  active      │  │                                                       │ │
+│              │  │              [ iframe — ~75vh tall ]                  │ │
+│  WebGL lab…  │  │                                                       │ │
+│              │  │                                                       │ │
+│  stack       │  │                                                       │ │
+│  github →    │  └───────────────────────────────────────────────────────┘ │
+│  (max 320px) │                                                           │
+│              │                                                           │
+├──────────────┴───────────────────────────────────────────────────────────┤
+│ footer (960px)                                                           │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-Mobile: columns stack — narrative block first, demo panel below.
+Mobile: columns stack — narrative block first, full-width sandbox below (min-height ~50vh).
 
 ### About (`/about`)
 
@@ -129,14 +133,14 @@ Mobile: columns stack — narrative block first, demo panel below.
 
 | Breakpoint | Behaviour |
 |------------|-----------|
-| `< md` (768px) | Project split stacks vertically; table scrolls horizontally if needed |
-| `≥ md` | Project split is 1fr / 1fr grid; table full width |
+| `< md` (768px) | Project split stacks vertically (narrative first); sandbox min-height ~50vh; table scrolls horizontally if needed |
+| `≥ md` | Index/about: 960px max-width. Project pages: 1400px shell, **1fr / 3fr** split, sandbox ~`calc(100dvh - 12rem)` |
 
 ## Demo panel states
 
 1. **Not wired** — dashed border, muted text: "Demo not wired"
-2. **Wired, not implemented** — solid border, shows demo type label + "Coming soon"
-3. **Live (Phase 2+)** — renders iframe, API playground, exhibit gallery, or edge proxy UI
+2. **Iframe (live)** — header row (`sandbox` + open in new tab), embedded iframe filling a tall panel (~75vh desktop / ~50vh mobile). Loading overlay while iframe loads; fallback if embed blocked or load times out (~8s). On mobile, prominent **open in new tab** link above iframe.
+3. **Wired, not implemented** (`api`, `exhibit`, `edge`) — solid border, shows demo type label + "Coming soon"
 
 ## Changing design decisions
 

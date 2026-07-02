@@ -27,7 +27,7 @@ export default function RootLayout({
       <body className={`${ibmPlexMono.variable} antialiased`}>
         <div className="site-shell">
           <SiteHeader />
-          <main className="site-main">{children}</main>
+          {children}
           <SiteFooter />
         </div>
       </body>

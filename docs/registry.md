@@ -57,14 +57,26 @@ Demos are **always manual**. Omitting `demo` means the index shows `—` and the
 
 ### iframe
 
-For deployed frontends:
+For deployed frontends. **Implemented and live** — `DemoPanel` embeds the URL in a sandboxed iframe with loading and fallback states.
 
 ```typescript
 {
   repo: "aryanjohari/background-studio",
   slug: "background-studio",
-  demo: { type: "iframe", url: "https://background-studio.example.com" },
+  demo: { type: "iframe", url: "https://music.arkhives.nz" },
 }
+```
+
+The index table shows **try demo** when `demo` is set. If the target site blocks embedding (X-Frame-Options / CSP), the panel shows a fallback with an **open in new tab** link instead of a broken empty frame.
+
+To wire another iframe demo (e.g. sound-visualiser):
+
+```typescript
+{
+  repo: "aryanjohari/sound-visualiser",
+  slug: "sound-visualiser",
+  demo: { type: "iframe", url: "https://your-deployed-demo.example.com" },
+},
 ```
 
 ### api
@@ -125,7 +137,7 @@ Device URL and credentials live only in server environment variables.
 
 | Slug | Repo | Demo |
 |------|------|------|
-| `background-studio` | `aryanjohari/background-studio` | not wired |
+| `background-studio` | `aryanjohari/background-studio` | iframe → `https://music.arkhives.nz` |
 | `sound-visualiser` | `aryanjohari/sound-visualiser` | not wired |
 | `pii-gateway` | `aryanjohari/pii-gateway` | not wired |
 | `ada` | `aryanjohari/ada` | not wired |
