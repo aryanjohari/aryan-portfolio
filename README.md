@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# aryan-portfolio
 
-## Getting Started
+A curated **workshop index** portfolio — a terminal-style catalog of selected GitHub projects with narrative pages and optional live demo panels.
 
-First, run the development server:
+Built with Next.js 16, React, Tailwind CSS, and TypeScript. Monospace aesthetic, flat UI, no WebGL in the shell.
+
+## Documentation
+
+All design and architecture decisions live in [`docs/MASTER.md`](docs/MASTER.md). Start there.
+
+| Doc | Topic |
+|-----|-------|
+| [docs/MASTER.md](docs/MASTER.md) | Vision, principles, doc index |
+| [docs/architecture.md](docs/architecture.md) | Data flow, build strategy |
+| [docs/contract.md](docs/contract.md) | `portfolio.yaml` schema |
+| [docs/ui.md](docs/ui.md) | Design tokens, wireframes |
+| [docs/registry.md](docs/registry.md) | Adding projects, wiring demos |
+
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build   # production build
+npm run start   # serve production build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Resume
 
-## Learn More
+Place your PDF at `public/resume.pdf`. The nav and about page link to `/resume.pdf`.
 
-To learn more about Next.js, take a look at the following resources:
+## Adding a project
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Add `portfolio.yaml` to the project repo (see [docs/contract.md](docs/contract.md)).
+2. Add an entry to [`src/data/registry.ts`](src/data/registry.ts) (see [docs/registry.md](docs/registry.md)).
+3. Add mock content to [`src/lib/mock-projects.ts`](src/lib/mock-projects.ts) until GitHub fetch is implemented.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Current phase
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Static UI shell with mock data. GitHub fetch, live demos, and API proxies are documented but not yet implemented.
