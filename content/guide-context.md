@@ -1,12 +1,13 @@
-# Guide context (placeholder)
+# Guide context
 
-User-editable source for future Portfolio Guide (Phase B). Not wired to runtime in Phase A.
+User-editable source for the Portfolio Guide. Aggregated at build time into `src/lib/guide-context.json`.
 
 ## Identity
 
 - **Who:** Aryan Johari — graduate software engineer, Auckland, New Zealand
 - **Availability:** Seeking a graduate software engineering role in Auckland from September 2026
 - **Site:** Curated workshop portfolio — selected projects with narrative and live demos
+- **Work history:** Detailed employment history is ingested from `public/resume.pdf` at build time (not duplicated here)
 
 ## Philosophy
 

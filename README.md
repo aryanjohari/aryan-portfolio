@@ -1,6 +1,6 @@
 # aryan-portfolio
 
-A curated **workshop index** portfolio — a terminal-style catalog of selected GitHub projects with narrative pages and optional live demo panels.
+A curated **workshop** portfolio — narrative homepage with an AI guide, plus a terminal-style catalog of selected GitHub projects with narrative pages and optional live demo panels.
 
 Built with Next.js 16, React, Tailwind CSS, and TypeScript. Monospace aesthetic, flat UI, no WebGL in the shell.
 
@@ -14,13 +14,14 @@ All design and architecture decisions live in [`docs/MASTER.md`](docs/MASTER.md)
 | [docs/architecture.md](docs/architecture.md) | Data flow, build strategy |
 | [docs/contract.md](docs/contract.md) | `portfolio.yaml` schema |
 | [docs/ui.md](docs/ui.md) | Design tokens, wireframes |
+| [docs/guide.md](docs/guide.md) | Portfolio guide, Gemini setup |
 | [docs/registry.md](docs/registry.md) | Adding projects, wiring demos |
 
 ## Development
 
 ```bash
 npm install
-cp .env.example .env.local   # optional: GITHUB_TOKEN, PORTFOLIO_FETCH_SKIP
+cp .env.example .env.local   # optional: GITHUB_TOKEN, PORTFOLIO_FETCH_SKIP, GEMINI_API_KEY
 npm run fetch:projects       # fetch portfolio.yaml from GitHub (optional locally)
 npm run dev
 ```
@@ -46,14 +47,16 @@ npm run start   # serve production build
 |----------|---------|
 | `GITHUB_TOKEN` | GitHub API token for fetching `portfolio.yaml` from private repos. Public repos work without it. |
 | `PORTFOLIO_FETCH_SKIP` | Set to `true` to skip fetch and use mock data. |
+| `GEMINI_API_KEY` | Google Gemini API key for `/api/guide`. Server-side only — required for the portfolio guide. |
 
 See [`.env.example`](.env.example) for template values.
 
 ## Vercel deployment
 
 1. Add `GITHUB_TOKEN` in Vercel project settings (Production + Preview).
-2. `prebuild` runs `npm run fetch:projects` automatically on each deploy.
-3. Token is used only at build time — never exposed to the client.
+2. Add `GEMINI_API_KEY` for the portfolio guide (Production + Preview).
+3. `prebuild` runs `fetch:projects` and `build:guide-context` automatically on each deploy.
+4. Tokens are used only at build time or on the server — never exposed to the client.
 
 ## Resume
 
@@ -67,4 +70,4 @@ Place your PDF at `public/resume.pdf`. The nav and about page link to `/resume.p
 
 ## Current phase
 
-Build-time GitHub fetch for `portfolio.yaml` is live. Iframe demos are wired for background-studio and sound-visualiser. API proxies and exhibit assets are documented for Phase 3.
+Build-time GitHub fetch for `portfolio.yaml` is live. Route split: `/` (guide home) and `/workshop` (project table). Portfolio Guide uses Gemini via `/api/guide`. Iframe demos are wired for background-studio and sound-visualiser. API proxies and exhibit assets remain for Phase C.

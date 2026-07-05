@@ -5,8 +5,10 @@ export default function NotFound() {
     <main className="site-main">
       <h1 className="page-heading">not found</h1>
       <p>
-        No project matches that slug.{" "}
-        <Link href="/">Return to index</Link>.
+        Page not found.{" "}
+        <Link href="/">return home</Link>
+        {" · "}
+        <Link href="/workshop">view workshop</Link>.
       </p>
     </main>
   );

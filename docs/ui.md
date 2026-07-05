@@ -42,40 +42,70 @@ Applied via `.site-header-accent` pseudo-element on `SiteHeader`:
 
 ## Wireframes
 
-### Index (`/`) — v2
+### Link map
 
-Header unchanged. No new fonts, no shadows, no WebGL on shell.
+| Link | URL | Page |
+|------|-----|------|
+| Nav `home` | `/` | Narrative intro + portfolio guide |
+| Nav `workshop` | `/workshop` | Full project table only |
+| HomeIntro catalog link | `/workshop` | Same as workshop nav |
+| Nav `about` | `/about` | Bio, education, availability |
+| Nav `resume` | `/resume.pdf` | PDF download |
+
+Do **not** link to `/index` anywhere — it aliases to `/` on some hosts. `/index` redirects to `/workshop` for old bookmarks only.
+
+### Home (`/`) — guide-focused
+
+Header: `home · workshop · about · resume`. No new fonts, no shadows, no WebGL on shell.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ ░░ scanline accent band ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │
-│ aryan johari          index · about · resume                  │
+│ aryan johari          home · workshop · about · resume        │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  [HomeIntro]                                                │
+│  [HomeIntro — compact variant]                              │
 │  aryan johari                                               │
 │  graduate software engineer · auckland                      │
-│  [2–3 sentence narrative]                                   │
-│  ┌─────────────┬─────────────┬──────────────────────────┐  │
-│  │ N projects  │ N live demos│ available · auckland     │  │
-│  └─────────────┴─────────────┴──────────────────────────┘  │
+│  [1 short narrative paragraph]                              │
+│  5 projects · view catalog →                                │
 │  resume.pdf · more about me                                 │
 │                                                             │
-│  [FeaturedDemos]                                            │
-│  > live demos                                               │
-│  slug — summary                              try demo →    │
-│                                                             │
-│  > workshop index                                           │
-│  [ProjectTable — unchanged 4-column table]                  │
+│  [PortfolioGuide]                                           │
+│  > guide                                                    │
+│  [prompt chips]                                             │
+│  [input________________________] [send]                     │
+│  ┌ response panel ───────────────────────────────────────┐ │
+│  │ reply or …                                              │ │
+│  └─────────────────────────────────────────────────────────┘ │
 │                                                             │
 ├─────────────────────────────────────────────────────────────┤
 │ email · github · linkedin                                   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**HomeIntro CSS classes:** `.home-intro`, `.home-intro-name`, `.home-intro-role`, `.home-intro-narrative`, `.home-intro-stats`, `.home-intro-stat`, `.home-intro-links`
+### Workshop (`/workshop`)
+
+Table only — no featured demos block, no guide.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ header                                                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  > workshop index                                           │
+│  [ProjectTable — unchanged 4-column table]                  │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│ footer                                                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**HomeIntro CSS classes:** `.home-intro`, `.home-intro-name`, `.home-intro-role`, `.home-intro-narrative`, `.home-intro-narrative--compact`, `.home-intro-catalog-link`, `.home-intro-stats`, `.home-intro-stat`, `.home-intro-links`
 
 **FeaturedDemos CSS classes:** `.featured-demos`, `.featured-demo-row`, `.featured-demo-title`, `.featured-demo-summary`, `.featured-demo-action`
+
+**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide-chips`, `.portfolio-guide-chip`, `.portfolio-guide-form`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-response`, `.portfolio-guide-response--loading`
 
 ### Project page (`/projects/[slug]`)
 
@@ -135,8 +165,9 @@ Mobile: columns stack — narrative block first, full-width sandbox below (min-h
 |-----------|------|----------------|
 | `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band, site name, nav links |
 | `SiteFooter` | `src/components/SiteFooter.tsx` | Email, GitHub, LinkedIn |
-| `HomeIntro` | `src/components/HomeIntro.tsx` | Name, role, narrative, stats, resume/about links |
+| `HomeIntro` | `src/components/HomeIntro.tsx` | Name, role, narrative, stats or index link, resume/about links |
 | `FeaturedDemos` | `src/components/FeaturedDemos.tsx` | Featured projects with wired demos |
+| `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Guide input, prompt chips, reply panel |
 | `ProjectTable` | `src/components/ProjectTable.tsx` | Terminal index table |
 | `ProjectSplit` | `src/components/ProjectSplit.tsx` | Two-column project layout |
 | `DemoPanel` | `src/components/DemoPanel.tsx` | Demo sandbox or placeholder state |

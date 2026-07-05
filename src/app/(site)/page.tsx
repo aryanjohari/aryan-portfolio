@@ -1,21 +1,18 @@
-import { FeaturedDemos } from "@/components/FeaturedDemos";
 import { HomeIntro } from "@/components/HomeIntro";
-import { ProjectTable } from "@/components/ProjectTable";
-import { getAllProjects, getFeaturedProjects } from "@/lib/projects";
+import { PortfolioGuide } from "@/components/PortfolioGuide";
+import guideContext from "@/lib/guide-context.json";
+import type { GuideContextFile } from "@/lib/guide-schema";
+import { getAllProjects } from "@/lib/projects";
+
+const context = guideContext as GuideContextFile;
 
 export default function Home() {
   const projects = getAllProjects();
-  const featured = getFeaturedProjects();
 
   return (
     <>
-      <HomeIntro
-        projectCount={projects.length}
-        featuredCount={featured.length}
-      />
-      <FeaturedDemos projects={featured} />
-      <h1 className="page-heading">workshop index</h1>
-      <ProjectTable projects={projects} />
+      <HomeIntro variant="home" projectCount={projects.length} />
+      <PortfolioGuide suggestedPrompts={context.suggestedPrompts} />
     </>
   );
 }

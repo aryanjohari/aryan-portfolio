@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "fetch:projects": "tsx scripts/fetch-portfolio-yaml.ts",
-    "prebuild": "npm run fetch:projects"
+    "build:guide-context": "tsx scripts/build-guide-context.ts",
+    "prebuild": "npm run fetch:projects && npm run build:guide-context"
   },
   "dependencies": {
     "next": "16.2.1",
@@ -19,10 +20,12 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
+    "pdf-parse": "^2.4.5",
     "tailwindcss": "^4",
     "tsx": "^4.20.3",
     "typescript": "^5"

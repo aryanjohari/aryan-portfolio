@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 const navItems = [
-  { href: "/", label: "index" },
+  { href: "/", label: "home" },
+  { href: "/workshop", label: "workshop" },
   { href: "/about", label: "about" },
   { href: "/resume.pdf", label: "resume" },
 ];
