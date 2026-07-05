@@ -13,10 +13,10 @@ export default function AboutPage() {
 
       <section className="about-section">
         <p>
-          Software engineer building tools at the intersection of visual
-          systems, APIs, and edge hardware. This portfolio is a curated workshop
-          index — selected projects with narrative context and optional live
-          demos.
+          I build software that solves real problems — from visual tools to edge
+          systems. I own the full stack: architecture, APIs, and deployment. This
+          portfolio is a curated workshop index with narrative context and live
+          demos where wired.
         </p>
       </section>
 

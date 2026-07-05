@@ -42,7 +42,9 @@ Applied via `.site-header-accent` pseudo-element on `SiteHeader`:
 
 ## Wireframes
 
-### Index (`/`)
+### Index (`/`) — v2
+
+Header unchanged. No new fonts, no shadows, no WebGL on shell.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -50,22 +52,30 @@ Applied via `.site-header-accent` pseudo-element on `SiteHeader`:
 │ aryan johari          index · about · resume                  │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  > workshop index                                           │
+│  [HomeIntro]                                                │
+│  aryan johari                                               │
+│  graduate software engineer · auckland                      │
+│  [2–3 sentence narrative]                                   │
+│  ┌─────────────┬─────────────┬──────────────────────────┐  │
+│  │ N projects  │ N live demos│ available · auckland     │  │
+│  └─────────────┴─────────────┴──────────────────────────┘  │
+│  resume.pdf · more about me                                 │
 │                                                             │
-│  ┌──────────────┬─────────────────┬──────────┬──────────┐ │
-│  │ name         │ stack           │ status   │ demo     │ │
-│  ├──────────────┼─────────────────┼──────────┼──────────┤ │
-│  │ background-… │ TypeScript, …   │ active   │ —        │ │
-│  │ sound-vis…   │ Web Audio, …    │ active   │ —        │ │
-│  │ pii-gateway  │ Python, …       │ active   │ —        │ │
-│  │ ada          │ Raspberry Pi, … │ wip      │ —        │ │
-│  │ gstf         │ PyTorch, …      │ archived │ —        │ │
-│  └──────────────┴─────────────────┴──────────┴──────────┘ │
+│  [FeaturedDemos]                                            │
+│  > live demos                                               │
+│  slug — summary                              try demo →    │
+│                                                             │
+│  > workshop index                                           │
+│  [ProjectTable — unchanged 4-column table]                  │
 │                                                             │
 ├─────────────────────────────────────────────────────────────┤
 │ email · github · linkedin                                   │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**HomeIntro CSS classes:** `.home-intro`, `.home-intro-name`, `.home-intro-role`, `.home-intro-narrative`, `.home-intro-stats`, `.home-intro-stat`, `.home-intro-links`
+
+**FeaturedDemos CSS classes:** `.featured-demos`, `.featured-demo-row`, `.featured-demo-title`, `.featured-demo-summary`, `.featured-demo-action`
 
 ### Project page (`/projects/[slug]`)
 
@@ -125,6 +135,8 @@ Mobile: columns stack — narrative block first, full-width sandbox below (min-h
 |-----------|------|----------------|
 | `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band, site name, nav links |
 | `SiteFooter` | `src/components/SiteFooter.tsx` | Email, GitHub, LinkedIn |
+| `HomeIntro` | `src/components/HomeIntro.tsx` | Name, role, narrative, stats, resume/about links |
+| `FeaturedDemos` | `src/components/FeaturedDemos.tsx` | Featured projects with wired demos |
 | `ProjectTable` | `src/components/ProjectTable.tsx` | Terminal index table |
 | `ProjectSplit` | `src/components/ProjectSplit.tsx` | Two-column project layout |
 | `DemoPanel` | `src/components/DemoPanel.tsx` | Demo sandbox or placeholder state |

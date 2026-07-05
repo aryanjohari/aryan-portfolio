@@ -4,7 +4,7 @@ This document is the entry point for all portfolio decisions. Read it first befo
 
 ## What this site is
 
-A **curated workshop index** — a terminal-style catalog of selected projects hosted on GitHub. Each project has a dedicated page with narrative content and an optional live demo panel. The portfolio is an editorial interface over GitHub repos, not a raw README browser.
+A **curated workshop** — a terminal-style portfolio with a narrative homepage and catalog of selected projects hosted on GitHub. Each project has a dedicated page with narrative content and an optional live demo panel. An interactive guide is planned for Phase B. The portfolio is an editorial interface over GitHub repos, not a raw README browser.
 
 Visitors should understand what a project does, see its stack and status, and try a demo when one is wired.
 
@@ -27,7 +27,7 @@ Visitors should understand what a project does, see its stack and status, and tr
 
 | Route | Purpose |
 |-------|---------|
-| `/` | Terminal-style index table of all curated projects |
+| `/` | Narrative intro, featured live demos, and terminal-style index table of all curated projects |
 | `/about` | Bio, education, availability, resume link |
 | `/projects/[slug]` | Split layout: narrative left, demo panel right |
 | `/resume.pdf` | Static PDF in `public/resume.pdf` (not committed by default) |
@@ -41,14 +41,17 @@ Visitors should understand what a project does, see its stack and status, and tr
 | [create-portfolio-yaml.md](./create-portfolio-yaml.md) | Cursor prompt to generate portfolio.yaml in project repos |
 | [ui.md](./ui.md) | Design tokens, wireframes, components, responsive rules |
 | [registry.md](./registry.md) | How to add/remove projects and wire demos |
+| [v2-roadmap.md](./v2-roadmap.md) | v2 workshop phases (homepage narrative, guide, remaining demos) |
 
 ## Current phase
 
 **Phase 1 (done):** Static UI shell, mock project data, full documentation.
 
-**Phase 2 (in progress / partial):** Build-time fetch of `portfolio.yaml` from GitHub, per-project content status UI, iframe demos live. API proxies and exhibit assets remain.
+**Phase 2 (done / partial):** Build-time fetch of `portfolio.yaml` from GitHub, per-project content status UI, iframe demos live. API proxies and exhibit assets remain.
 
 **Phase 3 (later):** GitHub Action deploy hook, additional demo types, production hardening.
+
+**Phase 4 — v2 Workshop (in progress):** Narrative homepage with identity, featured live demos, and full workshop index. Look and feel only in Phase A; interactive guide planned for Phase B. v1 architecture (registry, yaml fetch, demo wiring) is unchanged.
 
 ## Quick reference
 

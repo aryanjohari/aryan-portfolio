@@ -164,6 +164,10 @@ export function getAllProjects(): Project[] {
   return registry.map((entry) => buildProject(entry, fetchBySlug));
 }
 
+export function getFeaturedProjects(): Project[] {
+  return getAllProjects().filter((p) => p.demo !== undefined);
+}
+
 export function getProjectBySlug(slug: string): Project | undefined {
   const entry = registry.find((e) => e.slug === slug);
   if (!entry) return undefined;
