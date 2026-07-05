@@ -1,6 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+
+const AUTO_SUMMARY_PROMPT =
+  "Give a 3-sentence recruiter summary of Aryan's strengths, availability, and live demos.";
+const VISIBLE_CHIP_COUNT = 4;
 
 type PortfolioGuideProps = {
   suggestedPrompts: string[];
@@ -15,6 +19,8 @@ type GuideState =
 export function PortfolioGuide({ suggestedPrompts }: PortfolioGuideProps) {
   const [message, setMessage] = useState("");
   const [state, setState] = useState<GuideState>({ status: "idle" });
+  const [chipsExpanded, setChipsExpanded] = useState(false);
+  const autoSubmitted = useRef(false);
 
   async function submitQuestion(question: string) {
     const trimmed = question.trim();
@@ -53,6 +59,15 @@ export function PortfolioGuide({ suggestedPrompts }: PortfolioGuideProps) {
     }
   }
 
+  useEffect(() => {
+    if (autoSubmitted.current) {
+      return;
+    }
+    autoSubmitted.current = true;
+    void submitQuestion(AUTO_SUMMARY_PROMPT);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
+  }, []);
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void submitQuestion(message);
@@ -63,12 +78,17 @@ export function PortfolioGuide({ suggestedPrompts }: PortfolioGuideProps) {
     void submitQuestion(prompt);
   }
 
+  const visibleChips = chipsExpanded
+    ? suggestedPrompts
+    : suggestedPrompts.slice(0, VISIBLE_CHIP_COUNT);
+  const hiddenChipCount = suggestedPrompts.length - VISIBLE_CHIP_COUNT;
+
   return (
     <section className="portfolio-guide" aria-label="Portfolio guide">
       <h2 className="page-heading">guide</h2>
 
       <div className="portfolio-guide-chips" role="group" aria-label="Suggested prompts">
-        {suggestedPrompts.map((prompt) => (
+        {visibleChips.map((prompt) => (
           <button
             key={prompt}
             type="button"
@@ -79,6 +99,16 @@ export function PortfolioGuide({ suggestedPrompts }: PortfolioGuideProps) {
             {prompt}
           </button>
         ))}
+        {!chipsExpanded && hiddenChipCount > 0 && (
+          <button
+            type="button"
+            className="portfolio-guide-chip portfolio-guide-chip--more"
+            onClick={() => setChipsExpanded(true)}
+            disabled={state.status === "loading"}
+          >
+            +{hiddenChipCount} more
+          </button>
+        )}
       </div>
 
       <form className="portfolio-guide-form" onSubmit={handleSubmit}>

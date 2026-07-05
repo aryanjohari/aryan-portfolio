@@ -188,6 +188,11 @@ code {
   color: var(--color-muted);
 }
 
+.home-intro-demos {
+  margin: 0 0 var(--space-2);
+  font-size: 0.875rem;
+}
+
 .home-intro-stats {
   display: flex;
   flex-wrap: wrap;
@@ -309,6 +314,10 @@ code {
 .portfolio-guide-chip:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.portfolio-guide-chip--more {
+  font-style: italic;
 }
 
 .portfolio-guide-label {
@@ -564,6 +573,43 @@ code {
   margin: 0;
 }
 
+.project-meta--yaml {
+  border: 1px solid var(--color-border);
+  padding: var(--space-2);
+  background-color: var(--color-accent-band);
+}
+
+.project-meta--yaml .project-meta-row {
+  border-top: none;
+  grid-template-columns: 72px 1fr;
+  padding: 2px 0;
+}
+
+.project-meta--yaml .project-meta-row dt {
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.project-meta-value {
+  font-family: inherit;
+  word-break: break-word;
+}
+
+.stack-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.stack-tag {
+  display: inline-block;
+  padding: 0 var(--space-1);
+  border: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
 /* Demo panel */
 
 .demo-panel {
@@ -717,6 +763,58 @@ code {
   text-decoration: underline;
 }
 
+.demo-panel--exhibit {
+  padding: 0;
+  justify-content: flex-start;
+  align-items: stretch;
+  text-align: left;
+  min-height: 50vh;
+}
+
+@media (min-width: 768px) {
+  .demo-panel--exhibit {
+    min-height: calc(100dvh - 12rem);
+  }
+}
+
+.demo-panel-exhibit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-accent-band);
+}
+
+.demo-panel-exhibit-header .demo-panel-label {
+  margin: 0;
+}
+
+.demo-panel-exhibit-type {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  text-transform: lowercase;
+}
+
+.demo-panel-exhibit-body {
+  flex: 1;
+  margin: 0;
+  padding: var(--space-2);
+  overflow: auto;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  text-align: left;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.project-demo-column .demo-panel--exhibit {
+  display: flex;
+  flex-direction: column;
+}
+
 /* About page */
 
 .about-section {
@@ -732,7 +830,11 @@ code {
 }
 
 .about-section p {
-  margin: 0;
+  margin: 0 0 var(--space-1);
+}
+
+.about-section p:last-child {
+  margin-bottom: 0;
 }
 
 .resume-link {

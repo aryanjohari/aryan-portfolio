@@ -5,7 +5,7 @@ const MAX_MESSAGE_LENGTH = 500;
 const MAX_RUNTIME_CONTEXT_CHARS = 24000;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 20;
-const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_MODEL = "gemini-2.5-flash-lite";
 
 type RateLimitEntry = {
   count: number;

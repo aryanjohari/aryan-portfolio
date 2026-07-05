@@ -53,4 +53,21 @@ Resume and structured experience/education/skills ingested at build time; API pr
 ## Phase C — Remaining demos (later)
 
 - ADA edge demo proxy
-- Demos for `pii-gateway`, `gstf`, and other unwired registry entries
+- Live API playground for `pii-gateway` (replace static exhibit when deployed)
+
+## Phase D — Narrative polish + static exhibits + auto-guide (done)
+
+- Expanded `/about` — philosophy, background (Master's, SEO, web dev), education, availability
+- `HomeIntro` — full-stack + ML focus, live demo links, September 2026 availability
+- Static exhibit demos for `pii-gateway`, `ada`, `gstf` (`src/data/exhibits.ts`)
+- Auto recruiter summary on guide load (`PortfolioGuide`)
+- Stack tags in `ProjectTable`; YAML-style meta in `ProjectSplit`
+
+### Success criteria
+
+- [x] `npm run build` passes
+- [x] `/about` has philosophy + background sections
+- [x] `/projects/pii-gateway`, `/ada`, `/gstf` show exhibit content (not "not wired")
+- [x] `/projects/background-studio` iframe unchanged
+- [x] `/` auto-shows guide summary on load
+- [x] Mobile: exhibits scroll, guide readable

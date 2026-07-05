@@ -333,9 +333,9 @@ function estimateContextCharCount(output: Omit<GuideContextFile, "meta"> & {
 async function buildGuideContext(): Promise<GuideContextFile> {
   const identity = readIdentity();
   const fetched = readFetchedProjects();
-  const demoSlugs = new Set(
+  const liveDemoSlugs = new Set(
     registry
-      .filter((entry) => entry.demo !== undefined)
+      .filter((entry) => entry.demo?.type === "iframe")
       .map((entry) => entry.slug),
   );
 
@@ -367,7 +367,7 @@ async function buildGuideContext(): Promise<GuideContextFile> {
           MAX_PROJECT_DESCRIPTION_CHARS,
         ),
         stack: result.yaml.stack,
-        ...(demoSlugs.has(result.slug) ? { demo: true } : {}),
+        ...(liveDemoSlugs.has(result.slug) ? { demo: true } : {}),
       })) ?? [];
 
   const featuredDemoSlugs = projects

@@ -165,7 +165,7 @@ export function getAllProjects(): Project[] {
 }
 
 export function getFeaturedProjects(): Project[] {
-  return getAllProjects().filter((p) => p.demo !== undefined);
+  return getAllProjects().filter((p) => p.demo?.type === "iframe");
 }
 
 export function getProjectBySlug(slug: string): Project | undefined {

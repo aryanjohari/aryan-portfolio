@@ -101,11 +101,26 @@ Table only — no featured demos block, no guide.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**HomeIntro CSS classes:** `.home-intro`, `.home-intro-name`, `.home-intro-role`, `.home-intro-narrative`, `.home-intro-narrative--compact`, `.home-intro-catalog-link`, `.home-intro-stats`, `.home-intro-stat`, `.home-intro-links`
+**HomeIntro CSS classes:** `.home-intro`, `.home-intro-name`, `.home-intro-role`, `.home-intro-narrative`, `.home-intro-narrative--compact`, `.home-intro-demos`, `.home-intro-catalog-link`, `.home-intro-stats`, `.home-intro-stat`, `.home-intro-links`
 
 **FeaturedDemos CSS classes:** `.featured-demos`, `.featured-demo-row`, `.featured-demo-title`, `.featured-demo-summary`, `.featured-demo-action`
 
-**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide-chips`, `.portfolio-guide-chip`, `.portfolio-guide-form`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-response`, `.portfolio-guide-response--loading`
+```
+┌─────────────────────────────────────────────────────────────┐
+│  exhibit                                    api sample      │
+├─────────────────────────────────────────────────────────────┤
+│  # PII Gateway — sample sanitize request                    │
+│                                                             │
+│  POST /sanitize HTTP/1.1                                    │
+│  Host: localhost:8080                                       │
+│  ...                                                        │
+│  (scrollable monospace <pre>)                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Exhibit panels match iframe sandbox height. Header uses accent band; body scrolls on mobile.
+
+**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide-chips`, `.portfolio-guide-chip`, `.portfolio-guide-chip--more`, `.portfolio-guide-form`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-response`, `.portfolio-guide-response--loading`
 
 ### Project page (`/projects/[slug]`)
 
@@ -183,7 +198,8 @@ Mobile: columns stack — narrative block first, full-width sandbox below (min-h
 
 1. **Not wired** — dashed border, muted text: "Demo not wired"
 2. **Iframe (live)** — header row (`sandbox` + open in new tab), embedded iframe filling a tall panel (~75vh desktop / ~50vh mobile). Loading overlay while iframe loads; fallback if embed blocked or load times out (~8s). On mobile, prominent **open in new tab** link above iframe.
-3. **Wired, not implemented** (`api`, `exhibit`, `edge`) — solid border, shows demo type label + "Coming soon"
+3. **Exhibit (static)** — header row (`exhibit` + variant label), scrollable `<pre>` body with monospace sample content. Same min-height as iframe panel. Variants: `api-sample` (PII Gateway), `terminal-log` (ADA), `metrics` (GSTF). Content in `src/data/exhibits.ts`.
+4. **Wired, not implemented** (`api`, `edge`) — solid border, shows demo type label + "Coming soon"
 
 ## Changing design decisions
 

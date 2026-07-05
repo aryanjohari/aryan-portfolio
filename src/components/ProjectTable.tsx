@@ -13,6 +13,22 @@ function indexSummary(project: Project): string {
   return project.summary;
 }
 
+function StackTags({ stack }: { stack: string[] }) {
+  if (stack.length === 0) {
+    return <>—</>;
+  }
+
+  return (
+    <span className="stack-tags">
+      {stack.map((item) => (
+        <span key={item} className="stack-tag">
+          {item}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export function ProjectTable({ projects }: ProjectTableProps) {
   return (
     <div className="table-wrap">
@@ -43,7 +59,7 @@ export function ProjectTable({ projects }: ProjectTableProps) {
                 </span>
               </td>
               <td className="project-stack">
-                {project.stack.length > 0 ? project.stack.join(", ") : "—"}
+                <StackTags stack={project.stack} />
               </td>
               <td className="project-status">
                 {project.status}

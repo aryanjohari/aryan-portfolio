@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import type { ExhibitVariant } from "@/data/exhibits";
+import { getExhibitContent } from "@/data/exhibits";
 import type { DemoConfig } from "@/lib/projects";
 
 type DemoPanelProps = {
@@ -10,6 +12,12 @@ type DemoPanelProps = {
 
 const IFRAME_LOAD_TIMEOUT_MS = 8000;
 
+const EXHIBIT_LABELS: Record<ExhibitVariant, string> = {
+  "api-sample": "api sample",
+  "terminal-log": "terminal log",
+  metrics: "metrics",
+};
+
 function demoTypeLabel(demo: DemoConfig): string {
   switch (demo.type) {
     case "iframe":
@@ -17,7 +25,7 @@ function demoTypeLabel(demo: DemoConfig): string {
     case "api":
       return "api playground";
     case "exhibit":
-      return "exhibit";
+      return `exhibit · ${EXHIBIT_LABELS[demo.variant]}`;
     case "edge":
       return "edge proxy";
   }
@@ -125,6 +133,23 @@ function IframeDemo({ url }: { url: string }) {
   );
 }
 
+function ExhibitDemo({ variant }: { variant: ExhibitVariant }) {
+  const content = getExhibitContent(variant);
+
+  return (
+    <div
+      className="demo-panel demo-panel--exhibit"
+      aria-label={`Static exhibit — ${EXHIBIT_LABELS[variant]}`}
+    >
+      <div className="demo-panel-exhibit-header">
+        <span className="demo-panel-label">exhibit</span>
+        <span className="demo-panel-exhibit-type">{EXHIBIT_LABELS[variant]}</span>
+      </div>
+      <pre className="demo-panel-exhibit-body">{content}</pre>
+    </div>
+  );
+}
+
 function ComingSoonDemo({ demo }: { demo: DemoConfig }) {
   return (
     <div
@@ -156,6 +181,10 @@ export function DemoPanel({ demo }: DemoPanelProps) {
 
   if (demo.type === "iframe") {
     return <IframeDemo url={demo.url} />;
+  }
+
+  if (demo.type === "exhibit") {
+    return <ExhibitDemo variant={demo.variant} />;
   }
 
   return <ComingSoonDemo demo={demo} />;
