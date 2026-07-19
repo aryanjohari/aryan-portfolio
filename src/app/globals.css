@@ -2,11 +2,12 @@
 @config "../../tailwind.config.ts";
 
 :root {
-  --color-bg: #f4f0e8;
-  --color-text: #0a0a0a;
-  --color-border: #0a0a0a;
-  --color-muted: #5a5a5a;
-  --color-accent-band: #ebe6dc;
+  /* Site-wide void shell — cream tokens retired */
+  --color-bg: #0a0a0a;
+  --color-text: #f2f0eb;
+  --color-border: rgba(242, 240, 235, 0.16);
+  --color-muted: #9a9690;
+  --color-accent-band: #161616;
   --space-1: 8px;
   --space-2: 16px;
   --space-3: 24px;
@@ -53,9 +54,11 @@ code {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  /* Transparent so Atmosphere WebGL void shows through; body stays #0a0a0a */
+  background-color: transparent;
 }
 
-/* SSR flash shield: hides cream shell until boot gate / BootOverlay takes over */
+/* SSR flash shield: holds void until boot gate / BootOverlay takes over */
 #boot-cover {
   position: fixed;
   inset: 0;
@@ -97,8 +100,8 @@ html[data-boot-cover-skip] #boot-cover {
     0deg,
     transparent,
     transparent 2px,
-    rgba(10, 10, 10, 0.03) 2px,
-    rgba(10, 10, 10, 0.03) 4px
+    rgba(242, 240, 235, 0.04) 2px,
+    rgba(242, 240, 235, 0.04) 4px
   );
   pointer-events: none;
 }
@@ -338,22 +341,7 @@ body:has(.home-ask) .home-glyph-row.is-revealed {
   color: var(--color-muted);
 }
 
-/* Homepage — Ask Aryan void */
-
-body:has(.home-ask) {
-  --color-bg: #0a0a0a;
-  --color-text: #f2f0eb;
-  --color-border: rgba(242, 240, 235, 0.16);
-  --color-muted: #9a9690;
-  --color-accent-band: #161616;
-  background-color: #0a0a0a;
-  color: #f2f0eb;
-}
-
-body:has(.home-ask) .site-shell {
-  /* Transparent so Atmosphere WebGL void shows through; body stays #0a0a0a */
-  background-color: transparent;
-}
+/* Homepage composition — unboxed chrome (void tokens are site-wide on :root) */
 
 body:has(.home-ask) .site-header {
   border-bottom: none;

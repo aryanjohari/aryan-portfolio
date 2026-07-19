@@ -10,32 +10,17 @@ import {
 } from "@/lib/motion";
 
 const FINAL_NAME = "aryan johari";
+/** Placeholder glyphs matching name length — never flash FINAL_NAME before scramble. */
+const PLACEHOLDER_NAME = FINAL_NAME.replace(/[^\s]/g, "·");
 const SCRAMBLE_CHARS = "abcdefghijklmnopqrstuvwxyz····";
-const SESSION_KEY = "home-name-scrambled";
-/** Slightly longer than before so the hero-scale name settles softly. */
+/** Soft settle for hero-scale name. */
 const SCRAMBLE_DURATION = 2.15;
 const ROLE_FADE_DURATION = 0.55;
 
-function alreadyScrambledThisVisit(): boolean {
-  try {
-    return sessionStorage.getItem(SESSION_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function markScrambledThisVisit(): void {
-  try {
-    sessionStorage.setItem(SESSION_KEY, "1");
-  } catch {
-    /* ignore */
-  }
-}
-
 /**
- * Home header identity: soft GSAP scramble → final name once per visit after
- * boot (or immediately when boot is skipped / reduced-motion). Role fades in
- * under the name after scramble completes.
+ * Home header identity: soft GSAP scramble → final name after boot on every
+ * load (immediate when reduced-motion). Role fades in under the name after
+ * scramble completes. Initial paint is placeholders only — no FINAL_NAME flash.
  */
 export function HomeIdentity() {
   const nameRef = useRef<HTMLSpanElement>(null);
@@ -58,13 +43,9 @@ export function HomeIdentity() {
     const roleEl = roleRef.current;
     if (!nameEl || !roleEl) return;
 
-    const skipMotion =
-      prefersReducedMotion() || alreadyScrambledThisVisit();
-
-    if (skipMotion) {
+    if (prefersReducedMotion()) {
       nameEl.textContent = FINAL_NAME;
       roleEl.style.opacity = "1";
-      markScrambledThisVisit();
       return;
     }
 
@@ -73,7 +54,7 @@ export function HomeIdentity() {
     let roleTween: { kill: () => void } | undefined;
 
     roleEl.style.opacity = "0";
-    nameEl.textContent = FINAL_NAME.replace(/[^\s]/g, "·");
+    nameEl.textContent = PLACEHOLDER_NAME;
 
     void import("gsap").then(({ gsap }) => {
       if (cancelled || !nameRef.current || !roleRef.current) return;
@@ -107,7 +88,6 @@ export function HomeIdentity() {
         },
         onComplete: () => {
           nameEl.textContent = FINAL_NAME;
-          markScrambledThisVisit();
           roleTween = gsap.to(roleEl, {
             opacity: 1,
             duration: ROLE_FADE_DURATION,
@@ -128,7 +108,7 @@ export function HomeIdentity() {
     <p className="site-header-identity">
       <Link href="/" className="site-name" aria-label={FINAL_NAME}>
         <span ref={nameRef} aria-hidden="true">
-          {FINAL_NAME}
+          {PLACEHOLDER_NAME}
         </span>
       </Link>
       <span ref={roleRef} className="site-header-role" style={{ opacity: 0 }}>

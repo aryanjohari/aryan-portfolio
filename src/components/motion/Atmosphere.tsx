@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -9,7 +8,7 @@ import {
   isBootDone,
 } from "@/lib/motion";
 
-/** Home void — matches `body:has(.home-ask)` / BootField clear. */
+/** Site void clear — matches :root `--color-bg` / BootField. */
 const CLEAR = 0x0a0a0a;
 const MAX_TRAIL = 200;
 const DEAD_ZONE_PAD = 24;
@@ -67,13 +66,12 @@ function makeSoftGlowTexture(THREE: typeof import("three")) {
 }
 
 /**
- * Full-viewport fixed WebGL canvas behind content (home only).
+ * Full-viewport fixed WebGL canvas behind content (all routes).
  * Soft red↔blue comet trail when enhanced motion + boot done; otherwise null.
+ * Ask-bar dead zone only applies when `.portfolio-guide-float` exists (home).
  */
 export function Atmosphere() {
   const hostRef = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
-  const isHome = pathname === "/";
   const [enhanced, setEnhanced] = useState(false);
 
   useEffect(() => {
@@ -95,7 +93,7 @@ export function Atmosphere() {
     };
   }, []);
 
-  const active = enhanced && isHome;
+  const active = enhanced;
 
   useEffect(() => {
     if (!active) return;

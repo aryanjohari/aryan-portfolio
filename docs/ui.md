@@ -6,11 +6,11 @@ All tokens live as CSS custom properties in `src/app/globals.css`.
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--color-bg` | `#f4f0e8` | Page background (off-white) |
-| `--color-text` | `#0a0a0a` | Primary text (deep black) |
-| `--color-border` | `#0a0a0a` | 1px borders, table rules |
-| `--color-muted` | `#5a5a5a` | Secondary text, placeholders |
-| `--color-accent-band` | `#ebe6dc` | Header accent background |
+| `--color-bg` | `#0a0a0a` | Page / void background |
+| `--color-text` | `#f2f0eb` | Primary text (cream/off-white) |
+| `--color-border` | `rgba(242, 240, 235, 0.16)` | Soft light borders, table rules |
+| `--color-muted` | `#9a9690` | Secondary text, placeholders |
+| `--color-accent-band` | `#161616` | Header accent background |
 | `--space-1` | `8px` | Base grid unit |
 | `--space-2` | `16px` | Standard padding |
 | `--space-3` | `24px` | Section gaps |
@@ -36,8 +36,8 @@ All tokens live as CSS custom properties in `src/app/globals.css`.
 
 Desktop-only GSAP + Three.js layer. Gate via `canUseEnhancedMotion()` in `src/lib/motion.ts`: enable only when `min-width: 1024px`, `pointer: fine`, and **not** `prefers-reduced-motion: reduce`. Server always returns false.
 
-- **Atmosphere** (`src/components/motion/Atmosphere.tsx`) — home-only (`pathname === "/"`) fixed full-viewport canvas behind `.site-shell` (`pointer-events: none`, `z-index: 0`). Near-black clear `#0a0a0a`; soft red↔blue cursor trail (128-point pool, additive, DPR ≤1.5, `low-power`). Idle (no spawn/RAF) until `portfolio:boot-done`; weaker spawn near `.portfolio-guide-float`; pause/dispose on unmount, route leave, and `document.hidden`. Home `.site-shell` is transparent so the void shows through.
-- **Boot cover:** SSR `#boot-cover` (`#0a0a0a`, above `.site-shell`) prevents cream homepage flash before client BootOverlay. A `beforeInteractive` script sets `data-boot-cover-skip` on `<html>` when the motion gate would fail so CSS hides the cover without removing the node (avoids hydration mismatch); BootOverlay calls `removeBootCover()` after mount. Three/GSAP stay client-only and are not required for the dark cover.
+- **Atmosphere** (`src/components/motion/Atmosphere.tsx`) — site-wide (not home-only) fixed full-viewport canvas behind `.site-shell` (`pointer-events: none`, `z-index: 0`). Near-black clear `#0a0a0a`; soft red↔blue cursor trail (128-point pool, additive, DPR ≤1.5, `low-power`). Idle (no spawn/RAF) until `portfolio:boot-done`; weaker spawn near `.portfolio-guide-float` when present (home ask bar only); pause/dispose on unmount and `document.hidden`. `.site-shell` is transparent so the void shows through on all routes.
+- **Boot cover:** SSR `#boot-cover` (`#0a0a0a`, above `.site-shell`) prevents any pre-hydrate flash before client BootOverlay. A `beforeInteractive` script sets `data-boot-cover-skip` on `<html>` when the motion gate would fail so CSS hides the cover without removing the node (avoids hydration mismatch); BootOverlay calls `removeBootCover()` after mount. Three/GSAP stay client-only and are not required for the dark cover.
 - **BootOverlay** (`src/components/motion/BootOverlay.tsx`) — dark desktop boot theatre (~8s), then unmounts so guide input is never blocked.
   - **Colours (boot-local):** near-black background `#0a0a0a`, cream text `#f4f0e8`.
   - **Shared clock:** one GSAP timeline drives story progress `p` 0→1 over ~7.4s content; BootField reads `p` every RAF via `getProgress` and its own elapsed `t` (Three Clock). Flow/silk uses `t`; density/converge/settle use `p`; hue drifts with `t` and calms as `p→1`.
@@ -74,13 +74,13 @@ Do **not** link to `/index` anywhere — it aliases to `/` on some hosts. `/inde
 
 ### Home (`/`) — Ask Aryan void
 
-Minimal black void (`#0a0a0a`) via `body:has(.home-ask)`; other routes keep the cream shell. No header/footer border rules on home (unboxed void).
+Minimal black void (`#0a0a0a`) site-wide via `:root` tokens; home additionally drops header/footer border rules (unboxed void). Workshop / about / project pages keep bordered chrome + accent band, rethemed for void contrast.
 
 Editorial composition (desktop): oversized name top-left · centered ask + reply · right-rail section links · contacts footer.
 
-- **Header (home):** stacked identity — hero-scale soft GSAP scramble of `aryan johari` (~2.15s, `clamp(2.5rem, 7.5vw, 4.75rem)`) once per visit after boot; quiet role line fades in **under** the name (~0.55s). `prefers-reduced-motion`: final name + role immediately. Accessible via `aria-label` on the name link (`HomeIdentity`).
+- **Header (home):** stacked identity — hero-scale soft GSAP scramble of `aryan johari` (~2.15s, `clamp(2.5rem, 7.5vw, 4.75rem)`) after boot on every full load (initial paint is dots only — no final-name flash); quiet role line fades in **under** the name (~0.55s). `prefers-reduced-motion`: final name + role immediately. Accessible via `aria-label` on the name link (`HomeIdentity`).
 - **Center:** void wireframe ask bar (slightly larger) with a **reserved reply slot** below so the bar does not jump when answers appear. Loading dots → character typewriter (~32 cps, capped ~3s); links become interactive when typing finishes. `prefers-reduced-motion`: full reply, no typewriter. No intro essay, no chip rails. Ask bar stays wireframe — no float/tilt chrome. Manual ask only (no auto Gemini).
-- **Section links (ask-reveal):** workshop · about · resume — clear text labels with small glyph marks beside them; underline on hover/focus. **Desktop (≥1024px):** fixed vertical stack in the right margin (`HomeGlyphRow`), out of the center cluster. **Mobile / tablet:** horizontal row under the ask stage (collapsed until reveal so the input stays centered). Hidden/`inert` until **first focus** of the ask input after boot (keeps first paint clean); reduced-motion shows immediately.
+- **Section links:** workshop · about · resume — clear text labels with small glyph marks beside them; underline on hover/focus. **Desktop (≥1024px):** fixed vertical stack in the right margin (`HomeGlyphRow`), out of the center cluster. **Mobile / tablet:** horizontal row under the ask stage (collapsed until reveal so the input stays centered). Auto-fades in ~0.9s after boot (immediate if reduced-motion); `inert` only until revealed.
 - **Footer (home):** contacts only (`email · github · linkedin`) — always soft-visible (`HomeFooterChrome`). Light padding; no heavy separator.
 - Ask bar: void fill (`#0a0a0a`), cream/off-white rounded outline, soft outer glow — reads as settled boot wireframe; off-white text + muted placeholder; ghost outline send. No GSAP float / no CSS 3D tilt. Mobile: same language, slightly tighter radius.
 
@@ -101,7 +101,7 @@ Editorial composition (desktop): oversized name top-left · centered ask + reply
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Boot → home morph:** void roam → one particle frame on `hi — i'm aryan.` → morph to measured `.portfolio-guide-float` bounds → soft hold + fade into the same void home (header + ask underneath; right-rail / under-ask links wait for ask focus). Boot signals `portfolio:boot-done` / `data-boot-done` for presence timing. Larger ask bar is picked up by live measure (no particle logic change).
+**Boot → home morph:** void roam → one particle frame on `hi — i'm aryan.` → morph to measured `.portfolio-guide-float` bounds → soft hold + fade into the same void home (header + ask underneath; right-rail / under-ask links auto-fade shortly after boot). Boot signals `portfolio:boot-done` / `data-boot-done` for presence timing. Larger ask bar is picked up by live measure (no particle logic change).
 
 **Home ask CSS classes:** `.home-ask`, `.portfolio-guide-stage`, `.portfolio-guide-reply-slot`
 
@@ -204,11 +204,11 @@ Mobile: columns stack — narrative block first, full-width sandbox below (min-h
 | Component | File | Responsibility |
 |-----------|------|----------------|
 | `MotionScaffold` | `src/components/motion/MotionScaffold.tsx` | Client-only Atmosphere + BootOverlay |
-| `Atmosphere` | `src/components/motion/Atmosphere.tsx` | Home-only void + soft cursor trail (post-boot) |
+| `Atmosphere` | `src/components/motion/Atmosphere.tsx` | Site-wide void + soft cursor trail (post-boot) |
 | `BootOverlay` | `src/components/motion/BootOverlay.tsx` | Desktop dark boot theatre (typed lines + shared p) |
 | `BootField` | `src/components/motion/BootField.ts` | Void roam → one center frame → ask-bar morph |
 | `HomeIdentity` | `src/components/motion/HomeIdentity.tsx` | Home soft-scramble hero name + quiet role fade |
-| `HomeGlyphRow` | `src/components/motion/HomeGlyphRow.tsx` | Ask-reveal section links (desktop right-rail / mobile under-ask) |
+| `HomeGlyphRow` | `src/components/motion/HomeGlyphRow.tsx` | Post-boot auto-fade section links (desktop right-rail / mobile under-ask) |
 | `HomeFooterChrome` | `src/components/motion/HomeFooterChrome.tsx` | Home contacts only (always visible) |
 | `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band; home identity or full nav |
 | `SiteFooter` | `src/components/SiteFooter.tsx` | Contacts; home uses HomeFooterChrome |

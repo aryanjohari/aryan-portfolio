@@ -31,6 +31,8 @@ const softLinks = [
 ];
 
 const GLYPH_SIZE = 14;
+/** Let name/ask settle briefly after boot before the rail fades in. */
+const REVEAL_DELAY_MS = 900;
 
 function SoftGlyph({ kind }: { kind: "workshop" | "about" | "resume" }) {
   if (kind === "workshop") {
@@ -143,13 +145,12 @@ function SoftGlyph({ kind }: { kind: "workshop" | "about" | "resume" }) {
 
 /**
  * Soft section links: desktop right-rail (editorial margin), mobile row under
- * ask. Ask-reveal after boot (immediate if reduced-motion) so first paint stays
- * clean — center ask bar never moves.
+ * ask. Auto-reveals after boot (short settle delay; immediate if reduced-motion)
+ * — no ask-focus gate. Inert only until revealed.
  */
 export function HomeGlyphRow() {
   const rowRef = useRef<HTMLElement>(null);
   const [bootDone, setBootDone] = useState(false);
-  const [askFocused, setAskFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const animatedRef = useRef(false);
 
@@ -164,30 +165,16 @@ export function HomeGlyphRow() {
   }, []);
 
   useEffect(() => {
+    if (!bootDone) return;
+
     if (prefersReducedMotion()) {
       setRevealed(true);
       return;
     }
 
-    const onFocusIn = (event: FocusEvent) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (
-        target.id === "guide-message" ||
-        target.closest(".portfolio-guide-float")
-      ) {
-        setAskFocused(true);
-      }
-    };
-
-    document.addEventListener("focusin", onFocusIn);
-    return () => document.removeEventListener("focusin", onFocusIn);
-  }, []);
-
-  useEffect(() => {
-    if (prefersReducedMotion()) return;
-    if (bootDone && askFocused) setRevealed(true);
-  }, [bootDone, askFocused]);
+    const id = window.setTimeout(() => setRevealed(true), REVEAL_DELAY_MS);
+    return () => window.clearTimeout(id);
+  }, [bootDone]);
 
   useEffect(() => {
     const el = rowRef.current;
