@@ -17,3 +17,24 @@ export function removeBootCover(): void {
   if (typeof document === "undefined") return;
   document.getElementById("boot-cover")?.remove();
 }
+
+/** Fired once when boot theatre finishes or is skipped (incl. mobile). */
+export const BOOT_DONE_EVENT = "portfolio:boot-done";
+
+export function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+export function isBootDone(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.documentElement.dataset.bootDone === "1";
+}
+
+/** Idempotent: marks boot complete and notifies home presence listeners. */
+export function signalBootDone(): void {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+  if (document.documentElement.dataset.bootDone === "1") return;
+  document.documentElement.dataset.bootDone = "1";
+  window.dispatchEvent(new CustomEvent(BOOT_DONE_EVENT));
+}

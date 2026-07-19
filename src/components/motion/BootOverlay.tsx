@@ -2,7 +2,11 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { canUseEnhancedMotion, removeBootCover } from "@/lib/motion";
+import {
+  canUseEnhancedMotion,
+  removeBootCover,
+  signalBootDone,
+} from "@/lib/motion";
 
 import type { BootFieldHandle } from "./BootField";
 
@@ -83,6 +87,10 @@ export function BootOverlay() {
       mqMotion.removeEventListener("change", sync);
     };
   }, []);
+
+  useEffect(() => {
+    if (done) signalBootDone();
+  }, [done]);
 
   useLayoutEffect(() => {
     if (!active || done) return;

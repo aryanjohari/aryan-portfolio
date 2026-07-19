@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono } from "next/font/google";
+import Script from "next/script";
 
 import { MotionScaffold } from "@/components/motion/MotionScaffold";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -18,8 +19,11 @@ export const metadata: Metadata = {
   description: "Curated portfolio of software projects and experiments.",
 };
 
-/** Inline: drop #boot-cover ASAP when enhanced motion gate would fail. */
-const BOOT_COVER_GATE_SCRIPT = `(function(){try{var el=document.getElementById("boot-cover");if(!el)return;var m=window.matchMedia;if(!(m("(min-width: 1024px)").matches&&m("(pointer: fine)").matches&&!m("(prefers-reduced-motion: reduce)").matches))el.remove();}catch(e){}})();`;
+/**
+ * When the enhanced-motion gate would fail, mark <html> so CSS hides
+ * #boot-cover immediately — without removing the node (avoids hydration mismatch).
+ */
+const BOOT_COVER_GATE_SCRIPT = `(function(){try{var m=window.matchMedia;if(!(m("(min-width: 1024px)").matches&&m("(pointer: fine)").matches&&!m("(prefers-reduced-motion: reduce)").matches))document.documentElement.dataset.bootCoverSkip="1";}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -32,10 +36,12 @@ export default function RootLayout({
         className={`${ibmPlexMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <div id="boot-cover" aria-hidden="true" />
-        <script
+        <Script
+          id="boot-cover-gate"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: BOOT_COVER_GATE_SCRIPT }}
         />
+        <div id="boot-cover" aria-hidden="true" />
         <MotionScaffold />
         <div className="site-shell">
           <SiteHeader />

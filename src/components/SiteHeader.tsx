@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { HomeIdentity } from "@/components/motion/HomeIdentity";
+
 const navItems = [
   { href: "/", label: "home" },
   { href: "/workshop", label: "workshop" },
@@ -19,18 +21,7 @@ export function SiteHeader() {
       <div className="site-header-accent" aria-hidden="true" />
       <div className="site-header-inner">
         {isHome ? (
-          <p className="site-header-identity">
-            <Link href="/" className="site-name">
-              aryan johari
-            </Link>
-            <span className="site-header-identity-sep" aria-hidden="true">
-              {" "}
-              ·{" "}
-            </span>
-            <span className="site-header-role">
-              graduate engineer · auckland · sept 2026
-            </span>
-          </p>
+          <HomeIdentity />
         ) : (
           <>
             <Link href="/" className="site-name">
