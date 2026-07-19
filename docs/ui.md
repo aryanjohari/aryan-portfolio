@@ -36,9 +36,14 @@ All tokens live as CSS custom properties in `src/app/globals.css`.
 
 Desktop-only GSAP + Three.js layer. Gate via `canUseEnhancedMotion()` in `src/lib/motion.ts`: enable only when `min-width: 1024px`, `pointer: fine`, and **not** `prefers-reduced-motion: reduce`. Server always returns false.
 
-- **Atmosphere** (`src/components/motion/Atmosphere.tsx`) — fixed full-viewport canvas behind `.site-shell` (`pointer-events: none`, `z-index: 0`). Minimal Three scene; pause/dispose on unmount and `document.hidden`.
-- **BootOverlay** (`src/components/motion/BootOverlay.tsx`) — brief GSAP fade (~1.5s or click), then unmounts so guide input is never blocked.
-- Wired once via `MotionScaffold` in root `layout.tsx` (`dynamic(..., { ssr: false })`). Mobile / reduced-motion: no canvas, no boot. Do not import three/gsap outside these client motion modules. No Framer Motion.
+- **Atmosphere** (`src/components/motion/Atmosphere.tsx`) — fixed full-viewport canvas behind `.site-shell` (`pointer-events: none`, `z-index: 0`). Calm post-boot Three backdrop; pause/dispose on unmount and `document.hidden`.
+- **BootOverlay** (`src/components/motion/BootOverlay.tsx`) — dark desktop boot theatre (~8s), then unmounts so guide input is never blocked.
+  - **Colours (boot-local):** near-black background `#0a0a0a`, cream text `#f4f0e8`.
+  - **Beats:** (1) `it's craft, not code.` (2) `made with intention, not scripts.` (3) `hi — i'm aryan.` One GSAP timeline owns typing (type → brief hold → wipe → next; soft blinking cursor) and a single `progress` 0→1.
+  - **Field:** colourful flow-field ink trails in `BootField.ts` (owned by BootOverlay, not Atmosphere). Agents follow trig-based flow angles every frame via `clock.getElapsedTime()` plus timeline `progress` (sparse void → denser colourful weave → calmer settle). Hue/sat/light from time + progress + agent id on dark clear — tasteful, not neon spam; not beat-stepped.
+  - **Skip:** click anywhere or Escape; short fade then unmount. Subtle “click to enter” hint.
+  - **Mobile / tablet / reduced-motion / coarse pointer:** no boot theatre, no boot Three sim — site shows immediately.
+- Wired once via `MotionScaffold` in root `layout.tsx` (`dynamic(..., { ssr: false })`). Do not import three/gsap outside these client motion modules. No Framer Motion.
 
 ## Header accent texture
 
@@ -188,7 +193,8 @@ Mobile: columns stack — narrative block first, full-width sandbox below (min-h
 |-----------|------|----------------|
 | `MotionScaffold` | `src/components/motion/MotionScaffold.tsx` | Client-only Atmosphere + BootOverlay |
 | `Atmosphere` | `src/components/motion/Atmosphere.tsx` | Desktop Three.js backdrop canvas |
-| `BootOverlay` | `src/components/motion/BootOverlay.tsx` | Desktop GSAP boot fade |
+| `BootOverlay` | `src/components/motion/BootOverlay.tsx` | Desktop dark boot theatre (typed lines + field) |
+| `BootField` | `src/components/motion/BootField.ts` | Colourful flow-field ink trails (time + progress) |
 | `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band, site name, nav links |
 | `SiteFooter` | `src/components/SiteFooter.tsx` | Email, GitHub, LinkedIn |
 | `HomeIntro` | `src/components/HomeIntro.tsx` | Name, role, narrative, stats or index link, resume/about links |
