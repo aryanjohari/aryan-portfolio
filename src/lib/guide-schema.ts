@@ -23,6 +23,15 @@ export type GuideEducationEntry = {
   notes?: string;
 };
 
+export type SuggestedChipGroup = "simple" | "technical";
+
+export type SuggestedChip = {
+  group: SuggestedChipGroup;
+  label: string;
+  prompt: string;
+  tooltip: string;
+};
+
 export type GuideContextFile = {
   builtAt: string;
   identity: string;
@@ -36,16 +45,44 @@ export type GuideContextFile = {
     contextCharCount: number;
   };
   projects: GuideContextProject[];
-  suggestedPrompts: string[];
+  suggestedChips: SuggestedChip[];
 };
 
-export const DEFAULT_SUGGESTED_PROMPTS = [
-  "What projects have live demos?",
-  "Tell me about GSTF",
-  "Are you available for work in Auckland?",
-  "What's your tech stack?",
-  "Summarize your background",
-  "What is Background Studio?",
-  "What is your work experience?",
-  "Tell me about your SEO role",
-] as const;
+export const DEFAULT_SUGGESTED_CHIPS: SuggestedChip[] = [
+  {
+    group: "simple",
+    label: "Who is he?",
+    prompt: "Who is Aryan?",
+    tooltip: "A short plain-English intro to Aryan.",
+  },
+  {
+    group: "simple",
+    label: "Is he looking for work?",
+    prompt: "Is Aryan looking for work?",
+    tooltip: "Availability and when he can start in Auckland.",
+  },
+  {
+    group: "simple",
+    label: "Show me something cool",
+    prompt: "Show me something cool from the portfolio.",
+    tooltip: "Pick a live demo or standout project to try.",
+  },
+  {
+    group: "technical",
+    label: "Backend / ML focus?",
+    prompt: "What's Aryan's backend and ML focus?",
+    tooltip: "Stack and strengths on the backend and ML side.",
+  },
+  {
+    group: "technical",
+    label: "What's ADA?",
+    prompt: "What is ADA?",
+    tooltip: "Explain the ADA project in one clear answer.",
+  },
+  {
+    group: "technical",
+    label: "What's live?",
+    prompt: "What projects have live demos?",
+    tooltip: "Which projects you can open and try in the browser.",
+  },
+];

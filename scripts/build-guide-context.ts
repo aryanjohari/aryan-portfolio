@@ -6,7 +6,7 @@ import { PDFParse } from "pdf-parse";
 
 import { registry } from "../src/data/registry";
 import {
-  DEFAULT_SUGGESTED_PROMPTS,
+  DEFAULT_SUGGESTED_CHIPS,
   type GuideContextFile,
   type GuideEducationEntry,
   type GuideExperienceEntry,
@@ -387,7 +387,7 @@ async function buildGuideContext(): Promise<GuideContextFile> {
       contextCharCount: 0,
     },
     projects,
-    suggestedPrompts: [...DEFAULT_SUGGESTED_PROMPTS],
+    suggestedChips: DEFAULT_SUGGESTED_CHIPS.map((chip) => ({ ...chip })),
   };
 
   const contextCharCount = estimateContextCharCount(baseOutput);

@@ -11,3 +11,9 @@ export function canUseEnhancedMotion(): boolean {
     !window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
 }
+
+/** Removes the SSR `#boot-cover` flash shield (no-op if already gone). */
+export function removeBootCover(): void {
+  if (typeof document === "undefined") return;
+  document.getElementById("boot-cover")?.remove();
+}

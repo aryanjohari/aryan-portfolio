@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   description: "Curated portfolio of software projects and experiments.",
 };
 
+/** Inline: drop #boot-cover ASAP when enhanced motion gate would fail. */
+const BOOT_COVER_GATE_SCRIPT = `(function(){try{var el=document.getElementById("boot-cover");if(!el)return;var m=window.matchMedia;if(!(m("(min-width: 1024px)").matches&&m("(pointer: fine)").matches&&!m("(prefers-reduced-motion: reduce)").matches))el.remove();}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,6 +32,10 @@ export default function RootLayout({
         className={`${ibmPlexMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        <div id="boot-cover" aria-hidden="true" />
+        <script
+          dangerouslySetInnerHTML={{ __html: BOOT_COVER_GATE_SCRIPT }}
+        />
         <MotionScaffold />
         <div className="site-shell">
           <SiteHeader />

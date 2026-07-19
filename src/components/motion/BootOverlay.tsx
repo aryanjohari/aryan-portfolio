@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { canUseEnhancedMotion } from "@/lib/motion";
+import { canUseEnhancedMotion, removeBootCover } from "@/lib/motion";
 
 import type { BootFieldHandle } from "./BootField";
 
@@ -30,9 +30,11 @@ const CONTENT_DURATION =
   FINAL_LINGER;
 
 /**
- * Desktop boot theatre: dark overlay, typed craft lines, colourful flow field
- * locked to a single GSAP progress. Unmounts after complete/skip so the guide
- * is never blocked. Mobile / reduced-motion / coarse pointer: null.
+ * Desktop boot theatre: dark overlay, typed craft lines, silk→wireframe field.
+ * Shared clock with BootField: GSAP drives `progressRef` (p 0→1) over
+ * CONTENT_DURATION; field reads p every RAF via getProgress + its own t clock.
+ * Beat1 void/weave · beat2 denser weave · beat3 converge to homepage wireframe / settle.
+ * Unmounts after complete/skip. Mobile / reduced-motion / coarse pointer: null.
  */
 export function BootOverlay() {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -48,7 +50,14 @@ export function BootOverlay() {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    setActive(canUseEnhancedMotion());
+    const ok = canUseEnhancedMotion();
+    if (!ok) {
+      removeBootCover();
+      setActive(false);
+      setDone(true);
+    } else {
+      setActive(true);
+    }
 
     const mqDesktop = window.matchMedia("(min-width: 1024px)");
     const mqPointer = window.matchMedia("(pointer: fine)");
@@ -56,6 +65,7 @@ export function BootOverlay() {
 
     const sync = () => {
       if (!canUseEnhancedMotion()) {
+        removeBootCover();
         setActive(false);
         setDone(true);
       }
@@ -71,6 +81,11 @@ export function BootOverlay() {
     };
   }, []);
 
+  // Same frame as dark BootOverlay paint — no cream flash under the cover
+  useLayoutEffect(() => {
+    if (!active || done) return;
+    removeBootCover();
+  }, [active, done]);
   useEffect(() => {
     if (!active || done) return;
     const overlay = overlayRef.current;
@@ -137,7 +152,10 @@ export function BootOverlay() {
         return;
       }
 
-      const field = await createBootField(fieldHostRef.current);
+      progressRef.current.value = 0;
+      const field = await createBootField(fieldHostRef.current, {
+        getProgress: () => progressRef.current.value,
+      });
       if (cancelled || skippingRef.current) {
         field.dispose();
         return;
@@ -151,8 +169,6 @@ export function BootOverlay() {
       lineEl.textContent = "";
       gsap.set(hint, { opacity: 0 });
       gsap.set(curEl, { opacity: 1 });
-      progressRef.current.value = 0;
-      field.setProgress(0);
 
       cursorTween = gsap.to(curEl, {
         opacity: 0.15,
@@ -171,27 +187,26 @@ export function BootOverlay() {
       });
       timeline = tl;
 
-      // Progress 0→1 locked to the full typed sequence (field also reads clock time)
+      // Single p 0→1 — field reads this every RAF; typing locked to same timeline
       tl.to(
         progressRef.current,
         {
           value: 1,
           duration: CONTENT_DURATION,
           ease: "none",
-          onUpdate: () => {
-            fieldRef.current?.setProgress(progressRef.current.value);
-          },
         },
         0,
       );
 
       tl.to(hint, { opacity: 0.35, duration: 0.65, ease: "power1.out" }, 0.3);
 
-      let t = 0;
+      let at = 0;
       BEATS.forEach((beat, i) => {
         const typeDur = TYPE_DURATIONS[i];
         const typed = { n: 0 };
+        const labels = ["voidWeave", "denserWeave", "convergeSettle"] as const;
 
+        tl.addLabel(labels[i], at);
         tl.to(
           typed,
           {
@@ -205,24 +220,24 @@ export function BootOverlay() {
               lineEl.textContent = beat;
             },
           },
-          t,
+          at,
         );
-        t += typeDur;
+        at += typeDur;
 
         if (i < BEATS.length - 1) {
-          tl.to({}, { duration: HOLD }, t);
-          t += HOLD;
+          tl.to({}, { duration: HOLD }, at);
+          at += HOLD;
           tl.call(
             () => {
               lineEl.textContent = "";
             },
             undefined,
-            t,
+            at,
           );
-          tl.to({}, { duration: WIPE }, t);
-          t += WIPE;
+          tl.to({}, { duration: WIPE }, at);
+          at += WIPE;
         } else {
-          tl.to({}, { duration: FINAL_LINGER }, t);
+          tl.to({}, { duration: FINAL_LINGER }, at);
         }
       });
     })();

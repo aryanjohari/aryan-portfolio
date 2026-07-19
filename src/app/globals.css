@@ -55,6 +55,16 @@ code {
   min-height: 100dvh;
 }
 
+/* SSR flash shield: hides cream shell until boot gate / BootOverlay takes over */
+#boot-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  width: 100%;
+  height: 100dvh;
+  background-color: #0a0a0a;
+}
+
 .site-main {
   flex: 1;
   padding: var(--space-4);
@@ -147,79 +157,47 @@ code {
   color: var(--color-muted);
 }
 
-/* Homepage intro */
+/* Homepage — Ask Aryan */
+
+.home-ask {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: var(--space-4) 0 var(--space-5);
+  text-align: center;
+  color: var(--color-text);
+}
 
 .home-intro {
   margin-bottom: var(--space-4);
 }
 
 .home-intro-name {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 600;
   margin: 0 0 var(--space-1);
+  color: var(--color-text);
 }
 
 .home-intro-role {
   font-size: 0.875rem;
   color: var(--color-muted);
-  margin: 0 0 var(--space-2);
-}
-
-.home-intro-narrative {
-  max-width: 65ch;
-  margin-bottom: var(--space-3);
-}
-
-.home-intro-narrative p {
   margin: 0 0 var(--space-1);
 }
 
-.home-intro-narrative p:last-child {
-  margin-bottom: 0;
-}
-
-.home-intro-narrative--compact {
-  max-width: 65ch;
-  margin: 0 0 var(--space-2);
-  font-size: 0.875rem;
-}
-
-.home-intro-catalog-link {
-  margin: 0 0 var(--space-2);
+.home-intro-craft {
   font-size: 0.875rem;
   color: var(--color-muted);
-}
-
-.home-intro-demos {
-  margin: 0 0 var(--space-2);
-  font-size: 0.875rem;
-}
-
-.home-intro-stats {
-  display: flex;
-  flex-wrap: wrap;
-  margin-bottom: var(--space-2);
-}
-
-.home-intro-stat {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: var(--space-1) var(--space-2);
-  font-size: 0.875rem;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-accent-band);
-}
-
-.home-intro-stat + .home-intro-stat {
-  border-left: none;
-}
-
-.home-intro-links {
   margin: 0;
+  max-width: 36ch;
+  margin-inline: auto;
+}
+
+.home-ask-links {
+  margin: var(--space-4) 0 0;
   font-size: 0.875rem;
 }
 
-.home-intro-links-sep {
+.home-ask-links-sep {
   color: var(--color-muted);
 }
 
@@ -271,13 +249,8 @@ code {
 }
 
 @media (max-width: 767px) {
-  .home-intro-stats {
-    flex-direction: column;
-  }
-
-  .home-intro-stat + .home-intro-stat {
-    border-left: 1px solid var(--color-border);
-    border-top: none;
+  .home-ask {
+    padding: var(--space-3) 0 var(--space-4);
   }
 
   .featured-demo-row {
@@ -286,17 +259,96 @@ code {
   }
 }
 
-/* Portfolio guide */
+/* Portfolio guide — Ask Aryan hero */
 
 .portfolio-guide {
-  margin-bottom: var(--space-4);
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.portfolio-guide-form {
+  margin-bottom: var(--space-3);
+}
+
+.portfolio-guide-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.portfolio-guide-input-row {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.portfolio-guide-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 1rem;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.portfolio-guide-input:focus {
+  outline: 1px solid var(--color-border);
+  outline-offset: 1px;
+}
+
+.portfolio-guide-submit {
+  font-family: inherit;
+  font-size: 0.875rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-accent-band);
+  color: var(--color-text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.portfolio-guide-submit:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.portfolio-guide-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.portfolio-guide-chip-rails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.portfolio-guide-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+}
+
+.portfolio-guide-chip-group-label {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  flex-shrink: 0;
+  min-width: 4.5rem;
 }
 
 .portfolio-guide-chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1);
-  margin-bottom: var(--space-2);
+  flex: 1 1 auto;
 }
 
 .portfolio-guide-chip {
@@ -318,72 +370,14 @@ code {
   cursor: not-allowed;
 }
 
-.portfolio-guide-chip--more {
-  font-style: italic;
-}
-
-.portfolio-guide-label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.portfolio-guide-form {
-  margin-bottom: var(--space-2);
-}
-
-.portfolio-guide-input-row {
-  display: flex;
-  gap: var(--space-1);
-}
-
-.portfolio-guide-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-family: inherit;
-  font-size: 0.875rem;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-bg);
-  color: var(--color-text);
-}
-
-.portfolio-guide-input:focus {
-  outline: 1px solid var(--color-border);
-  outline-offset: 1px;
-}
-
-.portfolio-guide-submit {
-  font-family: inherit;
-  font-size: 0.875rem;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-accent-band);
-  color: var(--color-text);
-  cursor: pointer;
-}
-
-.portfolio-guide-submit:hover:not(:disabled) {
-  text-decoration: underline;
-}
-
-.portfolio-guide-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .portfolio-guide-response {
   border: 1px solid var(--color-border);
   padding: var(--space-2);
   font-size: 0.875rem;
   text-align: left;
   min-height: 4rem;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 .portfolio-guide-response p {
@@ -391,8 +385,28 @@ code {
   white-space: pre-wrap;
 }
 
+.portfolio-guide-response a {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
 .portfolio-guide-response--loading {
   color: var(--color-muted);
+}
+
+@media (max-width: 767px) {
+  .portfolio-guide-input-row {
+    flex-direction: column;
+  }
+
+  .portfolio-guide-submit {
+    width: 100%;
+  }
+
+  .portfolio-guide-chip-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 /* Index table */

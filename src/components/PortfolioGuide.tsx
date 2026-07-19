@@ -1,13 +1,24 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
+
+import type { SuggestedChip, SuggestedChipGroup } from "@/lib/guide-schema";
 
 const AUTO_SUMMARY_PROMPT =
   "Give a 3-sentence recruiter summary of Aryan's strengths, availability, and live demos.";
-const VISIBLE_CHIP_COUNT = 4;
+
+const CHIP_GROUP_ORDER: SuggestedChipGroup[] = ["simple", "technical"];
+const CHIP_GROUP_LABELS: Record<SuggestedChipGroup, string> = {
+  simple: "simple",
+  technical: "technical",
+};
+
+const SITE_PATH_PATTERN =
+  /(\/(?:workshop|about|resume\.pdf|projects\/[a-z0-9-]+))/g;
 
 type PortfolioGuideProps = {
-  suggestedPrompts: string[];
+  suggestedChips: SuggestedChip[];
 };
 
 type GuideState =
@@ -16,10 +27,35 @@ type GuideState =
   | { status: "error"; message: string }
   | { status: "success"; reply: string };
 
-export function PortfolioGuide({ suggestedPrompts }: PortfolioGuideProps) {
+function linkifyReply(reply: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  const pattern = new RegExp(SITE_PATH_PATTERN.source, "g");
+
+  while ((match = pattern.exec(reply)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(reply.slice(lastIndex, match.index));
+    }
+    const href = match[1];
+    parts.push(
+      <Link key={`${href}-${match.index}`} href={href}>
+        {href}
+      </Link>,
+    );
+    lastIndex = match.index + href.length;
+  }
+
+  if (lastIndex < reply.length) {
+    parts.push(reply.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [reply];
+}
+
+export function PortfolioGuide({ suggestedChips }: PortfolioGuideProps) {
   const [message, setMessage] = useState("");
   const [state, setState] = useState<GuideState>({ status: "idle" });
-  const [chipsExpanded, setChipsExpanded] = useState(false);
   const autoSubmitted = useRef(false);
 
   async function submitQuestion(question: string) {
@@ -78,42 +114,11 @@ export function PortfolioGuide({ suggestedPrompts }: PortfolioGuideProps) {
     void submitQuestion(prompt);
   }
 
-  const visibleChips = chipsExpanded
-    ? suggestedPrompts
-    : suggestedPrompts.slice(0, VISIBLE_CHIP_COUNT);
-  const hiddenChipCount = suggestedPrompts.length - VISIBLE_CHIP_COUNT;
-
   return (
-    <section className="portfolio-guide" aria-label="Portfolio guide">
-      <h2 className="page-heading">guide</h2>
-
-      <div className="portfolio-guide-chips" role="group" aria-label="Suggested prompts">
-        {visibleChips.map((prompt) => (
-          <button
-            key={prompt}
-            type="button"
-            className="portfolio-guide-chip"
-            onClick={() => handleChipClick(prompt)}
-            disabled={state.status === "loading"}
-          >
-            {prompt}
-          </button>
-        ))}
-        {!chipsExpanded && hiddenChipCount > 0 && (
-          <button
-            type="button"
-            className="portfolio-guide-chip portfolio-guide-chip--more"
-            onClick={() => setChipsExpanded(true)}
-            disabled={state.status === "loading"}
-          >
-            +{hiddenChipCount} more
-          </button>
-        )}
-      </div>
-
+    <section className="portfolio-guide" aria-label="Ask Aryan">
       <form className="portfolio-guide-form" onSubmit={handleSubmit}>
         <label className="portfolio-guide-label" htmlFor="guide-message">
-          Ask about projects, background, or availability
+          Ask Aryan anything about his work, background, or availability
         </label>
         <div className="portfolio-guide-input-row">
           <input
@@ -122,7 +127,7 @@ export function PortfolioGuide({ suggestedPrompts }: PortfolioGuideProps) {
             type="text"
             value={message}
             onChange={(event) => setMessage(event.target.value)}
-            placeholder="type a question…"
+            placeholder="ask me anything"
             maxLength={500}
             disabled={state.status === "loading"}
           />
@@ -136,6 +141,43 @@ export function PortfolioGuide({ suggestedPrompts }: PortfolioGuideProps) {
         </div>
       </form>
 
+      <div className="portfolio-guide-chip-rails">
+        {CHIP_GROUP_ORDER.map((group) => {
+          const chips = suggestedChips.filter((chip) => chip.group === group);
+          if (chips.length === 0) {
+            return null;
+          }
+
+          return (
+            <div
+              key={group}
+              className="portfolio-guide-chip-group"
+              role="group"
+              aria-label={`${CHIP_GROUP_LABELS[group]} prompts`}
+            >
+              <span className="portfolio-guide-chip-group-label">
+                {CHIP_GROUP_LABELS[group]}
+              </span>
+              <div className="portfolio-guide-chips">
+                {chips.map((chip) => (
+                  <button
+                    key={chip.label}
+                    type="button"
+                    className="portfolio-guide-chip"
+                    onClick={() => handleChipClick(chip.prompt)}
+                    disabled={state.status === "loading"}
+                    title={chip.tooltip}
+                    aria-label={chip.tooltip}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {(state.status === "loading" ||
         state.status === "error" ||
         state.status === "success") && (
@@ -147,7 +189,7 @@ export function PortfolioGuide({ suggestedPrompts }: PortfolioGuideProps) {
         >
           {state.status === "loading" && <p>…</p>}
           {state.status === "error" && <p>{state.message}</p>}
-          {state.status === "success" && <p>{state.reply}</p>}
+          {state.status === "success" && <p>{linkifyReply(state.reply)}</p>}
         </div>
       )}
     </section>

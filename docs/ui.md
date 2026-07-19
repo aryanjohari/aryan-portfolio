@@ -37,10 +37,12 @@ All tokens live as CSS custom properties in `src/app/globals.css`.
 Desktop-only GSAP + Three.js layer. Gate via `canUseEnhancedMotion()` in `src/lib/motion.ts`: enable only when `min-width: 1024px`, `pointer: fine`, and **not** `prefers-reduced-motion: reduce`. Server always returns false.
 
 - **Atmosphere** (`src/components/motion/Atmosphere.tsx`) — fixed full-viewport canvas behind `.site-shell` (`pointer-events: none`, `z-index: 0`). Calm post-boot Three backdrop; pause/dispose on unmount and `document.hidden`.
+- **Boot cover:** SSR `#boot-cover` (`#0a0a0a`, above `.site-shell`) prevents cream homepage flash before client BootOverlay. Inline script removes it immediately when the motion gate would fail; BootOverlay removes it in the same frame it mounts when the gate passes. Three/GSAP stay client-only and are not required for the dark cover.
 - **BootOverlay** (`src/components/motion/BootOverlay.tsx`) — dark desktop boot theatre (~8s), then unmounts so guide input is never blocked.
   - **Colours (boot-local):** near-black background `#0a0a0a`, cream text `#f4f0e8`.
-  - **Beats:** (1) `it's craft, not code.` (2) `made with intention, not scripts.` (3) `hi — i'm aryan.` One GSAP timeline owns typing (type → brief hold → wipe → next; soft blinking cursor) and a single `progress` 0→1.
-  - **Field:** colourful flow-field ink trails in `BootField.ts` (owned by BootOverlay, not Atmosphere). Agents follow trig-based flow angles every frame via `clock.getElapsedTime()` plus timeline `progress` (sparse void → denser colourful weave → calmer settle). Hue/sat/light from time + progress + agent id on dark clear — tasteful, not neon spam; not beat-stepped.
+  - **Shared clock:** one GSAP timeline drives story progress `p` 0→1 over ~7.4s content; BootField reads `p` every RAF via `getProgress` and its own elapsed `t` (Three Clock). Flow/silk uses `t`; density/converge/settle use `p`; hue drifts with `t` and calms as `p→1`.
+  - **Beats:** (1) `it's craft, not code.` (2) `made with intention, not scripts.` (3) `hi — i'm aryan.` Typing (type → hold → wipe → next; soft cursor) locked to the same timeline — beat1 void/weave · beat2 denser weave · beat3 converge/settle.
+  - **Field:** colourful flow-field particles (soft circular sprites) + ink trails in `BootField.ts` that build an approximate homepage wireframe with light 3D depth. Late `p`: particles snap onto edges, then nodes fade — final look is depth-shaded wireframe lines only (no dots). Overlay then fades into the real home. DOM sampling deferred (Phase 2).
   - **Skip:** click anywhere or Escape; short fade then unmount. Subtle “click to enter” hint.
   - **Mobile / tablet / reduced-motion / coarse pointer:** no boot theatre, no boot Three sim — site shows immediately.
 - Wired once via `MotionScaffold` in root `layout.tsx` (`dynamic(..., { ssr: false })`). Do not import three/gsap outside these client motion modules. No Framer Motion.
@@ -59,17 +61,19 @@ Applied via `.site-header-accent` pseudo-element on `SiteHeader`:
 
 | Link | URL | Page |
 |------|-----|------|
-| Nav `home` | `/` | Narrative intro + portfolio guide |
+| Nav `home` | `/` | Slim identity + Ask Aryan guide |
 | Nav `workshop` | `/workshop` | Full project table only |
-| HomeIntro catalog link | `/workshop` | Same as workshop nav |
+| Home soft `workshop` | `/workshop` | Same as workshop nav |
 | Nav `about` | `/about` | Bio, education, availability |
+| Home soft `about` | `/about` | Same as about nav |
 | Nav `resume` | `/resume.pdf` | PDF download |
+| Home soft `resume.pdf` | `/resume.pdf` | Same PDF |
 
 Do **not** link to `/index` anywhere — it aliases to `/` on some hosts. `/index` redirects to `/workshop` for old bookmarks only.
 
-### Home (`/`) — guide-focused
+### Home (`/`) — Ask Aryan
 
-Header: `home · workshop · about · resume`. No new fonts, no shadows. WebGL Atmosphere is desktop-gated only (see Enhanced motion).
+Header: `home · workshop · about · resume`. No new fonts, no shadows. WebGL Atmosphere is desktop-gated only (see Enhanced motion). Centered column (~40rem); identity → ask → chips → reply → soft links.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -77,20 +81,20 @@ Header: `home · workshop · about · resume`. No new fonts, no shadows. WebGL A
 │ aryan johari          home · workshop · about · resume        │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  [HomeIntro — compact variant]                              │
-│  aryan johari                                               │
-│  graduate software engineer · auckland                      │
-│  [1 short narrative paragraph]                              │
-│  5 projects · view catalog →                                │
-│  resume.pdf · more about me                                 │
+│              [HomeIntro — identity only]                    │
+│                    aryan johari                             │
+│           graduate engineer · auckland · sept 2026          │
+│              [one short craft line]                         │
 │                                                             │
-│  [PortfolioGuide]                                           │
-│  > guide                                                    │
-│  [prompt chips]                                             │
-│  [input________________________] [send]                     │
-│  ┌ response panel ───────────────────────────────────────┐ │
-│  │ reply or …                                              │ │
-│  └─────────────────────────────────────────────────────────┘ │
+│              [PortfolioGuide — Ask Aryan]                   │
+│              [ ask me anything ……… ] [send]                 │
+│              simple: [Who is he?] [Is he looking…] […]      │
+│              technical: [Backend / ML?] [What's ADA?] […]   │
+│              ┌ response panel ───────────────────────────┐  │
+│              │ reply (paths linkified) or …              │  │
+│              └───────────────────────────────────────────┘  │
+│                                                             │
+│              workshop · about · resume.pdf                  │
 │                                                             │
 ├─────────────────────────────────────────────────────────────┤
 │ email · github · linkedin                                   │
@@ -114,7 +118,9 @@ Table only — no featured demos block, no guide.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**HomeIntro CSS classes:** `.home-intro`, `.home-intro-name`, `.home-intro-role`, `.home-intro-narrative`, `.home-intro-narrative--compact`, `.home-intro-demos`, `.home-intro-catalog-link`, `.home-intro-stats`, `.home-intro-stat`, `.home-intro-links`
+**HomeIntro CSS classes:** `.home-intro`, `.home-intro-name`, `.home-intro-role`, `.home-intro-craft`
+
+**Home ask CSS classes:** `.home-ask`, `.home-ask-links`, `.home-ask-links-sep`
 
 **FeaturedDemos CSS classes:** `.featured-demos`, `.featured-demo-row`, `.featured-demo-title`, `.featured-demo-summary`, `.featured-demo-action`
 
@@ -133,7 +139,7 @@ Table only — no featured demos block, no guide.
 
 Exhibit panels match iframe sandbox height. Header uses accent band; body scrolls on mobile.
 
-**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide-chips`, `.portfolio-guide-chip`, `.portfolio-guide-chip--more`, `.portfolio-guide-form`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-response`, `.portfolio-guide-response--loading`
+**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide-form`, `.portfolio-guide-label`, `.portfolio-guide-input-row`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-chip-rails`, `.portfolio-guide-chip-group`, `.portfolio-guide-chip-group-label`, `.portfolio-guide-chips`, `.portfolio-guide-chip`, `.portfolio-guide-response`, `.portfolio-guide-response--loading`
 
 ### Project page (`/projects/[slug]`)
 
@@ -193,13 +199,13 @@ Mobile: columns stack — narrative block first, full-width sandbox below (min-h
 |-----------|------|----------------|
 | `MotionScaffold` | `src/components/motion/MotionScaffold.tsx` | Client-only Atmosphere + BootOverlay |
 | `Atmosphere` | `src/components/motion/Atmosphere.tsx` | Desktop Three.js backdrop canvas |
-| `BootOverlay` | `src/components/motion/BootOverlay.tsx` | Desktop dark boot theatre (typed lines + field) |
-| `BootField` | `src/components/motion/BootField.ts` | Colourful flow-field ink trails (time + progress) |
+| `BootOverlay` | `src/components/motion/BootOverlay.tsx` | Desktop dark boot theatre (typed lines + shared p) |
+| `BootField` | `src/components/motion/BootField.ts` | Flow trails → homepage wireframe (shared t + p) |
 | `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band, site name, nav links |
 | `SiteFooter` | `src/components/SiteFooter.tsx` | Email, GitHub, LinkedIn |
-| `HomeIntro` | `src/components/HomeIntro.tsx` | Name, role, narrative, stats or index link, resume/about links |
+| `HomeIntro` | `src/components/HomeIntro.tsx` | Slim identity: name, role/location/availability, one craft line |
 | `FeaturedDemos` | `src/components/FeaturedDemos.tsx` | Featured projects with wired demos |
-| `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Guide input, prompt chips, reply panel |
+| `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Ask Aryan hero: input, grouped chips, reply panel |
 | `ProjectTable` | `src/components/ProjectTable.tsx` | Terminal index table |
 | `ProjectSplit` | `src/components/ProjectSplit.tsx` | Two-column project layout |
 | `DemoPanel` | `src/components/DemoPanel.tsx` | Demo sandbox or placeholder state |
