@@ -119,6 +119,22 @@ code {
   text-decoration: underline;
 }
 
+.site-header-identity {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.site-header-identity-sep,
+.site-header-role {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
 .site-nav {
   font-size: 0.875rem;
 }
@@ -144,6 +160,18 @@ code {
   color: var(--color-muted);
 }
 
+.site-footer-soft-item a {
+  color: var(--color-muted);
+}
+
+.site-footer-soft-item a:hover {
+  color: var(--color-text);
+}
+
+.site-footer-soft-gap {
+  opacity: 0.55;
+}
+
 /* Page headings */
 
 .page-heading {
@@ -157,48 +185,61 @@ code {
   color: var(--color-muted);
 }
 
-/* Homepage — Ask Aryan */
+/* Homepage — Ask Aryan void */
+
+body:has(.home-ask) {
+  --color-bg: #0a0a0a;
+  --color-text: #f2f0eb;
+  --color-border: rgba(242, 240, 235, 0.16);
+  --color-muted: #9a9690;
+  --color-accent-band: #161616;
+  background-color: #0a0a0a;
+  color: #f2f0eb;
+}
+
+body:has(.home-ask) .site-shell {
+  background-color: #0a0a0a;
+}
+
+body:has(.home-ask) .site-header {
+  border-bottom-color: rgba(242, 240, 235, 0.1);
+}
+
+body:has(.home-ask) .site-header-accent {
+  background-color: #101010;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(242, 240, 235, 0.02) 2px,
+    rgba(242, 240, 235, 0.02) 4px
+  );
+}
+
+body:has(.home-ask) .site-footer {
+  border-top-color: rgba(242, 240, 235, 0.1);
+}
+
+body:has(.home-ask) .site-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  max-width: 42rem;
+  width: 100%;
+}
 
 .home-ask {
-  max-width: 40rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 36rem;
   margin: 0 auto;
-  padding: var(--space-4) 0 var(--space-5);
+  padding: var(--space-3) 0 var(--space-4);
   text-align: center;
   color: var(--color-text);
-}
-
-.home-intro {
-  margin-bottom: var(--space-4);
-}
-
-.home-intro-name {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0 0 var(--space-1);
-  color: var(--color-text);
-}
-
-.home-intro-role {
-  font-size: 0.875rem;
-  color: var(--color-muted);
-  margin: 0 0 var(--space-1);
-}
-
-.home-intro-craft {
-  font-size: 0.875rem;
-  color: var(--color-muted);
-  margin: 0;
-  max-width: 36ch;
-  margin-inline: auto;
-}
-
-.home-ask-links {
-  margin: var(--space-4) 0 0;
-  font-size: 0.875rem;
-}
-
-.home-ask-links-sep {
-  color: var(--color-muted);
 }
 
 /* Featured demos */
@@ -250,7 +291,9 @@ code {
 
 @media (max-width: 767px) {
   .home-ask {
-    padding: var(--space-3) 0 var(--space-4);
+    padding: var(--space-2) 0 var(--space-3);
+    justify-content: flex-start;
+    padding-top: var(--space-4);
   }
 
   .featured-demo-row {
@@ -259,15 +302,42 @@ code {
   }
 }
 
-/* Portfolio guide — Ask Aryan hero */
+/* Portfolio guide — void wireframe ask bar (settled boot language) */
 
 .portfolio-guide {
+  width: 100%;
   margin-bottom: 0;
   text-align: left;
 }
 
-.portfolio-guide-form {
+.portfolio-guide-float-wrap {
   margin-bottom: var(--space-3);
+}
+
+.portfolio-guide-float {
+  position: relative;
+  background: #0a0a0a;
+  border: 1.5px solid rgba(244, 240, 232, 0.72);
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 1px rgba(244, 240, 232, 0.08),
+    0 0 18px rgba(244, 240, 232, 0.12),
+    0 0 40px rgba(244, 240, 232, 0.06),
+    0 12px 36px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.portfolio-guide-float:focus-within {
+  border-color: rgba(244, 240, 232, 0.92);
+  box-shadow:
+    0 0 0 1px rgba(244, 240, 232, 0.18),
+    0 0 0 3px rgba(244, 240, 232, 0.16),
+    0 0 22px rgba(244, 240, 232, 0.18),
+    0 12px 36px rgba(0, 0, 0, 0.55);
+}
+
+.portfolio-guide-form {
+  margin: 0;
 }
 
 .portfolio-guide-label {
@@ -284,100 +354,83 @@ code {
 
 .portfolio-guide-input-row {
   display: flex;
-  gap: var(--space-1);
+  align-items: stretch;
+  gap: 0;
 }
 
 .portfolio-guide-input {
   flex: 1 1 auto;
   min-width: 0;
   font-family: inherit;
-  font-size: 1rem;
-  padding: var(--space-2);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-bg);
-  color: var(--color-text);
+  font-size: 1.0625rem;
+  padding: 1.05rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: #f4f0e8;
+  caret-color: #f4f0e8;
+  outline: none;
+}
+
+.portfolio-guide-input::placeholder {
+  color: rgba(244, 240, 232, 0.42);
+  opacity: 1;
+}
+
+.portfolio-guide-input::selection {
+  background: rgba(244, 240, 232, 0.28);
+  color: #f4f0e8;
 }
 
 .portfolio-guide-input:focus {
-  outline: 1px solid var(--color-border);
-  outline-offset: 1px;
+  outline: none;
+}
+
+.portfolio-guide-input:disabled {
+  opacity: 0.55;
 }
 
 .portfolio-guide-submit {
   font-family: inherit;
-  font-size: 0.875rem;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-accent-band);
-  color: var(--color-text);
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  margin: 0.55rem 0.55rem 0.55rem 0;
+  padding: 0 0.95rem;
+  border: 1px solid rgba(244, 240, 232, 0.45);
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(244, 240, 232, 0.78);
   cursor: pointer;
   flex-shrink: 0;
+  align-self: center;
+  min-height: 2.25rem;
 }
 
 .portfolio-guide-submit:hover:not(:disabled) {
-  text-decoration: underline;
+  color: #f4f0e8;
+  border-color: rgba(244, 240, 232, 0.85);
+  background: rgba(244, 240, 232, 0.06);
+  text-decoration: none;
+}
+
+.portfolio-guide-submit:focus-visible {
+  outline: 2px solid rgba(244, 240, 232, 0.7);
+  outline-offset: 2px;
 }
 
 .portfolio-guide-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.portfolio-guide-chip-rails {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-}
-
-.portfolio-guide-chip-group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-1) var(--space-2);
-}
-
-.portfolio-guide-chip-group-label {
-  font-size: 0.75rem;
-  color: var(--color-muted);
-  flex-shrink: 0;
-  min-width: 4.5rem;
-}
-
-.portfolio-guide-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  flex: 1 1 auto;
-}
-
-.portfolio-guide-chip {
-  font-family: inherit;
-  font-size: 0.75rem;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  cursor: pointer;
-}
-
-.portfolio-guide-chip:hover:not(:disabled) {
-  background-color: var(--color-accent-band);
-}
-
-.portfolio-guide-chip:disabled {
-  opacity: 0.6;
+  opacity: 0.32;
   cursor: not-allowed;
 }
 
 .portfolio-guide-response {
-  border: 1px solid var(--color-border);
-  padding: var(--space-2);
+  border: none;
+  border-top: 1px solid rgba(244, 240, 232, 0.12);
+  padding: var(--space-2) var(--space-1) 0;
   font-size: 0.875rem;
   text-align: left;
-  min-height: 4rem;
-  background-color: var(--color-bg);
-  color: var(--color-text);
+  min-height: 0;
+  background: transparent;
+  color: rgba(244, 240, 232, 0.55);
 }
 
 .portfolio-guide-response p {
@@ -386,26 +439,29 @@ code {
 }
 
 .portfolio-guide-response a {
-  color: var(--color-text);
+  color: #f4f0e8;
   text-decoration: underline;
 }
 
 .portfolio-guide-response--loading {
-  color: var(--color-muted);
+  color: rgba(244, 240, 232, 0.4);
+  opacity: 1;
 }
 
 @media (max-width: 767px) {
-  .portfolio-guide-input-row {
-    flex-direction: column;
+  .portfolio-guide-float {
+    border-radius: 1.25rem;
+  }
+
+  .portfolio-guide-input {
+    font-size: 1rem;
+    padding: 0.95rem 1.05rem;
   }
 
   .portfolio-guide-submit {
-    width: 100%;
-  }
-
-  .portfolio-guide-chip-group {
-    flex-direction: column;
-    align-items: flex-start;
+    margin: 0.45rem 0.45rem 0.45rem 0;
+    padding: 0 0.85rem;
+    min-height: 2.5rem;
   }
 }
 

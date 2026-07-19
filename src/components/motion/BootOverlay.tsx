@@ -15,13 +15,17 @@ const BEATS = [
 const BG = "#0a0a0a";
 const FG = "#f4f0e8";
 
-/** Type → hold → wipe → next; content (~7.4s) + exit ≈ 8s */
+/** Type → hold → wipe → next; content (~7.4s) + soft exit hold/fade */
 const TYPE_DURATIONS = [0.95, 1.45, 0.7] as const;
 const HOLD = 1.2;
 const WIPE = 0.3;
 const FINAL_LINGER = 1.3;
-const EXIT_FADE = 0.6;
+/** Soft reveal of home under aligned ask-bar frame */
+const EXIT_HOLD = 0.4;
+const EXIT_FADE = 1.15;
 const SKIP_FADE = 0.35;
+/** Fade typed line during linger so ask bar reveals in the same spot */
+const TEXT_CROSSFADE = 0.55;
 
 const CONTENT_DURATION =
   TYPE_DURATIONS.reduce((sum, d) => sum + d, 0) +
@@ -30,15 +34,14 @@ const CONTENT_DURATION =
   FINAL_LINGER;
 
 /**
- * Desktop boot theatre: dark overlay, typed craft lines, silk→wireframe field.
- * Shared clock with BootField: GSAP drives `progressRef` (p 0→1) over
- * CONTENT_DURATION; field reads p every RAF via getProgress + its own t clock.
- * Beat1 void/weave · beat2 denser weave · beat3 converge to homepage wireframe / settle.
- * Unmounts after complete/skip. Mobile / reduced-motion / coarse pointer: null.
+ * Desktop boot theatre: dark overlay, typed craft lines, void roam → one
+ * center frame → ask-bar morph. Shared clock with BootField. Soft exit hold
+ * then fade so home (same void + ask) reads continuous. Unmounts after.
  */
 export function BootOverlay() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const fieldHostRef = useRef<HTMLDivElement>(null);
+  const lineWrapRef = useRef<HTMLParagraphElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const cursorRef = useRef<HTMLSpanElement>(null);
   const hintRef = useRef<HTMLParagraphElement>(null);
@@ -81,11 +84,11 @@ export function BootOverlay() {
     };
   }, []);
 
-  // Same frame as dark BootOverlay paint — no cream flash under the cover
   useLayoutEffect(() => {
     if (!active || done) return;
     removeBootCover();
   }, [active, done]);
+
   useEffect(() => {
     if (!active || done) return;
     const overlay = overlayRef.current;
@@ -93,7 +96,15 @@ export function BootOverlay() {
     const textEl = textRef.current;
     const cursorEl = cursorRef.current;
     const hintEl = hintRef.current;
-    if (!overlay || !fieldHost || !textEl || !cursorEl || !hintEl) {
+    const lineWrap = lineWrapRef.current;
+    if (
+      !overlay ||
+      !fieldHost ||
+      !textEl ||
+      !cursorEl ||
+      !hintEl ||
+      !lineWrap
+    ) {
       return;
     }
 
@@ -101,6 +112,21 @@ export function BootOverlay() {
     let timeline: { kill: () => void } | undefined;
     let exitTween: { kill: () => void } | undefined;
     let cursorTween: { kill: () => void } | undefined;
+    let exitDelay: { kill: () => void } | undefined;
+
+    /** Pin typed line to measured ask bar so morph shares the same center. */
+    const syncLineToAsk = () => {
+      const ask = document.querySelector(".portfolio-guide-float");
+      const wrap = lineWrapRef.current;
+      const overlayEl = overlayRef.current;
+      if (!ask || !wrap || !overlayEl) return false;
+      const r = ask.getBoundingClientRect();
+      const host = overlayEl.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) return false;
+      wrap.style.left = `${r.left + r.width * 0.5 - host.left}px`;
+      wrap.style.top = `${r.top + r.height * 0.5 - host.top}px`;
+      return true;
+    };
 
     const finish = () => {
       if (!cancelled) setDone(true);
@@ -132,8 +158,13 @@ export function BootOverlay() {
       }
     };
 
+    const onResize = () => {
+      syncLineToAsk();
+    };
+
     overlay.addEventListener("click", skip);
     window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
 
     void (async () => {
       const [{ gsap }, { createBootField }] = await Promise.all([
@@ -147,12 +178,29 @@ export function BootOverlay() {
         !overlayRef.current ||
         !textRef.current ||
         !cursorRef.current ||
-        !hintRef.current
+        !hintRef.current ||
+        !lineWrapRef.current
       ) {
         return;
       }
 
       progressRef.current.value = 0;
+
+      // Align typed line to ask before field measures [data-boot-line]
+      await new Promise<void>((resolve) => {
+        let tries = 0;
+        const tick = () => {
+          if (cancelled || syncLineToAsk() || tries >= 8) {
+            resolve();
+            return;
+          }
+          tries += 1;
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(() => requestAnimationFrame(tick));
+      });
+      if (cancelled || skippingRef.current) return;
+
       const field = await createBootField(fieldHostRef.current, {
         getProgress: () => progressRef.current.value,
       });
@@ -161,14 +209,17 @@ export function BootOverlay() {
         return;
       }
       fieldRef.current = field;
+      syncLineToAsk();
 
       const lineEl = textRef.current;
       const curEl = cursorRef.current;
       const hint = hintRef.current;
+      const wrap = lineWrapRef.current;
 
       lineEl.textContent = "";
       gsap.set(hint, { opacity: 0 });
       gsap.set(curEl, { opacity: 1 });
+      gsap.set(wrap, { opacity: 1 });
 
       cursorTween = gsap.to(curEl, {
         opacity: 0.15,
@@ -182,12 +233,15 @@ export function BootOverlay() {
         onComplete: () => {
           cursorTween?.kill();
           gsap.set(curEl, { opacity: 0 });
-          exit(EXIT_FADE);
+          // Hold last aligned frame, then soft crossfade into home
+          exitDelay?.kill();
+          exitDelay = gsap.delayedCall(EXIT_HOLD, () => {
+            if (!cancelled && !skippingRef.current) exit(EXIT_FADE);
+          });
         },
       });
       timeline = tl;
 
-      // Single p 0→1 — field reads this every RAF; typing locked to same timeline
       tl.to(
         progressRef.current,
         {
@@ -204,7 +258,7 @@ export function BootOverlay() {
       BEATS.forEach((beat, i) => {
         const typeDur = TYPE_DURATIONS[i];
         const typed = { n: 0 };
-        const labels = ["voidWeave", "denserWeave", "convergeSettle"] as const;
+        const labels = ["voidRoam", "voidWeave", "centerFrame"] as const;
 
         tl.addLabel(labels[i], at);
         tl.to(
@@ -237,6 +291,22 @@ export function BootOverlay() {
           tl.to({}, { duration: WIPE }, at);
           at += WIPE;
         } else {
+          // Crossfade typed line → ask bar while particles morph the frame
+          const fadeStart = at + Math.max(0, FINAL_LINGER - TEXT_CROSSFADE);
+          tl.to(
+            wrap,
+            {
+              opacity: 0,
+              duration: TEXT_CROSSFADE,
+              ease: "power2.inOut",
+            },
+            fadeStart,
+          );
+          tl.to(
+            hint,
+            { opacity: 0, duration: 0.35, ease: "power1.out" },
+            fadeStart,
+          );
           tl.to({}, { duration: FINAL_LINGER }, at);
         }
       });
@@ -246,9 +316,11 @@ export function BootOverlay() {
       cancelled = true;
       timeline?.kill();
       exitTween?.kill();
+      exitDelay?.kill();
       cursorTween?.kill();
       overlay.removeEventListener("click", skip);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
       fieldRef.current?.dispose();
       fieldRef.current = null;
     };
@@ -292,19 +364,20 @@ export function BootOverlay() {
         style={{
           position: "relative",
           zIndex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
           width: "100%",
           height: "100%",
-          padding: "clamp(1.25rem, 4vh, 2.5rem) clamp(1rem, 4vw, 2rem)",
-          boxSizing: "border-box",
           pointerEvents: "none",
         }}
       >
+        {/* Anchored to ask-bar center so frame → input reads as one object */}
         <p
+          ref={lineWrapRef}
+          data-boot-line
           style={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
             margin: 0,
             textAlign: "center",
             fontFamily: "var(--font-mono), ui-monospace, monospace",
@@ -314,6 +387,9 @@ export function BootOverlay() {
             fontWeight: 400,
             color: FG,
             maxWidth: "min(36rem, 90vw)",
+            width: "max-content",
+            padding: "0 clamp(1rem, 4vw, 2rem)",
+            boxSizing: "border-box",
           }}
         >
           <span ref={textRef} />

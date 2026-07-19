@@ -1,25 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useRef, useState, type ReactNode } from "react";
-
-import type { SuggestedChip, SuggestedChipGroup } from "@/lib/guide-schema";
-
-const AUTO_SUMMARY_PROMPT =
-  "Give a 3-sentence recruiter summary of Aryan's strengths, availability, and live demos.";
-
-const CHIP_GROUP_ORDER: SuggestedChipGroup[] = ["simple", "technical"];
-const CHIP_GROUP_LABELS: Record<SuggestedChipGroup, string> = {
-  simple: "simple",
-  technical: "technical",
-};
+import { FormEvent, useState, type ReactNode } from "react";
 
 const SITE_PATH_PATTERN =
   /(\/(?:workshop|about|resume\.pdf|projects\/[a-z0-9-]+))/g;
-
-type PortfolioGuideProps = {
-  suggestedChips: SuggestedChip[];
-};
 
 type GuideState =
   | { status: "idle" }
@@ -53,10 +38,9 @@ function linkifyReply(reply: string): ReactNode[] {
   return parts.length > 0 ? parts : [reply];
 }
 
-export function PortfolioGuide({ suggestedChips }: PortfolioGuideProps) {
+export function PortfolioGuide() {
   const [message, setMessage] = useState("");
   const [state, setState] = useState<GuideState>({ status: "idle" });
-  const autoSubmitted = useRef(false);
 
   async function submitQuestion(question: string) {
     const trimmed = question.trim();
@@ -95,87 +79,41 @@ export function PortfolioGuide({ suggestedChips }: PortfolioGuideProps) {
     }
   }
 
-  useEffect(() => {
-    if (autoSubmitted.current) {
-      return;
-    }
-    autoSubmitted.current = true;
-    void submitQuestion(AUTO_SUMMARY_PROMPT);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
-  }, []);
-
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void submitQuestion(message);
   }
 
-  function handleChipClick(prompt: string) {
-    setMessage(prompt);
-    void submitQuestion(prompt);
-  }
-
   return (
     <section className="portfolio-guide" aria-label="Ask Aryan">
-      <form className="portfolio-guide-form" onSubmit={handleSubmit}>
-        <label className="portfolio-guide-label" htmlFor="guide-message">
-          Ask Aryan anything about his work, background, or availability
-        </label>
-        <div className="portfolio-guide-input-row">
-          <input
-            id="guide-message"
-            className="portfolio-guide-input"
-            type="text"
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            placeholder="ask me anything"
-            maxLength={500}
-            disabled={state.status === "loading"}
-          />
-          <button
-            type="submit"
-            className="portfolio-guide-submit"
-            disabled={state.status === "loading" || message.trim().length === 0}
-          >
-            send
-          </button>
-        </div>
-      </form>
-
-      <div className="portfolio-guide-chip-rails">
-        {CHIP_GROUP_ORDER.map((group) => {
-          const chips = suggestedChips.filter((chip) => chip.group === group);
-          if (chips.length === 0) {
-            return null;
-          }
-
-          return (
-            <div
-              key={group}
-              className="portfolio-guide-chip-group"
-              role="group"
-              aria-label={`${CHIP_GROUP_LABELS[group]} prompts`}
-            >
-              <span className="portfolio-guide-chip-group-label">
-                {CHIP_GROUP_LABELS[group]}
-              </span>
-              <div className="portfolio-guide-chips">
-                {chips.map((chip) => (
-                  <button
-                    key={chip.label}
-                    type="button"
-                    className="portfolio-guide-chip"
-                    onClick={() => handleChipClick(chip.prompt)}
-                    disabled={state.status === "loading"}
-                    title={chip.tooltip}
-                    aria-label={chip.tooltip}
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
+      <div className="portfolio-guide-float-wrap">
+        <div className="portfolio-guide-float">
+          <form className="portfolio-guide-form" onSubmit={handleSubmit}>
+            <label className="portfolio-guide-label" htmlFor="guide-message">
+              Ask Aryan anything about his work, background, or availability
+            </label>
+            <div className="portfolio-guide-input-row">
+              <input
+                id="guide-message"
+                className="portfolio-guide-input"
+                type="text"
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                placeholder="ask about me…"
+                maxLength={500}
+                disabled={state.status === "loading"}
+                autoComplete="off"
+              />
+              <button
+                type="submit"
+                className="portfolio-guide-submit"
+                disabled={state.status === "loading" || message.trim().length === 0}
+              >
+                send
+              </button>
             </div>
-          );
-        })}
+          </form>
+        </div>
       </div>
 
       {(state.status === "loading" ||
