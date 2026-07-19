@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono } from "next/font/google";
 
+import { MotionScaffold } from "@/components/motion/MotionScaffold";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 
@@ -23,8 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${ibmPlexMono.variable} antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${ibmPlexMono.variable} antialiased`}
+        suppressHydrationWarning
+      >
+        <MotionScaffold />
         <div className="site-shell">
           <SiteHeader />
           {children}

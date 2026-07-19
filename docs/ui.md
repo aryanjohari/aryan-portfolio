@@ -32,6 +32,14 @@ All tokens live as CSS custom properties in `src/app/globals.css`.
 - Texture/grain/scanline **only** on the site header accent band
 - Links: underline on hover, no colour change
 
+## Enhanced motion (desktop scaffold)
+
+Desktop-only GSAP + Three.js layer. Gate via `canUseEnhancedMotion()` in `src/lib/motion.ts`: enable only when `min-width: 1024px`, `pointer: fine`, and **not** `prefers-reduced-motion: reduce`. Server always returns false.
+
+- **Atmosphere** (`src/components/motion/Atmosphere.tsx`) — fixed full-viewport canvas behind `.site-shell` (`pointer-events: none`, `z-index: 0`). Minimal Three scene; pause/dispose on unmount and `document.hidden`.
+- **BootOverlay** (`src/components/motion/BootOverlay.tsx`) — brief GSAP fade (~1.5s or click), then unmounts so guide input is never blocked.
+- Wired once via `MotionScaffold` in root `layout.tsx` (`dynamic(..., { ssr: false })`). Mobile / reduced-motion: no canvas, no boot. Do not import three/gsap outside these client motion modules. No Framer Motion.
+
 ## Header accent texture
 
 Applied via `.site-header-accent` pseudo-element on `SiteHeader`:
@@ -56,7 +64,7 @@ Do **not** link to `/index` anywhere — it aliases to `/` on some hosts. `/inde
 
 ### Home (`/`) — guide-focused
 
-Header: `home · workshop · about · resume`. No new fonts, no shadows, no WebGL on shell.
+Header: `home · workshop · about · resume`. No new fonts, no shadows. WebGL Atmosphere is desktop-gated only (see Enhanced motion).
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -178,6 +186,9 @@ Mobile: columns stack — narrative block first, full-width sandbox below (min-h
 
 | Component | File | Responsibility |
 |-----------|------|----------------|
+| `MotionScaffold` | `src/components/motion/MotionScaffold.tsx` | Client-only Atmosphere + BootOverlay |
+| `Atmosphere` | `src/components/motion/Atmosphere.tsx` | Desktop Three.js backdrop canvas |
+| `BootOverlay` | `src/components/motion/BootOverlay.tsx` | Desktop GSAP boot fade |
 | `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band, site name, nav links |
 | `SiteFooter` | `src/components/SiteFooter.tsx` | Email, GitHub, LinkedIn |
 | `HomeIntro` | `src/components/HomeIntro.tsx` | Name, role, narrative, stats or index link, resume/about links |

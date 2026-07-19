@@ -12,9 +12,11 @@
     "prebuild": "npm run fetch:projects && npm run build:guide-context"
   },
   "dependencies": {
+    "gsap": "^3.15.0",
     "next": "16.2.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "three": "^0.185.1",
     "yaml": "^2.8.0"
   },
   "devDependencies": {
@@ -23,6 +25,7 @@
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.185.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "pdf-parse": "^2.4.5",
