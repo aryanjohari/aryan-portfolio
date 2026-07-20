@@ -26,9 +26,9 @@ All tokens live as CSS custom properties in `src/app/globals.css`.
 
 ## Visual rules
 
-- Flat surfaces only — no box-shadow, no backdrop-blur, no gradients except header accent
+- Flat surfaces only — no box-shadow, no backdrop-blur, no gradients except header accent and workshop card visual placeholders (slug-hashed void panes)
 - 1px solid borders using `--color-border`
-- No scroll hijacking, no smooth-scroll libraries, no page transitions
+- No scroll hijacking of the whole site, no smooth-scroll libraries, no page transitions.
 - Texture/grain/scanline **only** on the site header accent band
 - Links: underline on hover, no colour change
 
@@ -63,7 +63,7 @@ Applied via `.site-header-accent` pseudo-element on `SiteHeader`:
 | Link | URL | Page |
 |------|-----|------|
 | Nav `home` | `/` | Minimal void: identity header + ask bar + footer |
-| Nav `workshop` | `/workshop` | Full project table only |
+| Nav `workshop` | `/workshop` | Coverflow project gallery (drag / arrows / dots) |
 | Home soft `workshop` | `/workshop` | Same as workshop nav |
 | Nav `about` | `/about` | Bio, education, availability |
 | Home soft `about` | `/about` | Same as about nav |
@@ -74,7 +74,7 @@ Do **not** link to `/index` anywhere — it aliases to `/` on some hosts. `/inde
 
 ### Home (`/`) — Ask Aryan void
 
-Minimal black void (`#0a0a0a`) site-wide via `:root` tokens; home additionally drops header/footer border rules (unboxed void). Workshop / about / project pages keep bordered chrome + accent band, rethemed for void contrast.
+Minimal black void (`#0a0a0a`) site-wide via `:root` tokens; home additionally drops header/footer border rules (unboxed void). Workshop matches that quiet header chrome (no accent band / bottom rule) while keeping full nav. About / project pages keep bordered chrome + accent band, rethemed for void contrast.
 
 Editorial composition (desktop): oversized name top-left · centered ask + reply · right-rail section links · contacts footer.
 
@@ -115,20 +115,31 @@ Editorial composition (desktop): oversized name top-left · centered ask + reply
 
 ### Workshop (`/workshop`)
 
-Table only — no featured demos block, no guide.
+Immersive project gallery — no featured demos, no guide. Same void tokens as home; header keeps quiet name + full nav (no scramble identity). **Normal page scroll:** intro → self-contained gallery → footer (no pin scrub).
+
+**Gallery (`ProjectGallery`):** center active card in a coverflow / revolving slot; left/right neighbors visible (scaled/dimmed). Change project via drag (GSAP **Draggable** + **InertiaPlugin** when motion allows), prev/next arrows, dots, and `02 / 05` index. Keyboard arrows when the gallery is focused. Enhanced motion (`canUseEnhancedMotion`) adds mild `rotateY`; otherwise scale/opacity only. `prefers-reduced-motion`: fade/swap between cards — no 3D, no throw inertia. Cards include a slug-hashed void visual pane (placeholder until real images), title, summary, stack · status, open project / try demo, yaml warning when needed. Title and primary CTAs link to `/projects/[slug]` — drag does not trap navigation.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ header                                                      │
-├─────────────────────────────────────────────────────────────┤
+│ aryan johari (quiet)           home · workshop · about · …  │
 │                                                             │
-│  > workshop index                                           │
-│  [ProjectTable — unchanged 4-column table]                  │
+│  > workshop                                                 │
+│  Selected projects… — browse the gallery…                   │
+│  ←   drag or use arrows · 02 / 05 · · ● · ·   →             │
+│           ┌──────────┐                                      │
+│  (dim)    │ ACTIVE   │    (dim)     ← coverflow / drag      │
+│           │ [visual] │                                      │
+│           │ title    │                                      │
+│           │ summary  │                                      │
+│           │ stack·st │                                      │
+│           │ open/demo│                                      │
+│           └──────────┘                                      │
 │                                                             │
-├─────────────────────────────────────────────────────────────┤
-│ footer                                                      │
+│ footer (normal document flow)                               │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**Workshop CSS classes:** `.workshop-page`, `.workshop-intro`, `.workshop-lede`, `.project-gallery`, `.project-gallery-chrome`, `.project-gallery-stage`, `.project-gallery-deck`, `.project-gallery-card`, `.project-gallery-visual`
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -210,11 +221,11 @@ Mobile: columns stack — narrative block first, full-width sandbox below (min-h
 | `HomeIdentity` | `src/components/motion/HomeIdentity.tsx` | Home soft-scramble hero name + quiet role fade |
 | `HomeGlyphRow` | `src/components/motion/HomeGlyphRow.tsx` | Post-boot auto-fade section links (desktop right-rail / mobile under-ask) |
 | `HomeFooterChrome` | `src/components/motion/HomeFooterChrome.tsx` | Home contacts only (always visible) |
-| `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band; home identity or full nav |
+| `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band (home/workshop void chrome softens it); home identity or full nav |
 | `SiteFooter` | `src/components/SiteFooter.tsx` | Contacts; home uses HomeFooterChrome |
 | `FeaturedDemos` | `src/components/FeaturedDemos.tsx` | Featured projects with wired demos |
 | `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Void ask bar + reserved reply slot (load → type) |
-| `ProjectTable` | `src/components/ProjectTable.tsx` | Terminal index table |
+| `ProjectGallery` | `src/components/ProjectGallery.tsx` | Workshop coverflow gallery (Draggable + InertiaPlugin; no page pin) |
 | `ProjectSplit` | `src/components/ProjectSplit.tsx` | Two-column project layout |
 | `DemoPanel` | `src/components/DemoPanel.tsx` | Demo sandbox or placeholder state |
 
@@ -222,7 +233,7 @@ Mobile: columns stack — narrative block first, full-width sandbox below (min-h
 
 | Breakpoint | Behaviour |
 |------------|-----------|
-| `< md` (768px) | Project split stacks vertically (narrative first); sandbox min-height ~50vh; table scrolls horizontally if needed |
+| `< md` (768px) | Project split stacks vertically (narrative first); sandbox min-height ~50vh; workshop coverflow uses touch drag (no page pin) |
 | `≥ md` | Index/about: 960px max-width. Project pages: 1400px shell, **1fr / 3fr** split, sandbox ~`calc(100dvh - 12rem)` |
 
 ## Demo panel states

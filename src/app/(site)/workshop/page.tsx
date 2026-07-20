@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { ProjectTable } from "@/components/ProjectTable";
+import { ProjectGallery } from "@/components/ProjectGallery";
 import { getAllProjects } from "@/lib/projects";
 
 export const metadata: Metadata = {
@@ -12,9 +12,15 @@ export default function WorkshopPage() {
   const projects = getAllProjects();
 
   return (
-    <>
-      <h1 className="page-heading">workshop index</h1>
-      <ProjectTable projects={projects} />
-    </>
+    <div className="workshop-page">
+      <header className="workshop-intro">
+        <h1 className="page-heading">workshop</h1>
+        <p className="workshop-lede">
+          Selected projects with context — browse the gallery, then open a
+          project.
+        </p>
+      </header>
+      <ProjectGallery projects={projects} />
+    </div>
   );
 }
