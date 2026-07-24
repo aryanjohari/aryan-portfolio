@@ -1,11 +1,7 @@
-import { PortfolioGuide } from "@/components/PortfolioGuide";
-import { HomeGlyphRow } from "@/components/motion/HomeGlyphRow";
-
+/**
+ * Home stage lives in VoidChrome (name + ask + glyphs). Route keeps a marker
+ * so deep links to `/` still resolve; page body is empty.
+ */
 export default function Home() {
-  return (
-    <div className="home-ask">
-      <PortfolioGuide />
-      <HomeGlyphRow />
-    </div>
-  );
+  return null;
 }

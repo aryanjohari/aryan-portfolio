@@ -77,7 +77,8 @@ function makeSoftGlowTexture(THREE: typeof import("three")) {
 /**
  * Full-viewport fixed WebGL canvas behind content (all routes).
  * Soft red↔blue comet trail when theatre motion + boot done; otherwise null.
- * Ask-bar dead zone only applies when `.portfolio-guide-float` exists (home).
+ * Ask-bar dead zone only applies for the home hero ask
+ * (`.void-chrome--home .portfolio-guide-float`).
  * Touch and mouse both drive the trail via pointermove.
  */
 export function Atmosphere() {
@@ -159,7 +160,9 @@ export function Atmosphere() {
       const refreshAskRect = (now: number) => {
         if (now - lastAskCache < ASK_RECT_CACHE_MS) return;
         lastAskCache = now;
-        const el = document.querySelector(".portfolio-guide-float");
+        const el = document.querySelector(
+          ".void-chrome--home .portfolio-guide-float",
+        );
         askRect = el?.getBoundingClientRect() ?? null;
       };
 

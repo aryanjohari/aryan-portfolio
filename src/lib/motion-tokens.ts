@@ -21,6 +21,19 @@ export const MOTION = {
   easeInOut: "power2.inOut",
 
   /**
+   * Home ↔ site void-chrome morph — a touch slower than `slow` so the
+   * Flip reads intentional. Same duration both directions.
+   */
+  chrome: {
+    morph: 0.9,
+    ease: "power2.inOut" as const,
+    /** Soft fade of page content before morph (→home) or after push (←home) */
+    content: 0.5,
+    /** Narrow/coarse crossfade halves */
+    crossfade: 0.45,
+  },
+
+  /**
    * Home name scramble — cinematic; longer than medium/slow.
    * Do not shorten to MOTION.medium.
    */

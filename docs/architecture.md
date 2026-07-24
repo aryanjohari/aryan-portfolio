@@ -124,13 +124,13 @@ aryan-portfolio/
 │   └── resume.pdf                 # Expected location; add manually
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx             # Root shell: font, header, footer
-│   │   ├── globals.css            # Design tokens, header accent texture
+│   │   ├── layout.tsx             # Root shell: font, VoidChrome, footer
+│   │   ├── globals.css            # Design tokens, void chrome
 │   │   ├── page.tsx               # Index table
 │   │   ├── about/page.tsx
 │   │   └── projects/[slug]/page.tsx
 │   ├── components/
-│   │   ├── SiteHeader.tsx
+│   │   ├── VoidChrome.tsx         # Morph-first home/site chrome + navigate
 │   │   ├── SiteFooter.tsx
 │   │   ├── ProjectTable.tsx
 │   │   ├── ProjectExhibit.tsx

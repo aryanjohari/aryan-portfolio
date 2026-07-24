@@ -44,6 +44,7 @@ Visitors should understand what a project does, see its stack and status, and tr
 | [create-portfolio-yaml.md](./create-portfolio-yaml.md) | Cursor prompt to generate portfolio.yaml in project repos |
 | [streamline-project-docs.md](./streamline-project-docs.md) | Cursor prompt to streamline GitHub + portfolio docs in project repos |
 | [ui.md](./ui.md) | Design tokens, wireframes, components, responsive rules |
+| [void-chrome-transitions.md](./void-chrome-transitions.md) | Morph-first home ↔ site chrome navigation (why + how) |
 | [registry.md](./registry.md) | How to add/remove projects and wire demos |
 | [v2-roadmap.md](./v2-roadmap.md) | v2 workshop phases (homepage narrative, guide, remaining demos) |
 | [guide.md](./guide.md) | Portfolio guide API, context build, env setup, testing |

@@ -29,19 +29,23 @@ Shared timing lives in `src/lib/motion-tokens.ts` (re-exported from `src/lib/mot
 | `MOTION.fast` | `0.2` s | Hovers, presses, small UI |
 | `MOTION.medium` | `0.45` s | Fades, panels, most enters |
 | `MOTION.slow` | `0.6` s | Larger section / page-ish moves |
+| `MOTION.chrome.morph` | `0.9` s | Home ↔ site void-chrome measure→tween (both directions) |
+| `MOTION.chrome.content` | `0.5` s | Page fade before (→home) / after (←home) morph |
 | `MOTION.ease` | `power2.out` | Default GSAP ease |
 | `MOTION.easeInOut` | `power2.inOut` | Symmetric GSAP ease |
+| `MOTION.chrome.ease` | `power2.inOut` | Chrome morph ease (mirrored) |
 
 Helpers: `motionDuration("fast" \| "medium" \| "slow")`, `motionDurationCss(...)` for `"0.45s"`-style strings. CSS transitions should use `--motion-*` so changing a pace stays consistent.
 
 **Exceptions (cinematic — do not shorten to medium):**
 
+- `MOTION.chrome` — home ↔ site void-chrome morph (~0.9s measure→tween, mirrored both ways)
 - `MOTION.scramble` — home name scramble (~2.15s)
 - `MOTION.boot` — boot theatre clock (type/hold/wipe/exit fade, etc.)
 
 **Reduced motion:** Tokens do not override a11y. Keep gating with `prefersReducedMotion()` — skip the tween or use zero duration as components already do.
 
-**Rule:** New animations must use `MOTION` tokens (or the matching CSS `--motion-*` vars). No Framer Motion. No page-transition redesign until a dedicated pass.
+**Rule:** New animations must use `MOTION` tokens (or the matching CSS `--motion-*` vars). No Framer Motion. Chrome morph lives in `VoidChrome` — do not add competing full-page transition systems.
 
 ## Typography
 
@@ -54,7 +58,7 @@ Helpers: `motionDuration("fast" \| "medium" \| "slow")`, `motionDurationCss(...)
 
 - Flat surfaces only — no box-shadow, no backdrop-blur, no gradients except header accent and workshop card visual placeholders (slug-hashed void panes)
 - 1px solid borders using `--color-border`
-- No scroll hijacking of the whole site, no smooth-scroll libraries, no page transitions.
+- **No scroll hijacking of the whole site, no smooth-scroll libraries.** Chrome morph (home ↔ site) is the intentional route transition; do not add full-page takeover transitions.
 - Texture/grain/scanline **only** on the site header accent band
 - Links: underline on hover, no colour change
 
@@ -67,7 +71,7 @@ Two gates in `src/lib/motion.ts` (both server-safe → `false`). Shared paces/ea
 | `canUseTheatreMotion()` | **not** `prefers-reduced-motion: reduce` (any viewport / pointer) | Boot theatre, Atmosphere trail, boot-cover visibility |
 | `canUseEnhancedMotion()` | `min-width: 1024px` + `pointer: fine` + not reduced-motion | Gallery mild `rotateY`, dense particle budgets |
 
-- **Atmosphere** (`src/components/motion/Atmosphere.tsx`) — site-wide fixed full-viewport canvas behind `.site-shell` (`pointer-events: none`, `z-index: 0`). Near-black clear `#0a0a0a`; soft red↔blue pointer/touch trail (desktop pool 200, mobile/light ~90; DPR ≤1.5, `low-power`). Idle until `portfolio:boot-done`; weaker spawn near `.portfolio-guide-float` when present (home ask bar); pause/dispose on unmount and `document.hidden`. Touch drives the trail via `pointermove`. `.site-shell` is transparent so the void shows through on all routes.
+- **Atmosphere** (`src/components/motion/Atmosphere.tsx`) — site-wide fixed full-viewport canvas behind `.site-shell` (`pointer-events: none`, `z-index: 0`). Near-black clear `#0a0a0a`; soft red↔blue pointer/touch trail (desktop pool 200, mobile/light ~90; DPR ≤1.5, `low-power`). Idle until `portfolio:boot-done`; weaker spawn near `.void-chrome--home .portfolio-guide-float` when present (home ask bar); pause/dispose on unmount and `document.hidden`. Touch drives the trail via `pointermove`. `.site-shell` is transparent so the void shows through on all routes.
 - **Boot cover:** SSR `#boot-cover` (`#0a0a0a`, above `.site-shell`) prevents any pre-hydrate flash before client BootOverlay. A `beforeInteractive` script sets `data-boot-cover-skip` on `<html>` **only when reduced-motion** so CSS hides the cover without removing the node (avoids hydration mismatch); BootOverlay calls `removeBootCover()` after mount. Three/GSAP stay client-only and are not required for the dark cover.
 - **BootOverlay** (`src/components/motion/BootOverlay.tsx`) — dark boot theatre (~8s) on phone, tablet, and desktop (unless reduced-motion), then unmounts so guide input is never blocked.
   - **Colours (boot-local):** near-black background `#0a0a0a`, cream text `#f4f0e8`.
@@ -82,11 +86,22 @@ Two gates in `src/lib/motion.ts` (both server-safe → `false`). Shared paces/ea
 
 ## Header accent texture
 
-Applied via `.site-header-accent` pseudo-element on `SiteHeader`:
+Applied via `.site-header-accent` / `.void-chrome-accent` on `VoidChrome`. Accent band stays **hidden** (opacity 0) in both home and site void chrome — scanline texture is reserved if a denser chrome mode returns later.
 
-- Faint horizontal scanlines (`repeating-linear-gradient`)
-- Optional subtle noise overlay at ~3% opacity
-- Does not extend beyond the header band
+## Void chrome (home ↔ site)
+
+Single persistent client shell: `VoidChrome` in root `layout.tsx` (`html[data-void-chrome="home|site"]`).
+
+| Mode | Layout |
+|------|--------|
+| `home` (`/`) | Hero name (scramble once after boot) · centered ask + invite + reply · glyph rail/row (workshop · about · resume) |
+| `site` (all other routes) | Compact bar: smaller name · `home · workshop · about · resume` · mini ask top-right |
+
+**Morph (morph-first):** Chrome nav intercepts in-app clicks. Home ↔ site: measure→tween name/nav/ask (`MOTION.chrome.morph`), **then** `router.push`, then soft content fade. Site ↔ site: push + content fade only. See `docs/void-chrome-transitions.md` for why post-route opacity tricks were abandoned. Narrow/coarse: matched crossfade. `prefers-reduced-motion`: instant mode + push.
+
+**Mini ask:** Compact wireframe input; replies open in a non-layout-breaking panel (dropdown under the bar; fixed bottom sheet on small screens). Remounts cleanly on site navigations via `remountKey`.
+
+Boot → home theatre is unchanged (`BootOverlay` / ask-bar measure).
 
 ## Wireframes
 
@@ -94,25 +109,22 @@ Applied via `.site-header-accent` pseudo-element on `SiteHeader`:
 
 | Link | URL | Page |
 |------|-----|------|
-| Nav `home` | `/` | Minimal void: identity header + ask bar + footer |
+| Nav `home` | `/` | Minimal void: identity + ask + footer |
 | Nav `workshop` | `/workshop` | Coverflow project gallery (drag / arrows / dots) |
-| Home soft `workshop` | `/workshop` | Same as workshop nav |
 | Nav `about` | `/about` | Void blog read: philosophy, background, education, availability |
-| Home soft `about` | `/about` | Same as about nav |
 | Nav `resume` | `/resume.pdf` | PDF download |
-| Home soft `resume.pdf` | `/resume.pdf` | Same PDF |
 
 Do **not** link to `/index` anywhere — it aliases to `/` on some hosts. `/index` redirects to `/workshop` for old bookmarks only.
 
 ### Home (`/`) — Ask Aryan void
 
-Minimal black void (`#0a0a0a`) site-wide via `:root` tokens; home additionally drops header/footer border rules (unboxed void). Workshop and about match that quiet header chrome (no accent band / bottom rule) while keeping full nav. Project pages keep bordered chrome + accent band, rethemed for void contrast.
+Minimal black void (`#0a0a0a`) site-wide via `:root` tokens. Home and all site routes share quiet void chrome (no accent band / bottom rule). Composition lives in `VoidChrome` (route page body is empty).
 
 Editorial composition (desktop): oversized name top-left · centered ask + invite whisper + reply · right-rail section links · contacts footer.
 
-- **Header (home):** hero-scale soft GSAP scramble of `aryan johari` (`MOTION.scramble` ~2.15s, `clamp(2.35rem, 8.75vw, 5.5rem)`) after boot on every full load (initial paint is dots only — no final-name flash). **No under-name role/tagline.** `prefers-reduced-motion`: final name immediately. Accessible via `aria-label` on the name link (`HomeIdentity`).
+- **Header (home):** hero-scale soft GSAP scramble of `aryan johari` (`MOTION.scramble` ~2.15s, `clamp(2.35rem, 8.75vw, 5.5rem)`) once after boot on a full load (initial paint is dots only — no final-name flash). Return-to-home settles without re-scramble. **No under-name role/tagline.** `prefers-reduced-motion`: final name immediately. Accessible via `aria-label` on the name link (`HomeIdentity`).
 - **Center:** void wireframe ask bar (larger type/padding) with a soft invite whisper under the bar (`ask me anything about my work` — DOM type-once + `MOTION.medium` fade after boot; full text instantly if reduced-motion; one-line reserved height so the bar does not jump) and a **reserved reply slot** below. Placeholder: `ask about my work, availability, or projects…`. Loading dots → character typewriter (~32 cps, capped ~3s); links become interactive when typing finishes. `prefers-reduced-motion`: full reply, no typewriter. No intro essay, no chip rails, no canvas quotes. Ask bar stays wireframe — no float/tilt chrome. Manual ask only (no auto Gemini).
-- **Section links:** workshop · about · resume — clear text labels with larger glyph marks (18px) + ~1rem labels; underline on hover/focus. **Desktop (≥1024px):** fixed vertical stack in the right margin (`HomeGlyphRow`), out of the center cluster. **Mobile / tablet:** horizontal row under the ask stage (collapsed until reveal so the input stays centered). Auto-fades in ~0.9s after boot (`MOTION.medium` enter; immediate if reduced-motion); `inert` only until revealed.
+- **Section links:** workshop · about · resume — clear text labels with larger glyph marks (18px) + ~1rem labels; underline on hover/focus. **Desktop (≥1024px):** fixed vertical stack in the right margin, out of the center cluster. **Mobile / tablet:** horizontal row under the ask stage (collapsed until reveal so the input stays centered). Auto-fades in ~0.9s after boot (`MOTION.medium` enter; immediate if reduced-motion); `inert` only until revealed. Leaving home morphs these into the site top nav (adds `home`).
 - **Footer (home):** contacts only (`email · github · linkedin`) — always soft-visible (`HomeFooterChrome`). Light padding; no heavy separator.
 - Ask bar: void fill (`#0a0a0a`), cream/off-white rounded outline, soft outer glow — reads as settled boot wireframe; off-white text + muted placeholder; ghost outline send. No GSAP float / no CSS 3D tilt. Mobile: same language, slightly tighter radius.
 
@@ -136,11 +148,13 @@ Editorial composition (desktop): oversized name top-left · centered ask + invit
 
 **Boot → home morph:** void roam → one particle frame on `hi — i'm aryan.` → morph to measured `.portfolio-guide-float` bounds → soft hold + fade into the same void home (header + ask underneath; right-rail / under-ask links auto-fade shortly after boot). Boot signals `portfolio:boot-done` / `data-boot-done` for presence timing. Larger ask bar is picked up by live measure (no particle logic change).
 
-**Home ask CSS classes:** `.home-ask`, `.portfolio-guide-stage`, `.portfolio-guide-invite`, `.portfolio-guide-reply-slot`
+**Void chrome CSS:** `.void-chrome`, `.void-chrome--home`, `.void-chrome--site`, `.void-chrome-name`, `.void-chrome-nav`, `.void-chrome-ask`, `.void-chrome-page`
+
+**Home ask CSS classes:** `.portfolio-guide--home`, `.portfolio-guide-stage`, `.portfolio-guide-invite`, `.portfolio-guide-reply-slot`
 
 **Home header identity:** `.site-header-identity` (`HomeIdentity`) — name only
 
-**Home soft section links:** `.home-glyph-row`, `.glyph-link`, `.glyph-link-label` (`HomeGlyphRow`) — desktop right-rail; mobile under-ask row
+**Home soft section links:** `.home-glyph-row`, `.glyph-link`, `.glyph-link-label` (owned by `VoidChrome`) — desktop right-rail; mobile under-ask row
 
 **Home footer contacts:** `.site-footer-chrome--contacts` (`HomeFooterChrome`)
 
@@ -148,13 +162,13 @@ Editorial composition (desktop): oversized name top-left · centered ask + invit
 
 ### Workshop (`/workshop`)
 
-Immersive project gallery — no featured demos, no guide. Same void tokens as home; header keeps quiet name + full nav (no scramble identity). **Normal page scroll:** intro → self-contained gallery → footer (no pin scrub).
+Immersive project gallery — no featured demos. Same void site chrome as other non-home routes (compact name + nav + mini ask). **Normal page scroll:** intro → self-contained gallery → footer (no pin scrub).
 
 **Gallery (`ProjectGallery`):** center active card in a coverflow / revolving slot; left/right neighbors visible (scaled/dimmed). Change project via drag (GSAP **Draggable** + **InertiaPlugin** when motion allows), prev/next arrows, dots, and `02 / 05` index. Keyboard arrows when the gallery is focused. Enhanced motion (`canUseEnhancedMotion`) adds mild `rotateY`; otherwise scale/opacity only. `prefers-reduced-motion`: fade/swap between cards — no 3D, no throw inertia. Cards include a slug-hashed void visual pane (placeholder until real images), title, summary, stack · status, open project / try demo, yaml warning when needed. Title and primary CTAs link to `/projects/[slug]` — drag does not trap navigation.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ aryan johari (quiet)           home · workshop · about · …  │
+│ aryan johari (quiet)   home · workshop · about · …   [ask] │
 │                                                             │
 │  > workshop                                                 │
 │  Selected projects… — browse the gallery…                   │
@@ -187,17 +201,17 @@ Immersive project gallery — no featured demos, no guide. Same void tokens as h
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Exhibit panels match iframe sandbox height. Header uses accent band; body scrolls on mobile.
+Exhibit panels match iframe sandbox height. Body scrolls on mobile.
 
-**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide-float-wrap`, `.portfolio-guide-float`, `.portfolio-guide-form`, `.portfolio-guide-label`, `.portfolio-guide-input-row`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-invite`, `.portfolio-guide-response`, `.portfolio-guide-response--loading`
+**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide--home`, `.portfolio-guide--mini`, `.portfolio-guide-float-wrap`, `.portfolio-guide-float`, `.portfolio-guide-form`, `.portfolio-guide-label`, `.portfolio-guide-input-row`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-invite`, `.portfolio-guide-response`, `.portfolio-guide-response--loading`, `.portfolio-guide-mini-panel`
 
 ### Project page (`/projects/[slug]`)
 
-Single-column **exhibit** inside the wider project shell (`max-width: 1400px`). Story text stays ~72ch; diagram/stage can stretch wider.
+Single-column **exhibit** inside the wider project shell (`max-width: 1400px`). Story text stays ~72ch; diagram/stage can stretch wider. Shares the same void site chrome (mini ask included).
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ header                                                       │
+│ name · nav · mini ask                                        │
 ├──────────────────────────────────────────────────────────────┤
 │  live demo | exhibit | research                              │
 │  Title                                                       │
@@ -229,7 +243,7 @@ Single-column **exhibit** inside the wider project shell (`max-width: 1400px`). 
 
 ### About (`/about`) — void blog read
 
-Hire / who-why page — **clear blog-style read**, not a guided dossier, not a second gallery, not a second Gemini ask. Quiet void chrome (same as workshop). Atmosphere trail may show behind (`pointer-events: none`).
+Hire / who-why page — **clear blog-style read**, not a guided dossier, not a second gallery. Quiet void site chrome (same mini ask as workshop). Atmosphere trail may show behind (`pointer-events: none`).
 
 **Layout**
 1. **Intro** — `> about` + short lede.
@@ -239,7 +253,7 @@ Hire / who-why page — **clear blog-style read**, not a guided dossier, not a s
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ aryan johari (quiet)           home · workshop · about · …  │
+│ aryan johari (quiet)   home · workshop · about · …   [ask] │
 ├─────────────────────────────────────────────────────────────┤
 │  > about                                                    │
 │  01 philosophy  │  philosophy                               │
@@ -249,7 +263,7 @@ Hire / who-why page — **clear blog-style read**, not a guided dossier, not a s
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **86.5%**). No coverflow, no embedded PortfolioGuide, no boot replay, no seal/chapter gates.
+Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **86.5%**). No coverflow, no boot replay, no seal/chapter gates.
 
 ## Components
 
@@ -259,14 +273,13 @@ Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **
 | `Atmosphere` | `src/components/motion/Atmosphere.tsx` | Site-wide void + soft pointer/touch trail (post-boot; light budget on mobile) |
 | `BootOverlay` | `src/components/motion/BootOverlay.tsx` | Cross-device dark boot theatre (typed lines + shared p; skips only reduced-motion) |
 | `BootField` | `src/components/motion/BootField.ts` | Void roam → one center frame → ask-bar morph |
-| `HomeIdentity` | `src/components/motion/HomeIdentity.tsx` | Home soft-scramble hero name (no under-name role) |
-| `HomeGlyphRow` | `src/components/motion/HomeGlyphRow.tsx` | Post-boot auto-fade section links (desktop right-rail / mobile under-ask) |
+| `HomeIdentity` | `src/components/motion/HomeIdentity.tsx` | Home soft-scramble hero name (once per load; no under-name role) |
 | `HomeFooterChrome` | `src/components/motion/HomeFooterChrome.tsx` | Home contacts only (always visible) |
 | `AboutAnchorNav` | `src/components/AboutAnchorNav.tsx` | About sticky section anchors + scroll-spy + heading fades |
-| `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band (home/workshop/about void chrome softens it); home identity or full nav |
+| `VoidChrome` | `src/components/VoidChrome.tsx` | Persistent home/site void chrome; morph-first nav then `router.push` |
 | `SiteFooter` | `src/components/SiteFooter.tsx` | Contacts; home uses HomeFooterChrome |
 | `FeaturedDemos` | `src/components/FeaturedDemos.tsx` | Featured projects with wired demos |
-| `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Void ask bar + invite whisper + reserved reply slot (load → type) |
+| `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Home ask + invite/reply; mini ask + panel on site chrome |
 | `ProjectGallery` | `src/components/ProjectGallery.tsx` | Workshop coverflow gallery (Draggable + InertiaPlugin; no page pin) |
 | `ProjectExhibit` | `src/components/ProjectExhibit.tsx` | Project exhibit: hero, CTAs, stage, story, details |
 | `ProjectDiagram` | `src/components/ProjectDiagram.tsx` | How it works — base SVG or Mermaid + scroll-draw |
@@ -276,8 +289,8 @@ Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **
 
 | Breakpoint | Behaviour |
 |------------|-----------|
-| `< md` (768px) | Exhibit stacks naturally; diagram scrolls horizontally if needed; workshop coverflow uses touch drag (no page pin); ask send ≥44px; gallery cards sized with `%` not `100vw` |
-| `≥ md` | Index/about: 960px max-width. Project pages: 1400px shell, readable exhibit column |
+| `< md` (768px) | Exhibit stacks naturally; diagram scrolls horizontally if needed; workshop coverflow uses touch drag (no page pin); ask send ≥44px; gallery cards sized with `%` not `100vw`; void chrome morph uses crossfade |
+| `≥ md` | Index/about: 960px max-width. Project pages: 1400px shell, readable exhibit column; Flip morph home ↔ site |
 | All | Shell / header / footer respect `env(safe-area-inset-*)`; no horizontal page overflow (`overflow-x: clip`) |
 
 ## Demo panel states

@@ -4,7 +4,7 @@ import Script from "next/script";
 
 import { MotionScaffold } from "@/components/motion/MotionScaffold";
 import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
+import { VoidChrome } from "@/components/VoidChrome";
 
 import "./globals.css";
 
@@ -45,8 +45,7 @@ export default function RootLayout({
         <div id="boot-cover" aria-hidden="true" />
         <MotionScaffold />
         <div className="site-shell">
-          <SiteHeader />
-          {children}
+          <VoidChrome>{children}</VoidChrome>
           <SiteFooter />
         </div>
       </body>

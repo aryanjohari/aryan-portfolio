@@ -33,6 +33,8 @@ type GuideState =
   | { status: "error"; message: string }
   | { status: "success"; reply: string };
 
+export type PortfolioGuideVariant = "home" | "mini";
+
 function linkifyReply(reply: string): ReactNode[] {
   const parts: ReactNode[] = [];
   let lastIndex = 0;
@@ -60,52 +62,56 @@ function linkifyReply(reply: string): ReactNode[] {
 }
 
 function useTypewriter(fullText: string | null, enabled: boolean) {
-  const [visibleLength, setVisibleLength] = useState(0);
-  const [done, setDone] = useState(false);
+  const [progress, setProgress] = useState<{
+    id: string | null;
+    length: number;
+  }>({ id: null, length: 0 });
 
   useEffect(() => {
-    if (!fullText) {
-      setVisibleLength(0);
-      setDone(false);
+    if (!fullText || !enabled || prefersReducedMotion()) {
       return;
     }
 
-    if (!enabled || prefersReducedMotion()) {
-      setVisibleLength(fullText.length);
-      setDone(true);
-      return;
-    }
-
-    setVisibleLength(0);
-    setDone(false);
-
+    let cancelled = false;
+    let frame = 0;
+    const id = fullText;
     const total = fullText.length;
     const durationMs = Math.min(
       TYPEWRITER_MAX_MS,
       Math.max(800, (total / TYPEWRITER_CPS) * 1000),
     );
     const start = performance.now();
-    let frame = 0;
 
     const tick = (now: number) => {
+      if (cancelled) return;
       const t = Math.min(1, (now - start) / durationMs);
-      const next = Math.floor(t * total);
-      setVisibleLength(next);
+      setProgress({ id, length: Math.floor(t * total) });
       if (t < 1) {
         frame = requestAnimationFrame(tick);
       } else {
-        setVisibleLength(total);
-        setDone(true);
+        setProgress({ id, length: total });
       }
     };
 
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
   }, [fullText, enabled]);
 
+  if (!fullText) {
+    return { visibleText: "", done: false };
+  }
+
+  if (!enabled || prefersReducedMotion()) {
+    return { visibleText: fullText, done: true };
+  }
+
+  const length = progress.id === fullText ? progress.length : 0;
   return {
-    visibleText: fullText ? fullText.slice(0, visibleLength) : "",
-    done,
+    visibleText: fullText.slice(0, length),
+    done: progress.id === fullText && length >= fullText.length,
   };
 }
 
@@ -189,21 +195,39 @@ function AskInvite() {
   );
 }
 
-export function PortfolioGuide() {
+type PortfolioGuideProps = {
+  /** Home center ask vs compact site-bar ask. */
+  variant?: PortfolioGuideVariant;
+  /** Change to remount cleanly (e.g. site route changes). */
+  remountKey?: string;
+};
+
+function PortfolioGuideInner({
+  variant,
+}: {
+  variant: PortfolioGuideVariant;
+}) {
   const [message, setMessage] = useState("");
   const [state, setState] = useState<GuideState>({ status: "idle" });
+  const [panelOpen, setPanelOpen] = useState(false);
   const reduceMotion = useRef(false);
+  const inputId =
+    variant === "mini" ? "guide-message-mini" : "guide-message";
 
   useEffect(() => {
     reduceMotion.current = prefersReducedMotion();
   }, []);
 
-  const successReply =
-    state.status === "success" ? state.reply : null;
+  const successReply = state.status === "success" ? state.reply : null;
   const { visibleText, done: typingDone } = useTypewriter(
     successReply,
     state.status === "success",
   );
+
+  const showReply =
+    state.status === "loading" ||
+    state.status === "error" ||
+    state.status === "success";
 
   async function submitQuestion(question: string) {
     const trimmed = question.trim();
@@ -212,6 +236,7 @@ export function PortfolioGuide() {
     }
 
     setState({ status: "loading" });
+    if (variant === "mini") setPanelOpen(true);
 
     try {
       const response = await fetch("/api/guide", {
@@ -248,28 +273,63 @@ export function PortfolioGuide() {
   }
 
   const isLoading = state.status === "loading";
+  const isMini = variant === "mini";
+
+  const replyBody = (
+    <div
+      className={`portfolio-guide-response${
+        isLoading ? " portfolio-guide-response--loading" : ""
+      }${state.status === "idle" ? " portfolio-guide-response--idle" : ""}`}
+      aria-live="polite"
+      aria-busy={isLoading || (state.status === "success" && !typingDone)}
+    >
+      {isLoading && (
+        <p className="portfolio-guide-loading-dots" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </p>
+      )}
+      {isLoading && <span className="visually-hidden">Thinking</span>}
+      {state.status === "error" && <p>{state.message}</p>}
+      {state.status === "success" && !typingDone && (
+        <p aria-hidden="true">{visibleText}</p>
+      )}
+      {state.status === "success" && typingDone && (
+        <p>{linkifyReply(state.reply)}</p>
+      )}
+    </div>
+  );
 
   return (
-    <section className="portfolio-guide" aria-label="Ask Aryan">
+    <section
+      className={`portfolio-guide portfolio-guide--${variant}`}
+      aria-label="Ask Aryan"
+    >
       <div className="portfolio-guide-stage">
         <div className="portfolio-guide-float-wrap">
           <div className="portfolio-guide-float">
             <form className="portfolio-guide-form" onSubmit={handleSubmit}>
-              <label className="portfolio-guide-label" htmlFor="guide-message">
+              <label className="portfolio-guide-label" htmlFor={inputId}>
                 Ask about my work, availability, or projects
               </label>
               <div className="portfolio-guide-input-row">
                 <input
-                  id="guide-message"
+                  id={inputId}
                   className="portfolio-guide-input"
                   type="text"
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
-                  placeholder="ask about my work, availability, or projects…"
+                  placeholder={
+                    isMini
+                      ? "ask…"
+                      : "ask about my work, availability, or projects…"
+                  }
                   maxLength={500}
                   disabled={isLoading}
                   autoComplete="off"
                   aria-busy={isLoading}
+                  aria-controls={isMini ? "guide-mini-panel" : undefined}
                 />
                 <button
                   type="submit"
@@ -283,38 +343,45 @@ export function PortfolioGuide() {
           </div>
         </div>
 
-        <AskInvite />
+        {!isMini && <AskInvite />}
 
-        <div className="portfolio-guide-reply-slot">
+        {!isMini && (
+          <div className="portfolio-guide-reply-slot">{replyBody}</div>
+        )}
+
+        {isMini && panelOpen && showReply && (
           <div
-            className={`portfolio-guide-response${
-              isLoading ? " portfolio-guide-response--loading" : ""
-            }${
-              state.status === "idle" ? " portfolio-guide-response--idle" : ""
-            }`}
-            aria-live="polite"
-            aria-busy={isLoading || (state.status === "success" && !typingDone)}
+            id="guide-mini-panel"
+            className="portfolio-guide-mini-panel"
+            role="region"
+            aria-label="Guide reply"
           >
-            {isLoading && (
-              <p className="portfolio-guide-loading-dots" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-              </p>
-            )}
-            {isLoading && (
-              <span className="visually-hidden">Thinking</span>
-            )}
-            {state.status === "error" && <p>{state.message}</p>}
-            {state.status === "success" && !typingDone && (
-              <p aria-hidden="true">{visibleText}</p>
-            )}
-            {state.status === "success" && typingDone && (
-              <p>{linkifyReply(state.reply)}</p>
-            )}
+            <button
+              type="button"
+              className="portfolio-guide-mini-panel-close"
+              onClick={() => {
+                setPanelOpen(false);
+                setState({ status: "idle" });
+                setMessage("");
+              }}
+            >
+              close
+            </button>
+            <div className="portfolio-guide-mini-panel-body">{replyBody}</div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );
+}
+
+/**
+ * Gemini ask bar — home center wireframe or compact site-chrome mini ask.
+ * `remountKey` remounts cleanly on site navigations.
+ */
+export function PortfolioGuide({
+  variant = "home",
+  remountKey = "default",
+}: PortfolioGuideProps) {
+  return <PortfolioGuideInner key={remountKey} variant={variant} />;
 }

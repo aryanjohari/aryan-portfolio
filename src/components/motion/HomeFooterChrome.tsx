@@ -10,8 +10,8 @@ const contactLinks = [
 ];
 
 /**
- * Home footer: contacts only (always visible). Section links live in the
- * right-rail / under-ask HomeGlyphRow.
+ * Home footer: contacts only (always visible). Section links live in
+ * VoidChrome (home glyph rail / site top nav).
  */
 export function HomeFooterChrome() {
   return (
