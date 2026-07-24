@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 import { buildBaseDiagramSvg } from "@/data/base-diagram";
 import type { ProjectDiagramData } from "@/lib/projects";
-import { prefersReducedMotion } from "@/lib/motion";
+import { MOTION, prefersReducedMotion } from "@/lib/motion";
 
 type ProjectDiagramProps = {
   title: string;
@@ -131,7 +131,7 @@ export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
           tl.to(edges, {
             strokeDashoffset: 0,
             duration: 1.1,
-            ease: "power2.out",
+            ease: MOTION.ease,
             stagger: 0.08,
           });
         }
@@ -141,8 +141,8 @@ export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
             nodes,
             {
               opacity: 1,
-              duration: 0.45,
-              ease: "power1.out",
+              duration: MOTION.medium,
+              ease: MOTION.ease,
               stagger: 0.04,
             },
             edges.length > 0 ? "-=0.55" : 0,

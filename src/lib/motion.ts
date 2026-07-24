@@ -1,3 +1,10 @@
+export {
+  MOTION,
+  motionDuration,
+  motionDurationCss,
+  type MotionPace,
+} from "./motion-tokens";
+
 /**
  * Cross-device theatre gate (boot + Atmosphere).
  * Safe on the server (always false). Client: only requires motion is allowed.

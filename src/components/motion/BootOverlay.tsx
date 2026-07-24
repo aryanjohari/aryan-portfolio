@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   canUseEnhancedMotion,
   canUseTheatreMotion,
+  MOTION,
   removeBootCover,
   signalBootDone,
 } from "@/lib/motion";
@@ -20,17 +21,15 @@ const BEATS = [
 const BG = "#0a0a0a";
 const FG = "#f4f0e8";
 
-/** Type → hold → wipe → next; content (~7.4s) + soft exit hold/fade */
-const TYPE_DURATIONS = [0.95, 1.45, 0.7] as const;
-const HOLD = 1.2;
-const WIPE = 0.3;
-const FINAL_LINGER = 1.3;
-/** Soft reveal of home under aligned ask-bar frame */
-const EXIT_HOLD = 0.4;
-const EXIT_FADE = 1.15;
-const SKIP_FADE = 0.35;
-/** Fade typed line during linger so ask bar reveals in the same spot */
-const TEXT_CROSSFADE = 0.55;
+/** Type → hold → wipe → next; content (~7.4s) + soft exit hold/fade — MOTION.boot */
+const TYPE_DURATIONS = MOTION.boot.typeDurations;
+const HOLD = MOTION.boot.hold;
+const WIPE = MOTION.boot.wipe;
+const FINAL_LINGER = MOTION.boot.finalLinger;
+const EXIT_HOLD = MOTION.boot.exitHold;
+const EXIT_FADE = MOTION.boot.exitFade;
+const SKIP_FADE = MOTION.boot.skipFade;
+const TEXT_CROSSFADE = MOTION.boot.textCrossfade;
 
 const CONTENT_DURATION =
   TYPE_DURATIONS.reduce((sum, d) => sum + d, 0) +
@@ -155,7 +154,7 @@ export function BootOverlay() {
         exitTween = gsap.to(overlayRef.current, {
           opacity: 0,
           duration,
-          ease: "power2.out",
+          ease: MOTION.ease,
           onComplete: finish,
         });
       });
@@ -314,7 +313,7 @@ export function BootOverlay() {
             {
               opacity: 0,
               duration: TEXT_CROSSFADE,
-              ease: "power2.inOut",
+              ease: MOTION.easeInOut,
             },
             fadeStart,
           );

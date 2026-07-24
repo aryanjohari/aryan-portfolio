@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   BOOT_DONE_EVENT,
   isBootDone,
+  MOTION,
   prefersReducedMotion,
 } from "@/lib/motion";
 
@@ -30,7 +31,7 @@ const softLinks = [
   },
 ];
 
-const GLYPH_SIZE = 14;
+const GLYPH_SIZE = 18;
 /** Let name/ask settle briefly after boot before the rail fades in. */
 const REVEAL_DELAY_MS = 900;
 
@@ -208,8 +209,8 @@ export function HomeGlyphRow() {
           opacity: 1,
           x: 0,
           y: 0,
-          duration: 0.55,
-          ease: "power2.out",
+          duration: MOTION.medium,
+          ease: MOTION.ease,
         },
       );
     });

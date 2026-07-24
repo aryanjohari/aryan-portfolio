@@ -9,13 +9,23 @@ import {
   type ReactNode,
 } from "react";
 
-import { prefersReducedMotion } from "@/lib/motion";
+import {
+  BOOT_DONE_EVENT,
+  isBootDone,
+  MOTION,
+  prefersReducedMotion,
+} from "@/lib/motion";
 
 const SITE_PATH_PATTERN =
   /(\/(?:workshop|about|resume\.pdf|projects\/[a-z0-9-]+))/g;
 
 const TYPEWRITER_CPS = 32;
 const TYPEWRITER_MAX_MS = 3000;
+
+/** Soft whisper under the ask bar — DOM only, not on the WebGL canvas. */
+const ASK_INVITE = "ask me anything about my work";
+/** Type-once pace; short line finishes near MOTION.slow. */
+const INVITE_CPS = 28;
 
 type GuideState =
   | { status: "idle" }
@@ -99,6 +109,86 @@ function useTypewriter(fullText: string | null, enabled: boolean) {
   };
 }
 
+/**
+ * Soft invite under the ask bar. Reserves one line so the bar does not jump.
+ * Types once after boot; reduced-motion shows the full line instantly.
+ */
+function AskInvite() {
+  const inviteRef = useRef<HTMLParagraphElement>(null);
+  const [bootDone, setBootDone] = useState(false);
+  const [visible, setVisible] = useState("");
+
+  useEffect(() => {
+    if (isBootDone()) {
+      setBootDone(true);
+      return;
+    }
+    const onDone = () => setBootDone(true);
+    window.addEventListener(BOOT_DONE_EVENT, onDone);
+    return () => window.removeEventListener(BOOT_DONE_EVENT, onDone);
+  }, []);
+
+  useEffect(() => {
+    if (!bootDone) return;
+    const el = inviteRef.current;
+
+    if (prefersReducedMotion()) {
+      setVisible(ASK_INVITE);
+      if (el) el.style.opacity = "1";
+      return;
+    }
+
+    let cancelled = false;
+    let frame = 0;
+    let fadeTween: { kill: () => void } | undefined;
+
+    void import("gsap").then(({ gsap }) => {
+      if (cancelled || !inviteRef.current) return;
+      fadeTween = gsap.fromTo(
+        inviteRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: MOTION.medium, ease: MOTION.ease },
+      );
+    });
+
+    const total = ASK_INVITE.length;
+    const durationMs = Math.max(
+      MOTION.slow * 1000,
+      (total / INVITE_CPS) * 1000,
+    );
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      if (cancelled) return;
+      const t = Math.min(1, (now - start) / durationMs);
+      setVisible(ASK_INVITE.slice(0, Math.floor(t * total)));
+      if (t < 1) {
+        frame = requestAnimationFrame(tick);
+      } else {
+        setVisible(ASK_INVITE);
+      }
+    };
+
+    frame = requestAnimationFrame(tick);
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      fadeTween?.kill();
+    };
+  }, [bootDone]);
+
+  return (
+    <p
+      ref={inviteRef}
+      className="portfolio-guide-invite"
+      aria-hidden={visible.length === 0}
+    >
+      {visible.length > 0 ? visible : "\u00a0"}
+    </p>
+  );
+}
+
 export function PortfolioGuide() {
   const [message, setMessage] = useState("");
   const [state, setState] = useState<GuideState>({ status: "idle" });
@@ -166,7 +256,7 @@ export function PortfolioGuide() {
           <div className="portfolio-guide-float">
             <form className="portfolio-guide-form" onSubmit={handleSubmit}>
               <label className="portfolio-guide-label" htmlFor="guide-message">
-                Ask Aryan anything about his work, background, or availability
+                Ask about my work, availability, or projects
               </label>
               <div className="portfolio-guide-input-row">
                 <input
@@ -175,7 +265,7 @@ export function PortfolioGuide() {
                   type="text"
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
-                  placeholder="ask about me…"
+                  placeholder="ask about my work, availability, or projects…"
                   maxLength={500}
                   disabled={isLoading}
                   autoComplete="off"
@@ -192,6 +282,8 @@ export function PortfolioGuide() {
             </form>
           </div>
         </div>
+
+        <AskInvite />
 
         <div className="portfolio-guide-reply-slot">
           <div

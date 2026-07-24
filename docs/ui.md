@@ -16,6 +16,32 @@ All tokens live as CSS custom properties in `src/app/globals.css`.
 | `--space-3` | `24px` | Section gaps |
 | `--space-4` | `32px` | Page margins |
 | `--font-mono` | IBM Plex Mono | Only font family used |
+| `--motion-fast` | `0.2s` | CSS mirror of `MOTION.fast` |
+| `--motion-medium` | `0.45s` | CSS mirror of `MOTION.medium` |
+| `--motion-slow` | `0.6s` | CSS mirror of `MOTION.slow` |
+
+## Motion language
+
+Shared timing lives in `src/lib/motion-tokens.ts` (re-exported from `src/lib/motion.ts`). Use these for new UI animation — not one-off magic numbers.
+
+| Token | Value | Class of motion |
+|-------|-------|-----------------|
+| `MOTION.fast` | `0.2` s | Hovers, presses, small UI |
+| `MOTION.medium` | `0.45` s | Fades, panels, most enters |
+| `MOTION.slow` | `0.6` s | Larger section / page-ish moves |
+| `MOTION.ease` | `power2.out` | Default GSAP ease |
+| `MOTION.easeInOut` | `power2.inOut` | Symmetric GSAP ease |
+
+Helpers: `motionDuration("fast" \| "medium" \| "slow")`, `motionDurationCss(...)` for `"0.45s"`-style strings. CSS transitions should use `--motion-*` so changing a pace stays consistent.
+
+**Exceptions (cinematic — do not shorten to medium):**
+
+- `MOTION.scramble` — home name scramble (~2.15s)
+- `MOTION.boot` — boot theatre clock (type/hold/wipe/exit fade, etc.)
+
+**Reduced motion:** Tokens do not override a11y. Keep gating with `prefersReducedMotion()` — skip the tween or use zero duration as components already do.
+
+**Rule:** New animations must use `MOTION` tokens (or the matching CSS `--motion-*` vars). No Framer Motion. No page-transition redesign until a dedicated pass.
 
 ## Typography
 
@@ -34,7 +60,7 @@ All tokens live as CSS custom properties in `src/app/globals.css`.
 
 ## Enhanced motion (theatre + desktop extras)
 
-Two gates in `src/lib/motion.ts` (both server-safe → `false`):
+Two gates in `src/lib/motion.ts` (both server-safe → `false`). Shared paces/eases: see **Motion language** above (`src/lib/motion-tokens.ts`).
 
 | Gate | When | Used for |
 |------|------|----------|
@@ -82,23 +108,24 @@ Do **not** link to `/index` anywhere — it aliases to `/` on some hosts. `/inde
 
 Minimal black void (`#0a0a0a`) site-wide via `:root` tokens; home additionally drops header/footer border rules (unboxed void). Workshop and about match that quiet header chrome (no accent band / bottom rule) while keeping full nav. Project pages keep bordered chrome + accent band, rethemed for void contrast.
 
-Editorial composition (desktop): oversized name top-left · centered ask + reply · right-rail section links · contacts footer.
+Editorial composition (desktop): oversized name top-left · centered ask + invite whisper + reply · right-rail section links · contacts footer.
 
-- **Header (home):** stacked identity — hero-scale soft GSAP scramble of `aryan johari` (~2.15s, `clamp(2rem, 7.5vw, 4.75rem)`) after boot on every full load (initial paint is dots only — no final-name flash); quiet role line fades in **under** the name (~0.55s). `prefers-reduced-motion`: final name + role immediately. Accessible via `aria-label` on the name link (`HomeIdentity`).
-- **Center:** void wireframe ask bar (slightly larger) with a **reserved reply slot** below so the bar does not jump when answers appear. Loading dots → character typewriter (~32 cps, capped ~3s); links become interactive when typing finishes. `prefers-reduced-motion`: full reply, no typewriter. No intro essay, no chip rails. Ask bar stays wireframe — no float/tilt chrome. Manual ask only (no auto Gemini).
-- **Section links:** workshop · about · resume — clear text labels with small glyph marks beside them; underline on hover/focus. **Desktop (≥1024px):** fixed vertical stack in the right margin (`HomeGlyphRow`), out of the center cluster. **Mobile / tablet:** horizontal row under the ask stage (collapsed until reveal so the input stays centered). Auto-fades in ~0.9s after boot (immediate if reduced-motion); `inert` only until revealed.
+- **Header (home):** hero-scale soft GSAP scramble of `aryan johari` (`MOTION.scramble` ~2.15s, `clamp(2.35rem, 8.75vw, 5.5rem)`) after boot on every full load (initial paint is dots only — no final-name flash). **No under-name role/tagline.** `prefers-reduced-motion`: final name immediately. Accessible via `aria-label` on the name link (`HomeIdentity`).
+- **Center:** void wireframe ask bar (larger type/padding) with a soft invite whisper under the bar (`ask me anything about my work` — DOM type-once + `MOTION.medium` fade after boot; full text instantly if reduced-motion; one-line reserved height so the bar does not jump) and a **reserved reply slot** below. Placeholder: `ask about my work, availability, or projects…`. Loading dots → character typewriter (~32 cps, capped ~3s); links become interactive when typing finishes. `prefers-reduced-motion`: full reply, no typewriter. No intro essay, no chip rails, no canvas quotes. Ask bar stays wireframe — no float/tilt chrome. Manual ask only (no auto Gemini).
+- **Section links:** workshop · about · resume — clear text labels with larger glyph marks (18px) + ~1rem labels; underline on hover/focus. **Desktop (≥1024px):** fixed vertical stack in the right margin (`HomeGlyphRow`), out of the center cluster. **Mobile / tablet:** horizontal row under the ask stage (collapsed until reveal so the input stays centered). Auto-fades in ~0.9s after boot (`MOTION.medium` enter; immediate if reduced-motion); `inert` only until revealed.
 - **Footer (home):** contacts only (`email · github · linkedin`) — always soft-visible (`HomeFooterChrome`). Light padding; no heavy separator.
 - Ask bar: void fill (`#0a0a0a`), cream/off-white rounded outline, soft outer glow — reads as settled boot wireframe; off-white text + muted placeholder; ghost outline send. No GSAP float / no CSS 3D tilt. Mobile: same language, slightly tighter radius.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ aryan johari (hero-scale)              workshop             │
-│ graduate engineer · auckland · …       about                │
+│                                        about                │
 │                                        resume               │
 │                                                             │
 │           ┌─ void wireframe ask bar ────────────────┐      │
-│           │ ask about me…                     send │      │
+│           │ ask about my work, availability…  send │      │
 │           └─────────────────────────────────────────┘      │
+│           ask me anything about my work (whisper)           │
 │           ┌─ reserved reply slot (scrolls) ─────────┐      │
 │           │ loading → typed reply                   │      │
 │           └─────────────────────────────────────────┘      │
@@ -109,9 +136,9 @@ Editorial composition (desktop): oversized name top-left · centered ask + reply
 
 **Boot → home morph:** void roam → one particle frame on `hi — i'm aryan.` → morph to measured `.portfolio-guide-float` bounds → soft hold + fade into the same void home (header + ask underneath; right-rail / under-ask links auto-fade shortly after boot). Boot signals `portfolio:boot-done` / `data-boot-done` for presence timing. Larger ask bar is picked up by live measure (no particle logic change).
 
-**Home ask CSS classes:** `.home-ask`, `.portfolio-guide-stage`, `.portfolio-guide-reply-slot`
+**Home ask CSS classes:** `.home-ask`, `.portfolio-guide-stage`, `.portfolio-guide-invite`, `.portfolio-guide-reply-slot`
 
-**Home header identity:** `.site-header-identity`, `.site-header-role` (`HomeIdentity`)
+**Home header identity:** `.site-header-identity` (`HomeIdentity`) — name only
 
 **Home soft section links:** `.home-glyph-row`, `.glyph-link`, `.glyph-link-label` (`HomeGlyphRow`) — desktop right-rail; mobile under-ask row
 
@@ -162,7 +189,7 @@ Immersive project gallery — no featured demos, no guide. Same void tokens as h
 
 Exhibit panels match iframe sandbox height. Header uses accent band; body scrolls on mobile.
 
-**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide-float-wrap`, `.portfolio-guide-float`, `.portfolio-guide-form`, `.portfolio-guide-label`, `.portfolio-guide-input-row`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-response`, `.portfolio-guide-response--loading`
+**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide-float-wrap`, `.portfolio-guide-float`, `.portfolio-guide-form`, `.portfolio-guide-label`, `.portfolio-guide-input-row`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-invite`, `.portfolio-guide-response`, `.portfolio-guide-response--loading`
 
 ### Project page (`/projects/[slug]`)
 
@@ -232,14 +259,14 @@ Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **
 | `Atmosphere` | `src/components/motion/Atmosphere.tsx` | Site-wide void + soft pointer/touch trail (post-boot; light budget on mobile) |
 | `BootOverlay` | `src/components/motion/BootOverlay.tsx` | Cross-device dark boot theatre (typed lines + shared p; skips only reduced-motion) |
 | `BootField` | `src/components/motion/BootField.ts` | Void roam → one center frame → ask-bar morph |
-| `HomeIdentity` | `src/components/motion/HomeIdentity.tsx` | Home soft-scramble hero name + quiet role fade |
+| `HomeIdentity` | `src/components/motion/HomeIdentity.tsx` | Home soft-scramble hero name (no under-name role) |
 | `HomeGlyphRow` | `src/components/motion/HomeGlyphRow.tsx` | Post-boot auto-fade section links (desktop right-rail / mobile under-ask) |
 | `HomeFooterChrome` | `src/components/motion/HomeFooterChrome.tsx` | Home contacts only (always visible) |
 | `AboutAnchorNav` | `src/components/AboutAnchorNav.tsx` | About sticky section anchors + scroll-spy + heading fades |
 | `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band (home/workshop/about void chrome softens it); home identity or full nav |
 | `SiteFooter` | `src/components/SiteFooter.tsx` | Contacts; home uses HomeFooterChrome |
 | `FeaturedDemos` | `src/components/FeaturedDemos.tsx` | Featured projects with wired demos |
-| `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Void ask bar + reserved reply slot (load → type) |
+| `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Void ask bar + invite whisper + reserved reply slot (load → type) |
 | `ProjectGallery` | `src/components/ProjectGallery.tsx` | Workshop coverflow gallery (Draggable + InertiaPlugin; no page pin) |
 | `ProjectExhibit` | `src/components/ProjectExhibit.tsx` | Project exhibit: hero, CTAs, stage, story, details |
 | `ProjectDiagram` | `src/components/ProjectDiagram.tsx` | How it works — base SVG or Mermaid + scroll-draw |

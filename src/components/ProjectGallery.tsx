@@ -11,7 +11,11 @@ import {
 } from "react";
 
 import type { Project } from "@/lib/projects";
-import { canUseEnhancedMotion, prefersReducedMotion } from "@/lib/motion";
+import {
+  canUseEnhancedMotion,
+  MOTION,
+  prefersReducedMotion,
+} from "@/lib/motion";
 
 type ProjectGalleryProps = {
   projects: Project[];
@@ -296,8 +300,8 @@ export function ProjectGallery({ projects }: ProjectGalleryProps) {
 
         const tween = gsap.to(proxy, {
           x: targetX,
-          duration: 0.45,
-          ease: "power2.out",
+          duration: MOTION.medium,
+          ease: MOTION.ease,
           onUpdate: () => {
             const x = Number(gsap.getProperty(proxy, "x"));
             applyProgress(-x / spacing);
