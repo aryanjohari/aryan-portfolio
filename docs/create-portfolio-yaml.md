@@ -25,8 +25,10 @@ links:
   github: string          # full URL to this repo
   demo?: string           # only if publicly deployed today
   docs?: string           # only if real docs exist
+diagram?: string          # optional path to architecture mermaid, e.g. docs/architecture.mmd
 ```
 Optional: slug (kebab-case) — omit unless repo name is a bad slug.
+Optional: diagram — only if this repo has a real architecture Mermaid file or markdown fence; otherwise omit (portfolio uses a base flowchart).
 
 ## How to write it
 Read README.md and scan the codebase to confirm what the project actually does and which technologies are used.
@@ -37,6 +39,7 @@ Read README.md and scan the codebase to confirm what the project actually does a
 - status — active if showcase-ready; wip if incomplete; archived only if historical.
 - links.github — use this repo's GitHub URL (infer from git remote if needed).
 - links.demo — include ONLY if you find a real deployed URL in README or config; otherwise omit. Do not guess.
+- diagram — include ONLY if an architecture Mermaid file already exists; otherwise omit.
 
 Do not mention portfolio, registry, iframe, or YAML contract in the copy.
 

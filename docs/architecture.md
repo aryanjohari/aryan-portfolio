@@ -133,10 +133,13 @@ aryan-portfolio/
 │   │   ├── SiteHeader.tsx
 │   │   ├── SiteFooter.tsx
 │   │   ├── ProjectTable.tsx
-│   │   ├── ProjectSplit.tsx
+│   │   ├── ProjectExhibit.tsx
+│   │   ├── ProjectDiagram.tsx
 │   │   └── DemoPanel.tsx
 │   ├── data/
-│   │   └── registry.ts            # Curated project list + demo config
+│   │   ├── registry.ts            # Curated project list + demo config
+│   │   ├── exhibits.ts
+│   │   └── base-diagram.ts        # Fallback How-it-works SVG
 │   └── lib/
 │       ├── portfolio-schema.ts    # YAML types + validation
 │       ├── projects.ts            # Types, merge helper, getters

@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-19T20:01:15.235Z",
+  "fetchedAt": "2026-07-23T19:54:09.353Z",
   "results": [
     {
       "slug": "background-studio",
@@ -27,7 +27,12 @@
         },
         "slug": "background-studio"
       },
-      "fetchedAt": "2026-07-19T20:01:13.576Z"
+      "fetchedAt": "2026-07-23T19:54:01.499Z",
+      "diagram": {
+        "source": "github",
+        "path": "PROJECT.md",
+        "mermaid": "flowchart LR\n  U[You in the browser]\n  C[Hero texture mood sliders]\n  G[GPU full viewport background]\n  J[Preset JSON embed]\n  U --> C\n  C --> G\n  G --> J\n  G --> W[WebM loop demo]\n  G --> P[PNG poster]"
+      }
     },
     {
       "slug": "sound-visualiser",
@@ -51,7 +56,10 @@
           "demo": "https://music.arkhives.nz"
         }
       },
-      "fetchedAt": "2026-07-19T20:01:14.171Z"
+      "fetchedAt": "2026-07-23T19:54:03.324Z",
+      "diagram": {
+        "source": "base"
+      }
     },
     {
       "slug": "pii-gateway",
@@ -73,7 +81,12 @@
           "github": "https://github.com/aryanjohari/pii-gateway"
         }
       },
-      "fetchedAt": "2026-07-19T20:01:14.414Z"
+      "fetchedAt": "2026-07-23T19:54:05.338Z",
+      "diagram": {
+        "source": "github",
+        "path": "docs/architecture.mmd",
+        "mermaid": "%% PII Gateway architecture (Mermaid source of truth)\n%% View: https://mermaid.live  |  local: open docs/view-architecture.html\n%% If you edit this file, update the mermaid block under \"Architecture diagram\" in PROJECT.md.\n\nflowchart TB\n  subgraph callers[\"Who calls it\"]\n    C1[Apps / BFF / workers / scripts]\n    C2[Automation cron or internal jobs]\n  end\n\n  subgraph gw[\"PII Gateway FastAPI container\"]\n    R1[POST /v1/sanitize plus X-API-Key]\n    R2[POST /internal/jobs/* plus internal key]\n    AUTH[Auth and correlation middleware]\n    PL[sanitize pipeline]\n    PR[Presidio Analyzer and Anonymizer]\n    POL[Policy YAML or JSON mount]\n    R1 --> AUTH\n    R2 --> AUTH\n    AUTH --> PL\n    POL --> PL\n    PL --> PR\n    SCH[Optional APScheduler]\n    SCH -.-> R2\n  end\n\n  subgraph inbound[\"Configured batch or file paths\"]\n    PG[(PostgreSQL read-only exports)]\n    LOC[Local inbox CSV or JSON array]\n    S3IN[S3-compatible inbox]\n  end\n\n  subgraph outbound[\"Artifact storage\"]\n    DISK[Local volume]\n    S3OUT[S3-compatible bucket]\n  end\n\n  C1 -->|HTTP JSON| R1\n  C2 -->|HTTP trigger| R2\n  PG --> PL\n  LOC --> PL\n  S3IN --> PL\n  PL --> DISK\n  PL --> S3OUT\n\n  HZ[GET /healthz]\n  HZ -.-> gw"
+      }
     },
     {
       "slug": "ada",
@@ -100,7 +113,10 @@
           "docs": "https://github.com/aryanjohari/ADA/tree/main/docs"
         }
       },
-      "fetchedAt": "2026-07-19T20:01:14.650Z"
+      "fetchedAt": "2026-07-23T19:54:05.366Z",
+      "diagram": {
+        "source": "base"
+      }
     },
     {
       "slug": "gstf",
@@ -126,7 +142,10 @@
           "github": "https://github.com/aryanjohari/GSTF"
         }
       },
-      "fetchedAt": "2026-07-19T20:01:15.234Z"
+      "fetchedAt": "2026-07-23T19:54:07.572Z",
+      "diagram": {
+        "source": "base"
+      }
     }
   ]
 }

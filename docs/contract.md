@@ -17,6 +17,7 @@ links:
   github: string       # Required — full GitHub repo URL
   demo?: string        # Optional external demo URL (registry overrides for embedded demos)
   docs?: string        # Optional documentation URL
+diagram?: string       # Optional path to architecture diagram (e.g. docs/architecture.mmd)
 ```
 
 ## TypeScript alignment
@@ -38,6 +39,13 @@ type PortfolioYaml = {
   stack: string[];
   status: ProjectStatus;
   links: PortfolioLinks;
+  diagram?: string;
+};
+
+type ProjectDiagramData = {
+  source: "github" | "base";
+  path?: string;
+  mermaid?: string;
 };
 ```
 
@@ -48,6 +56,7 @@ type Project = PortfolioYaml & {
   slug: string;
   repo: string;
   demo?: DemoConfig; // from registry only
+  diagram: ProjectDiagramData; // resolved at fetch time
 };
 ```
 
@@ -62,10 +71,21 @@ type Project = PortfolioYaml & {
 | `stack` | Required, non-empty array of strings |
 | `status` | Required, one of `active`, `wip`, `archived` |
 | `links.github` | Required, valid GitHub URL |
-| `links.demo` | Optional URL; used only when no registry demo is wired |
+| `links.demo` | Optional URL; used for “Open live demo” when present |
 | `links.docs` | Optional URL |
+| `diagram` | Optional path hint to a Mermaid file or markdown with a mermaid fence |
 
 Build should fail (or warn) on missing required fields or invalid status values.
+
+## Architecture diagrams
+
+At build time the fetch script resolves a **How it works** diagram for each project:
+
+1. Explicit `diagram` path in `portfolio.yaml` (if set)
+2. Fallbacks: `docs/architecture.mmd`, `docs/architecture.mermaid`, then first ` ```mermaid ` block in `docs/ARCHITECTURE.md` / `PROJECT.md` / `docs/architecture.md`
+3. Else a shared **base** flowchart SVG in the portfolio repo (Input → core → Output)
+
+Fetched Mermaid source is stored on the ok fetch result; the project page renders it via a dynamic Mermaid import, or the base SVG when none is found. Missing diagrams never break the page.
 
 ## Status semantics
 

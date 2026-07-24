@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { ProjectSplit } from "@/components/ProjectSplit";
+import { ProjectExhibit } from "@/components/ProjectExhibit";
 import { getAllSlugs, getProjectBySlug } from "@/lib/projects";
 
 export const revalidate = 3600;
@@ -36,5 +36,5 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
-  return <ProjectSplit project={project} />;
+  return <ProjectExhibit project={project} />;
 }

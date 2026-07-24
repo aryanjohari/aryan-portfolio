@@ -8,6 +8,7 @@ import type {
   FetchedProjectsFile,
   PortfolioLinks,
   PortfolioYaml,
+  ProjectDiagramData,
   ProjectStatus,
 } from "@/lib/portfolio-schema";
 
@@ -15,10 +16,13 @@ export type {
   ContentStatus,
   PortfolioLinks,
   PortfolioYaml,
+  ProjectDiagramData,
   ProjectStatus,
 } from "@/lib/portfolio-schema";
 
 export type { DemoConfig };
+
+const BASE_DIAGRAM: ProjectDiagramData = { source: "base" };
 
 type PlaceholderContent = {
   title: string;
@@ -35,7 +39,8 @@ export type Project = {
   demo?: DemoConfig;
   contentStatus: ContentStatus;
   contentMessage?: string;
-} & (PortfolioYaml | PlaceholderContent);
+  diagram: ProjectDiagramData;
+} & Omit<PortfolioYaml | PlaceholderContent, "diagram">;
 
 function humanizeSlug(slug: string): string {
   return slug
@@ -82,6 +87,7 @@ function buildPlaceholder(entry: RegistryEntry, status: ContentStatus, message?:
     demo: entry.demo,
     contentStatus: status,
     contentMessage: message,
+    diagram: BASE_DIAGRAM,
     title: humanizeSlug(entry.slug),
     summary: placeholderSummary(status),
     description: placeholderDescription(status, entry.repo, message),
@@ -98,14 +104,25 @@ export function mergeProject(
   yaml: PortfolioYaml,
   contentStatus: ContentStatus = "ok",
   contentMessage?: string,
+  diagram: ProjectDiagramData = BASE_DIAGRAM,
 ): Project {
+  const content: Omit<PortfolioYaml, "diagram"> = {
+    title: yaml.title,
+    summary: yaml.summary,
+    description: yaml.description,
+    stack: yaml.stack,
+    status: yaml.status,
+    links: yaml.links,
+    ...(yaml.slug !== undefined ? { slug: yaml.slug } : {}),
+  };
   return {
-    ...yaml,
+    ...content,
     slug: entry.slug,
     repo: entry.repo,
     demo: entry.demo,
     contentStatus,
     contentMessage,
+    diagram,
   };
 }
 
@@ -131,7 +148,7 @@ function getFetchResultsBySlug(): Map<string, FetchResult> | null {
 
 function buildFromFetchResult(entry: RegistryEntry, result: FetchResult): Project {
   if (result.status === "ok") {
-    return mergeProject(entry, result.yaml);
+    return mergeProject(entry, result.yaml, "ok", undefined, result.diagram ?? BASE_DIAGRAM);
   }
   return buildPlaceholder(entry, result.status, result.message);
 }

@@ -5,11 +5,25 @@ import { resolve } from "node:path";
 import { parse } from "yaml";
 
 import { registry } from "../src/data/registry";
-import type { FetchResult, FetchedProjectsFile } from "../src/lib/portfolio-schema";
+import type {
+  FetchResult,
+  FetchedProjectsFile,
+  PortfolioYaml,
+  ProjectDiagramData,
+} from "../src/lib/portfolio-schema";
 import { validatePortfolioYaml } from "../src/lib/portfolio-schema";
 
 const OUTPUT_PATH = resolve(process.cwd(), "src/lib/fetched-projects.json");
 const DEFAULT_BRANCH = "main";
+
+const DIAGRAM_DIRECT_FALLBACKS = ["docs/architecture.mmd", "docs/architecture.mermaid"] as const;
+const DIAGRAM_MARKDOWN_FALLBACKS = [
+  "docs/ARCHITECTURE.md",
+  "PROJECT.md",
+  "docs/architecture.md",
+] as const;
+
+const MERMAID_FENCE_RE = /```mermaid\s*\n([\s\S]*?)```/i;
 
 function loadEnvFile(filename: string): void {
   try {
@@ -39,16 +53,20 @@ function loadEnvFile(filename: string): void {
 loadEnvFile(".env.local");
 loadEnvFile(".env");
 
-function rawUrl(repo: string, branch: string): string {
-  return `https://raw.githubusercontent.com/${repo}/${branch}/portfolio.yaml`;
+function rawUrl(repo: string, branch: string, path: string): string {
+  return `https://raw.githubusercontent.com/${repo}/${branch}/${path}`;
 }
 
-function apiUrl(repo: string, branch: string): string {
-  return `https://api.github.com/repos/${repo}/contents/portfolio.yaml?ref=${encodeURIComponent(branch)}`;
+function apiUrl(repo: string, branch: string, path: string): string {
+  return `https://api.github.com/repos/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}`;
 }
 
-async function fetchRaw(repo: string, branch: string): Promise<{ ok: true; text: string } | { ok: false; status: number }> {
-  const response = await fetch(rawUrl(repo, branch), {
+async function fetchRaw(
+  repo: string,
+  branch: string,
+  path: string,
+): Promise<{ ok: true; text: string } | { ok: false; status: number }> {
+  const response = await fetch(rawUrl(repo, branch, path), {
     headers: { "User-Agent": "aryan-portfolio-fetch" },
   });
 
@@ -68,9 +86,10 @@ type GitHubContentResponse = {
 async function fetchViaApi(
   repo: string,
   branch: string,
+  path: string,
   token: string,
 ): Promise<{ ok: true; text: string } | { ok: false; status: number; message: string }> {
-  const response = await fetch(apiUrl(repo, branch), {
+  const response = await fetch(apiUrl(repo, branch, path), {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github+json",
@@ -97,6 +116,88 @@ async function fetchViaApi(
 
   const text = Buffer.from(body.content.replace(/\n/g, ""), "base64").toString("utf8");
   return { ok: true, text };
+}
+
+/** Fetch a repo file via raw URL, falling back to Contents API when needed. */
+async function fetchRepoFile(
+  repo: string,
+  branch: string,
+  path: string,
+  token: string | undefined,
+): Promise<{ ok: true; text: string } | { ok: false }> {
+  const rawResult = await fetchRaw(repo, branch, path);
+
+  if (rawResult.ok) {
+    return { ok: true, text: rawResult.text };
+  }
+
+  const shouldTryApi = rawResult.status === 404 || rawResult.status === 401 || rawResult.status === 403;
+  if (!shouldTryApi || !token) {
+    return { ok: false };
+  }
+
+  const apiResult = await fetchViaApi(repo, branch, path, token);
+  if (apiResult.ok) {
+    return { ok: true, text: apiResult.text };
+  }
+
+  return { ok: false };
+}
+
+function extractMermaidFromMarkdown(text: string): string | null {
+  const match = text.match(MERMAID_FENCE_RE);
+  if (!match?.[1]) return null;
+  const body = match[1].trim();
+  return body.length > 0 ? body : null;
+}
+
+function isDirectMermaidPath(path: string): boolean {
+  return /\.(mmd|mermaid)$/i.test(path);
+}
+
+async function resolveDiagram(
+  repo: string,
+  branch: string,
+  yaml: PortfolioYaml,
+  token: string | undefined,
+): Promise<ProjectDiagramData> {
+  const candidates: { path: string; mode: "direct" | "markdown" }[] = [];
+
+  if (yaml.diagram) {
+    candidates.push({
+      path: yaml.diagram,
+      mode: isDirectMermaidPath(yaml.diagram) ? "direct" : "markdown",
+    });
+  }
+
+  for (const path of DIAGRAM_DIRECT_FALLBACKS) {
+    candidates.push({ path, mode: "direct" });
+  }
+  for (const path of DIAGRAM_MARKDOWN_FALLBACKS) {
+    candidates.push({ path, mode: "markdown" });
+  }
+
+  const seen = new Set<string>();
+
+  for (const candidate of candidates) {
+    if (seen.has(candidate.path)) continue;
+    seen.add(candidate.path);
+
+    const file = await fetchRepoFile(repo, branch, candidate.path, token);
+    if (!file.ok) continue;
+
+    if (candidate.mode === "direct") {
+      const mermaid = file.text.trim();
+      if (!mermaid) continue;
+      return { source: "github", path: candidate.path, mermaid };
+    }
+
+    const mermaid = extractMermaidFromMarkdown(file.text);
+    if (!mermaid) continue;
+    return { source: "github", path: candidate.path, mermaid };
+  }
+
+  return { source: "base" };
 }
 
 function parseAndValidate(raw: string, slug: string, repo: string): FetchResult {
@@ -132,6 +233,7 @@ function parseAndValidate(raw: string, slug: string, repo: string): FetchResult 
     status: "ok",
     yaml: validation.yaml,
     fetchedAt: new Date().toISOString(),
+    diagram: { source: "base" },
   };
 }
 
@@ -142,68 +244,88 @@ async function fetchEntry(
   token: string | undefined,
 ): Promise<FetchResult> {
   try {
-    const rawResult = await fetchRaw(repo, branch);
+    const rawResult = await fetchRaw(repo, branch, "portfolio.yaml");
+
+    let yamlText: string | null = null;
 
     if (rawResult.ok) {
       console.log(`  ${slug.padEnd(20)} raw OK`);
-      return parseAndValidate(rawResult.text, slug, repo);
-    }
+      yamlText = rawResult.text;
+    } else {
+      const shouldTryApi =
+        rawResult.status === 404 || rawResult.status === 401 || rawResult.status === 403;
 
-    const shouldTryApi = rawResult.status === 404 || rawResult.status === 401 || rawResult.status === 403;
+      if (!shouldTryApi) {
+        console.error(`  ${slug.padEnd(20)} raw ${rawResult.status} → fetch_error`);
+        return {
+          slug,
+          status: "fetch_error",
+          repo,
+          message: `Raw fetch failed with HTTP ${rawResult.status}`,
+        };
+      }
 
-    if (!shouldTryApi) {
-      console.error(`  ${slug.padEnd(20)} raw ${rawResult.status} → fetch_error`);
-      return {
-        slug,
-        status: "fetch_error",
-        repo,
-        message: `Raw fetch failed with HTTP ${rawResult.status}`,
-      };
-    }
+      if (!token) {
+        if (rawResult.status === 404) {
+          console.log(`  ${slug.padEnd(20)} raw 404 → missing_yaml (no token for API)`);
+          return {
+            slug,
+            status: "missing_yaml",
+            repo,
+            message: `portfolio.yaml not found on branch "${branch}"`,
+          };
+        }
+        console.error(`  ${slug.padEnd(20)} raw ${rawResult.status} → fetch_error (no token)`);
+        return {
+          slug,
+          status: "fetch_error",
+          repo,
+          message: `HTTP ${rawResult.status} on raw URL; GITHUB_TOKEN required for private repos`,
+        };
+      }
 
-    if (!token) {
-      if (rawResult.status === 404) {
-        console.log(`  ${slug.padEnd(20)} raw 404 → missing_yaml (no token for API)`);
+      const apiResult = await fetchViaApi(repo, branch, "portfolio.yaml", token);
+
+      if (apiResult.ok) {
+        console.log(`  ${slug.padEnd(20)} raw ${rawResult.status} → API OK`);
+        yamlText = apiResult.text;
+      } else if (apiResult.status === 404) {
+        console.log(`  ${slug.padEnd(20)} raw ${rawResult.status} → API 404 → missing_yaml`);
         return {
           slug,
           status: "missing_yaml",
           repo,
           message: `portfolio.yaml not found on branch "${branch}"`,
         };
+      } else {
+        console.error(`  ${slug.padEnd(20)} API ${apiResult.status} → fetch_error: ${apiResult.message}`);
+        return {
+          slug,
+          status: "fetch_error",
+          repo,
+          message: `GitHub API error (${apiResult.status}): ${apiResult.message}`,
+        };
       }
-      console.error(`  ${slug.padEnd(20)} raw ${rawResult.status} → fetch_error (no token)`);
-      return {
-        slug,
-        status: "fetch_error",
-        repo,
-        message: `HTTP ${rawResult.status} on raw URL; GITHUB_TOKEN required for private repos`,
-      };
     }
 
-    const apiResult = await fetchViaApi(repo, branch, token);
-
-    if (apiResult.ok) {
-      console.log(`  ${slug.padEnd(20)} raw ${rawResult.status} → API OK`);
-      return parseAndValidate(apiResult.text, slug, repo);
+    const result = parseAndValidate(yamlText!, slug, repo);
+    if (result.status !== "ok") {
+      return result;
     }
 
-    if (apiResult.status === 404) {
-      console.log(`  ${slug.padEnd(20)} raw ${rawResult.status} → API 404 → missing_yaml`);
-      return {
-        slug,
-        status: "missing_yaml",
-        repo,
-        message: `portfolio.yaml not found on branch "${branch}"`,
-      };
+    try {
+      const diagram = await resolveDiagram(repo, branch, result.yaml, token);
+      if (diagram.source === "github") {
+        console.log(`  ${slug.padEnd(20)} diagram ← ${diagram.path}`);
+      } else {
+        console.log(`  ${slug.padEnd(20)} diagram ← base template`);
+      }
+      return { ...result, diagram };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "diagram resolve error";
+      console.warn(`  [${slug}] diagram fallback to base: ${message}`);
+      return { ...result, diagram: { source: "base" } };
     }
-
-    console.error(`  ${slug.padEnd(20)} API ${apiResult.status} → fetch_error: ${apiResult.message}`);
-    return {
-      slug,
-      status: "fetch_error",
-      repo,
-      message: `GitHub API error (${apiResult.status}): ${apiResult.message}`,
-    };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown fetch error";
     console.error(`  ${slug.padEnd(20)} fetch_error: ${message}`);
@@ -218,8 +340,13 @@ async function fetchEntry(
 
 function statusNotes(result: FetchResult): string {
   switch (result.status) {
-    case "ok":
-      return `validated (${result.yaml.stack.length} stack items)`;
+    case "ok": {
+      const diagramNote =
+        result.diagram?.source === "github"
+          ? `diagram:${result.diagram.path ?? "github"}`
+          : "diagram:base";
+      return `validated (${result.yaml.stack.length} stack items, ${diagramNote})`;
+    }
     case "missing_yaml":
       return result.message;
     case "invalid_yaml":

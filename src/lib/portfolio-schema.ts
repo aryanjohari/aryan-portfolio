@@ -14,12 +14,26 @@ export type PortfolioYaml = {
   stack: string[];
   status: ProjectStatus;
   links: PortfolioLinks;
+  /** Optional path hint to architecture diagram (e.g. docs/architecture.mmd). */
+  diagram?: string;
+};
+
+export type ProjectDiagramData = {
+  source: "github" | "base";
+  path?: string;
+  mermaid?: string;
 };
 
 export type ContentStatus = "ok" | "missing_yaml" | "invalid_yaml" | "fetch_error";
 
 export type FetchResult =
-  | { slug: string; status: "ok"; yaml: PortfolioYaml; fetchedAt: string }
+  | {
+      slug: string;
+      status: "ok";
+      yaml: PortfolioYaml;
+      fetchedAt: string;
+      diagram?: ProjectDiagramData;
+    }
   | { slug: string; status: "missing_yaml"; repo: string; message: string }
   | { slug: string; status: "invalid_yaml"; repo: string; message: string; raw?: string }
   | { slug: string; status: "fetch_error"; repo: string; message: string };
@@ -93,6 +107,10 @@ export function validatePortfolioYaml(data: unknown): { ok: true; yaml: Portfoli
     return { ok: false, message: "links.docs must be a non-empty string when provided" };
   }
 
+  if (record.diagram !== undefined && !isNonEmptyString(record.diagram)) {
+    return { ok: false, message: "Field diagram must be a non-empty string when provided" };
+  }
+
   const yaml: PortfolioYaml = {
     title: record.title.trim(),
     summary: record.summary.trim(),
@@ -108,6 +126,10 @@ export function validatePortfolioYaml(data: unknown): { ok: true; yaml: Portfoli
 
   if (record.slug !== undefined) {
     yaml.slug = record.slug.trim();
+  }
+
+  if (record.diagram !== undefined) {
+    yaml.diagram = (record.diagram as string).trim();
   }
 
   return { ok: true, yaml };

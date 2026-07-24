@@ -46,7 +46,8 @@ Desktop-only GSAP + Three.js layer. Gate via `canUseEnhancedMotion()` in `src/li
   - **Perf:** 160 agents, trail length 24, DPR capped at 2, `powerPreference: "low-power"`. Target ~55–60fps on mid laptops; if weave drops below ~45fps on older MBAs, drop `AGENT_COUNT` to 128 in `BootField.ts`.
   - **Skip:** click anywhere or Escape; short fade then unmount. Subtle “click to enter” hint.
   - **Mobile / tablet / reduced-motion / coarse pointer:** no boot theatre, no boot Three sim — site shows immediately. Boot always ends with `signalBootDone()` (`data-boot-done` + `portfolio:boot-done`) so home presence (name scramble, section-link reveal) can sync.
-- Wired once via `MotionScaffold` in root `layout.tsx` (`dynamic(..., { ssr: false })`). Do not import three/gsap outside these client motion modules. No Framer Motion.
+- Wired once via `MotionScaffold` in root `layout.tsx` (`dynamic(..., { ssr: false })`). Do not import three/gsap outside client motion modules and page-local clients that already use GSAP (`ProjectGallery`). No Framer Motion.
+- **About anchors** (`AboutAnchorNav`) — sticky section menu with scroll-spy active state + staggered entrance; soft `h2` fade on enter. No pin/scrub. Static when `prefers-reduced-motion`.
 
 ## Header accent texture
 
@@ -65,7 +66,7 @@ Applied via `.site-header-accent` pseudo-element on `SiteHeader`:
 | Nav `home` | `/` | Minimal void: identity header + ask bar + footer |
 | Nav `workshop` | `/workshop` | Coverflow project gallery (drag / arrows / dots) |
 | Home soft `workshop` | `/workshop` | Same as workshop nav |
-| Nav `about` | `/about` | Bio, education, availability |
+| Nav `about` | `/about` | Void blog read: philosophy, background, education, availability |
 | Home soft `about` | `/about` | Same as about nav |
 | Nav `resume` | `/resume.pdf` | PDF download |
 | Home soft `resume.pdf` | `/resume.pdf` | Same PDF |
@@ -74,7 +75,7 @@ Do **not** link to `/index` anywhere — it aliases to `/` on some hosts. `/inde
 
 ### Home (`/`) — Ask Aryan void
 
-Minimal black void (`#0a0a0a`) site-wide via `:root` tokens; home additionally drops header/footer border rules (unboxed void). Workshop matches that quiet header chrome (no accent band / bottom rule) while keeping full nav. About / project pages keep bordered chrome + accent band, rethemed for void contrast.
+Minimal black void (`#0a0a0a`) site-wide via `:root` tokens; home additionally drops header/footer border rules (unboxed void). Workshop and about match that quiet header chrome (no accent band / bottom rule) while keeping full nav. Project pages keep bordered chrome + accent band, rethemed for void contrast.
 
 Editorial composition (desktop): oversized name top-left · centered ask + reply · right-rail section links · contacts footer.
 
@@ -160,55 +161,63 @@ Exhibit panels match iframe sandbox height. Header uses accent band; body scroll
 
 ### Project page (`/projects/[slug]`)
 
-Wider shell (`max-width: 1400px`) than index/about. Desktop grid is **1fr : 3fr** (~25% narrative, ~75% sandbox).
+Single-column **exhibit** inside the wider project shell (`max-width: 1400px`). Story text stays ~72ch; diagram/stage can stretch wider.
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│ header (960px)                                                           │
-├──────────────┬───────────────────────────────────────────────────────────┤
-│              │                                                           │
-│  Background  │  ┌ sandbox ─────────────── open in new tab ────────────┐ │
-│  Studio      │  │                                                       │ │
-│  active      │  │                                                       │ │
-│              │  │              [ iframe — ~75vh tall ]                  │ │
-│  WebGL lab…  │  │                                                       │ │
-│              │  │                                                       │ │
-│  stack       │  │                                                       │ │
-│  github →    │  └───────────────────────────────────────────────────────┘ │
-│  (max 320px) │                                                           │
-│              │                                                           │
-├──────────────┴───────────────────────────────────────────────────────────┤
-│ footer (960px)                                                           │
-└──────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ header                                                       │
+├──────────────────────────────────────────────────────────────┤
+│  live demo | exhibit | research                              │
+│  Title                                                       │
+│  One exhibit sentence…                                       │
+│                                                              │
+│  [Open live demo ↗]  GitHub  Docs  ← Back to workshop        │
+│                                                              │
+│  (Stage — exhibit DemoPanel only; live demos are CTA-first)  │
+│                                                              │
+│  Story                                                       │
+│  Full description…                                           │
+│                                                              │
+│  How it works                                                │
+│  ┌ diagram (base SVG or GitHub mermaid) ──────────────────┐  │
+│  │  Input → Core → Output (+ Config / Storage)            │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                              │
+│  Details — status, stack, secondary links                    │
+├──────────────────────────────────────────────────────────────┤
+│ footer                                                       │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-Mobile: columns stack — narrative block first, full-width sandbox below (min-height ~50vh).
+**Live / iframe:** primary action is **Open live demo ↗** (new tab). No full-page iframe hero on the slug page. Workshop cards stay the short hook; this page is the deeper exhibit.
 
-### About (`/about`)
+**Exhibit registry demos:** Stage still renders `DemoPanel` with static sample content.
+
+**Diagram:** Every slug shows How it works. Build-time fetch stores GitHub Mermaid when found; otherwise the void base flowchart. Scroll-draw via GSAP StrokeDashoffset + ScrollTrigger; `prefers-reduced-motion` shows the full diagram.
+
+### About (`/about`) — void blog read
+
+Hire / who-why page — **clear blog-style read**, not a guided dossier, not a second gallery, not a second Gemini ask. Quiet void chrome (same as workshop). Atmosphere trail may show behind (`pointer-events: none`).
+
+**Layout**
+1. **Intro** — `> about` + short lede.
+2. **Anchor menu** — sticky section nav (01–04) with scroll-spy highlight + entrance stagger; desktop side rail, mobile sticky top strip.
+3. **Sections** — philosophy → background → education → availability; wider measure (~78ch), clear `h2` hierarchy, generous spacing; philosophy pull-quote; soft heading fade on scroll enter (static under reduced-motion). Hire details live in the availability section, not a top badge.
+4. **Footer** — resume CTA + ask/workshop links.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ header                                                      │
+│ aryan johari (quiet)           home · workshop · about · …  │
 ├─────────────────────────────────────────────────────────────┤
-│                                                             │
 │  > about                                                    │
-│                                                             │
-│  Short bio paragraph…                                       │
-│                                                             │
-│  education                                                  │
-│  ─────────                                                  │
-│  Degree, institution, year                                  │
-│                                                             │
-│  availability                                               │
-│  ────────────                                               │
-│  Seeking graduate role · Auckland · from Sept 2026          │
-│                                                             │
-│  [ download resume.pdf ]                                    │
-│                                                             │
-├─────────────────────────────────────────────────────────────┤
-│ footer                                                      │
+│  01 philosophy  │  philosophy                               │
+│  02 background  │  “I think in systems…”                    │
+│  03 education   │  background / education / availability    │
+│  04 availability│  [download resume.pdf]                    │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **86.5%**). No coverflow, no embedded PortfolioGuide, no boot replay, no seal/chapter gates.
 
 ## Components
 
@@ -221,26 +230,30 @@ Mobile: columns stack — narrative block first, full-width sandbox below (min-h
 | `HomeIdentity` | `src/components/motion/HomeIdentity.tsx` | Home soft-scramble hero name + quiet role fade |
 | `HomeGlyphRow` | `src/components/motion/HomeGlyphRow.tsx` | Post-boot auto-fade section links (desktop right-rail / mobile under-ask) |
 | `HomeFooterChrome` | `src/components/motion/HomeFooterChrome.tsx` | Home contacts only (always visible) |
-| `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band (home/workshop void chrome softens it); home identity or full nav |
+| `AboutAnchorNav` | `src/components/AboutAnchorNav.tsx` | About sticky section anchors + scroll-spy + heading fades |
+| `SiteHeader` | `src/components/SiteHeader.tsx` | Accent band (home/workshop/about void chrome softens it); home identity or full nav |
 | `SiteFooter` | `src/components/SiteFooter.tsx` | Contacts; home uses HomeFooterChrome |
 | `FeaturedDemos` | `src/components/FeaturedDemos.tsx` | Featured projects with wired demos |
 | `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Void ask bar + reserved reply slot (load → type) |
 | `ProjectGallery` | `src/components/ProjectGallery.tsx` | Workshop coverflow gallery (Draggable + InertiaPlugin; no page pin) |
-| `ProjectSplit` | `src/components/ProjectSplit.tsx` | Two-column project layout |
-| `DemoPanel` | `src/components/DemoPanel.tsx` | Demo sandbox or placeholder state |
+| `ProjectExhibit` | `src/components/ProjectExhibit.tsx` | Project exhibit: hero, CTAs, stage, story, details |
+| `ProjectDiagram` | `src/components/ProjectDiagram.tsx` | How it works — base SVG or Mermaid + scroll-draw |
+| `DemoPanel` | `src/components/DemoPanel.tsx` | Exhibit sandbox (and unused iframe helper) |
 
 ## Responsive rules
 
 | Breakpoint | Behaviour |
 |------------|-----------|
-| `< md` (768px) | Project split stacks vertically (narrative first); sandbox min-height ~50vh; workshop coverflow uses touch drag (no page pin) |
-| `≥ md` | Index/about: 960px max-width. Project pages: 1400px shell, **1fr / 3fr** split, sandbox ~`calc(100dvh - 12rem)` |
+| `< md` (768px) | Exhibit stacks naturally; diagram scrolls horizontally if needed; workshop coverflow uses touch drag (no page pin) |
+| `≥ md` | Index/about: 960px max-width. Project pages: 1400px shell, readable exhibit column |
 
 ## Demo panel states
 
+Used on project pages for **registry exhibit** demos (and still available for iframe elsewhere). Live projects on `/projects/[slug]` prefer **Open live demo ↗** instead of embedding.
+
 1. **Not wired** — dashed border, muted text: "Demo not wired"
-2. **Iframe (live)** — header row (`sandbox` + open in new tab), embedded iframe filling a tall panel (~75vh desktop / ~50vh mobile). Loading overlay while iframe loads; fallback if embed blocked or load times out (~8s). On mobile, prominent **open in new tab** link above iframe.
-3. **Exhibit (static)** — header row (`exhibit` + variant label), scrollable `<pre>` body with monospace sample content. Same min-height as iframe panel. Variants: `api-sample` (PII Gateway), `terminal-log` (ADA), `metrics` (GSTF). Content in `src/data/exhibits.ts`.
+2. **Iframe (live)** — header row (`sandbox` + open in new tab), embedded iframe. Loading overlay; fallback if embed blocked or load times out (~8s). On mobile, prominent **open in new tab** link above iframe. **Slug pages do not use this as the hero** — CTA-first.
+3. **Exhibit (static)** — header row (`exhibit` + variant label), scrollable `<pre>` body with monospace sample content. Shown in the exhibit Stage section. Variants: `api-sample` (PII Gateway), `terminal-log` (ADA), `metrics` (GSTF). Content in `src/data/exhibits.ts`.
 4. **Wired, not implemented** (`api`, `edge`) — solid border, shows demo type label + "Coming soon"
 
 ## Changing design decisions
