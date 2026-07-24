@@ -5,11 +5,10 @@
  */
 
 const CLEAR = 0x0a0a0a;
-/** Mid-laptop budget; drop to 128 if weave drops below ~45fps on older MBAs. */
-const AGENT_COUNT = 160;
-const TRAIL_LEN = 24;
-const TARGET_COUNT = AGENT_COUNT;
-const MAX_SEGMENTS = AGENT_COUNT * (TRAIL_LEN - 1);
+/** Mid-laptop budget; mobile/coarse use lighter opts from BootOverlay. */
+const DEFAULT_AGENT_COUNT = 160;
+const DEFAULT_TRAIL_LEN = 24;
+const DEFAULT_MAX_DPR = 2;
 const CAMERA_FOV = 48;
 const CAMERA_Z = 4.4;
 const POINT_SIZE = 0.078;
@@ -23,6 +22,12 @@ export type BootFieldHandle = {
 export type BootFieldOptions = {
   /** Story progress 0→1 — same source as typing timeline. Read every RAF. */
   getProgress?: () => number;
+  /** Particle count (desktop ~160, mobile ~80). */
+  agentCount?: number;
+  /** Trail length per agent (desktop ~24, mobile ~14). */
+  trailLen?: number;
+  /** Cap devicePixelRatio (desktop 2, mobile 1.5). */
+  maxDpr?: number;
 };
 
 type Agent = {
@@ -317,18 +322,18 @@ function screenToWorld(
   };
 }
 
-function buildAgents(): Agent[] {
+function buildAgents(agentCount: number, trailLen: number): Agent[] {
   const agents: Agent[] = [];
-  for (let i = 0; i < AGENT_COUNT; i++) {
+  for (let i = 0; i < agentCount; i++) {
     agents.push({
       id: i,
       x: (hash(i, 1) - 0.5) * 5.4,
       y: (hash(i, 2) - 0.5) * 4.0,
       z: (hash(i, 3) - 0.5) * 5.6,
-      targetIdx: i % TARGET_COUNT,
+      targetIdx: i % agentCount,
       hueBias: hash(i, 4) * 360,
       speedBias: 0.7 + hash(i, 5) * 0.6,
-      trail: new Float32Array(TRAIL_LEN * 3),
+      trail: new Float32Array(trailLen * 3),
       trailHead: 0,
       trailFilled: 0,
     });
@@ -343,9 +348,10 @@ function fillBarTargets(
   halfW: number,
   halfH: number,
   targets: Vec3[],
+  targetCount: number,
 ): void {
-  for (let i = 0; i < TARGET_COUNT; i++) {
-    const u = (i + 0.5) / TARGET_COUNT;
+  for (let i = 0; i < targetCount; i++) {
+    const u = (i + 0.5) / targetCount;
     const { nx, ny } = pointOnRoundedRectEdge(shape, u, vw, vh);
     const pt = screenToWorld(nx, ny, halfW, halfH);
     pt.z =
@@ -360,6 +366,11 @@ export async function createBootField(
 ): Promise<BootFieldHandle> {
   const THREE = await import("three");
   const getProgress = opts.getProgress;
+  const agentCount = Math.max(12, opts.agentCount ?? DEFAULT_AGENT_COUNT);
+  const trailLen = Math.max(4, opts.trailLen ?? DEFAULT_TRAIL_LEN);
+  const maxDpr = opts.maxDpr ?? DEFAULT_MAX_DPR;
+  const targetCount = agentCount;
+  const maxSegments = agentCount * (trailLen - 1);
 
   let progress = 0;
   let disposed = false;
@@ -380,21 +391,21 @@ export async function createBootField(
     powerPreference: "low-power",
   });
   renderer.setClearColor(CLEAR, 1);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxDpr));
   const canvas = renderer.domElement;
   canvas.style.cssText =
     "position:absolute;inset:0;width:100%;height:100%;display:block;";
   host.appendChild(canvas);
 
-  const agents = buildAgents();
-  const targets: Vec3[] = Array.from({ length: TARGET_COUNT }, () => ({
+  const agents = buildAgents(agentCount, trailLen);
+  const targets: Vec3[] = Array.from({ length: targetCount }, () => ({
     x: 0,
     y: 0,
     z: 0,
   }));
 
-  const positions = new Float32Array(MAX_SEGMENTS * 2 * 3);
-  const colors = new Float32Array(MAX_SEGMENTS * 2 * 3);
+  const positions = new Float32Array(maxSegments * 2 * 3);
+  const colors = new Float32Array(maxSegments * 2 * 3);
   const lineGeo = new THREE.BufferGeometry();
   lineGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   lineGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
@@ -407,8 +418,8 @@ export async function createBootField(
   scene.add(new THREE.LineSegments(lineGeo, lineMat));
 
   const circleTex = makeCircleTexture(THREE);
-  const pointPos = new Float32Array(AGENT_COUNT * 3);
-  const pointCol = new Float32Array(AGENT_COUNT * 3);
+  const pointPos = new Float32Array(agentCount * 3);
+  const pointCol = new Float32Array(agentCount * 3);
   const pointGeo = new THREE.BufferGeometry();
   pointGeo.setAttribute("position", new THREE.BufferAttribute(pointPos, 3));
   pointGeo.setAttribute("color", new THREE.BufferAttribute(pointCol, 3));
@@ -504,7 +515,7 @@ export async function createBootField(
     if (morphT > 0.02) textLocked = true;
     const { text, ask } = sampleBars(vw, vh, aspect);
     const shape = lerpShape(text, ask, morphT);
-    fillBarTargets(shape, vw, vh, halfW, halfH, targets);
+    fillBarTargets(shape, vw, vh, halfW, halfH, targets, targetCount);
   };
 
   const pushTrail = (agent: Agent) => {
@@ -512,8 +523,8 @@ export async function createBootField(
     agent.trail[i] = agent.x;
     agent.trail[i + 1] = agent.y;
     agent.trail[i + 2] = agent.z;
-    agent.trailHead = (agent.trailHead + 1) % TRAIL_LEN;
-    if (agent.trailFilled < TRAIL_LEN) agent.trailFilled += 1;
+    agent.trailHead = (agent.trailHead + 1) % trailLen;
+    if (agent.trailFilled < trailLen) agent.trailFilled += 1;
   };
 
   for (const agent of agents) {
@@ -526,7 +537,7 @@ export async function createBootField(
     const h = host.clientHeight || window.innerHeight;
     camera.aspect = w / Math.max(h, 1);
     camera.updateProjectionMatrix();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxDpr));
     renderer.setSize(w, h, false);
     frozenAsk = null;
     frozenText = null;
@@ -600,7 +611,7 @@ export async function createBootField(
       12,
       Math.floor(
         12 +
-          (AGENT_COUNT - 12) *
+          (agentCount - 12) *
             Math.max(0.4 * awaken + 0.6 * weave, gather, snap),
       ),
     );
@@ -613,8 +624,8 @@ export async function createBootField(
     const trailVis = Math.max(
       3,
       Math.floor(
-        7 +
-          (TRAIL_LEN - 7) *
+        Math.min(7, trailLen) +
+          (trailLen - Math.min(7, trailLen)) *
             (0.4 + weave * 0.7) *
             (1 - snap * 0.82),
       ),
@@ -627,7 +638,7 @@ export async function createBootField(
 
     for (let a = 0; a < activeCount; a++) {
       const agent = agents[a];
-      const homeIdx = a % TARGET_COUNT;
+      const homeIdx = a % targetCount;
       agent.targetIdx = homeIdx;
       const slot = targets[homeIdx];
 
@@ -728,7 +739,7 @@ export async function createBootField(
       const filled = Math.min(agent.trailFilled, trailVis);
       if (filled >= 2 && nodeHide < 0.95) {
         for (let s = 0; s < filled - 1; s++) {
-          if (segIndex >= MAX_SEGMENTS) break;
+          if (segIndex >= maxSegments) break;
           const age = s / (filled - 1);
           const fade = age * age;
           const alphaBoost =
@@ -740,12 +751,12 @@ export async function createBootField(
 
           const oldestOffset = filled - 1;
           const i0 =
-            ((agent.trailHead - 1 - oldestOffset + s + TRAIL_LEN * 4) %
-              TRAIL_LEN) *
+            ((agent.trailHead - 1 - oldestOffset + s + trailLen * 4) %
+              trailLen) *
             3;
           const i1 =
-            ((agent.trailHead - 1 - oldestOffset + s + 1 + TRAIL_LEN * 4) %
-              TRAIL_LEN) *
+            ((agent.trailHead - 1 - oldestOffset + s + 1 + trailLen * 4) %
+              trailLen) *
             3;
 
           const base = segIndex * 6;
@@ -775,8 +786,8 @@ export async function createBootField(
       }
 
       // Closed loop on the single bar
-      if (snap > 0.12 && segIndex < MAX_SEGMENTS) {
-        const next = targets[(homeIdx + 1) % TARGET_COUNT];
+      if (snap > 0.12 && segIndex < maxSegments) {
+        const next = targets[(homeIdx + 1) % targetCount];
         const useSlot = snap > 0.35 || morph > 0.4;
         const ax = useSlot ? slot.x : agent.x;
         const ay = useSlot ? slot.y : agent.y;
@@ -807,7 +818,7 @@ export async function createBootField(
       }
     }
 
-    for (let s = segIndex; s < MAX_SEGMENTS; s++) {
+    for (let s = segIndex; s < maxSegments; s++) {
       const base = s * 6;
       for (let k = 0; k < 6; k++) {
         positions[base + k] = 0;
@@ -815,7 +826,7 @@ export async function createBootField(
       }
     }
 
-    for (let a = activeCount; a < AGENT_COUNT; a++) {
+    for (let a = activeCount; a < agentCount; a++) {
       const pi = a * 3;
       pointPos[pi] = 0;
       pointPos[pi + 1] = 0;

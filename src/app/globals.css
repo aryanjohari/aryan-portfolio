@@ -22,11 +22,14 @@
 
 html {
   font-size: 14px;
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
   min-height: 100dvh;
+  max-width: 100%;
+  overflow-x: clip;
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-mono), ui-monospace, monospace;
@@ -54,8 +57,11 @@ code {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  max-width: 100%;
   /* Transparent so Atmosphere WebGL void shows through; body stays #0a0a0a */
   background-color: transparent;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 /* SSR flash shield: holds void until boot gate / BootOverlay takes over */
@@ -111,11 +117,13 @@ html[data-boot-cover-skip] #boot-cover {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding: var(--space-2) var(--space-4);
+  padding: calc(var(--space-2) + env(safe-area-inset-top, 0px)) var(--space-4)
+    var(--space-2);
   max-width: 960px;
   margin: 0 auto;
   flex-wrap: wrap;
   gap: var(--space-1);
+  row-gap: var(--space-2);
 }
 
 .site-name {
@@ -156,17 +164,31 @@ html[data-boot-cover-skip] #boot-cover {
 
 .site-nav {
   font-size: 0.875rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0;
+  max-width: 100%;
+}
+
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-block: 0.15rem;
 }
 
 .site-nav-sep {
   color: var(--color-muted);
+  padding-inline: 0.15rem;
 }
 
 /* Footer */
 
 .site-footer {
   border-top: 1px solid var(--color-border);
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-4)
+    calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
 }
 
 .site-footer-inner {
@@ -353,8 +375,8 @@ body:has(.home-ask) .site-header-accent {
 
 body:has(.home-ask) .site-header-inner {
   max-width: none;
-  padding: clamp(1.5rem, 4vw, 2.75rem) clamp(1.25rem, 4vw, 2.75rem)
-    var(--space-2);
+  padding: calc(clamp(1.5rem, 4vw, 2.75rem) + env(safe-area-inset-top, 0px))
+    clamp(1.25rem, 4vw, 2.75rem) var(--space-2);
 }
 
 body:has(.home-ask) .site-header-identity {
@@ -362,10 +384,12 @@ body:has(.home-ask) .site-header-identity {
 }
 
 body:has(.home-ask) .site-header-identity .site-name {
-  font-size: clamp(2.5rem, 7.5vw, 4.75rem);
+  font-size: clamp(2rem, 7.5vw, 4.75rem);
   font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 0.95;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 body:has(.home-ask) .site-header-role {
@@ -376,7 +400,8 @@ body:has(.home-ask) .site-header-role {
 
 body:has(.home-ask) .site-footer {
   border-top: none;
-  padding: var(--space-2) var(--space-4) var(--space-3);
+  padding: var(--space-2) var(--space-4)
+    calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
 }
 
 body:has(.home-ask) .site-main {
@@ -455,12 +480,31 @@ body:has(.home-ask) .site-main {
   .home-ask {
     padding: var(--space-2) 0 var(--space-3);
     justify-content: flex-start;
-    padding-top: var(--space-4);
+    padding-top: var(--space-3);
+    gap: var(--space-1);
   }
 
   .featured-demo-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* Short phones / landscape: keep ask + glyphs from fighting the fold */
+@media (max-height: 520px) and (max-width: 1023px) {
+  body:has(.home-ask) .site-header-inner {
+    padding-top: calc(var(--space-2) + env(safe-area-inset-top, 0px));
+    padding-bottom: var(--space-1);
+  }
+
+  body:has(.home-ask) .site-header-identity .site-name {
+    font-size: clamp(1.65rem, 6vw, 2.5rem);
+  }
+
+  .home-ask {
+    justify-content: flex-start;
+    padding-top: var(--space-1);
+    padding-bottom: var(--space-1);
   }
 }
 
@@ -680,12 +724,14 @@ body:has(.home-ask) .site-main {
   .portfolio-guide-input {
     font-size: 1rem;
     padding: 1.05rem 1.1rem;
+    min-height: 2.75rem;
   }
 
   .portfolio-guide-submit {
     margin: 0.45rem 0.45rem 0.45rem 0;
     padding: 0 0.85rem;
-    min-height: 2.5rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem; /* ≥44px tap target */
   }
 
   .portfolio-guide-reply-slot {
@@ -717,8 +763,8 @@ body:has(.workshop-page) .site-header-accent {
 
 body:has(.workshop-page) .site-header-inner {
   max-width: none;
-  padding: clamp(1.25rem, 3vw, 2rem) clamp(1.25rem, 4vw, 2.75rem)
-    var(--space-2);
+  padding: calc(clamp(1.25rem, 3vw, 2rem) + env(safe-area-inset-top, 0px))
+    clamp(1.25rem, 4vw, 2.75rem) var(--space-2);
 }
 
 body:has(.workshop-page) .site-name {
@@ -917,10 +963,13 @@ body:has(.workshop-page) .site-main {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: min(28rem, calc(100vw - 3rem));
+  /* Prefer % over 100vw to avoid scrollbar-induced horizontal overflow */
+  width: min(28rem, calc(100% - 3rem));
+  max-width: calc(100% - 2rem);
   margin: 0;
   transform-origin: center center;
   will-change: transform, opacity;
+  box-sizing: border-box;
 }
 
 .project-gallery:not(.project-gallery--ready) .project-gallery-card {
@@ -1056,11 +1105,24 @@ body:has(.workshop-page) .site-main {
 
 @media (max-width: 767px) {
   .project-gallery-stage {
-    min-height: min(68dvh, 32rem);
+    min-height: min(58dvh, 28rem);
   }
 
   .project-gallery-card {
-    width: min(20.5rem, calc(100vw - 2.5rem));
+    width: min(20.5rem, calc(100% - 2.5rem));
+    max-width: calc(100% - 1.5rem);
+  }
+
+  .project-gallery-arrow {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .project-gallery-dot {
+    min-width: 0.75rem;
+    min-height: 0.75rem;
+    padding: 0.55rem;
+    box-sizing: content-box;
   }
 
   .project-gallery-card-inner {
@@ -1569,8 +1631,8 @@ body:has(.about-page) .site-header-accent {
 
 body:has(.about-page) .site-header-inner {
   max-width: none;
-  padding: clamp(1.25rem, 3vw, 2rem) clamp(1.25rem, 4vw, 2.75rem)
-    var(--space-2);
+  padding: calc(clamp(1.25rem, 3vw, 2rem) + env(safe-area-inset-top, 0px))
+    clamp(1.25rem, 4vw, 2.75rem) var(--space-2);
 }
 
 body:has(.about-page) .site-name {
@@ -1644,7 +1706,7 @@ body:has(.about-page) .site-main {
 /* Sticky animated section anchors */
 .about-anchor {
   position: sticky;
-  top: var(--space-2);
+  top: calc(var(--space-2) + env(safe-area-inset-top, 0px));
   z-index: 2;
   display: grid;
   grid-template-columns: auto 1fr;

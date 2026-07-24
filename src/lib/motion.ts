@@ -1,5 +1,14 @@
 /**
- * Desktop-only enhanced motion gate.
+ * Cross-device theatre gate (boot + Atmosphere).
+ * Safe on the server (always false). Client: only requires motion is allowed.
+ */
+export function canUseTheatreMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/**
+ * Desktop extras gate (gallery rotateY, dense particle budgets).
  * Safe on the server (always false). Client: all media queries must match.
  */
 export function canUseEnhancedMotion(): boolean {
@@ -18,7 +27,7 @@ export function removeBootCover(): void {
   document.getElementById("boot-cover")?.remove();
 }
 
-/** Fired once when boot theatre finishes or is skipped (incl. mobile). */
+/** Fired once when boot theatre finishes or is skipped (incl. reduced-motion). */
 export const BOOT_DONE_EVENT = "portfolio:boot-done";
 
 export function prefersReducedMotion(): boolean {

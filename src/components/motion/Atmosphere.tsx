@@ -5,12 +5,12 @@ import { useEffect, useRef, useState } from "react";
 import {
   BOOT_DONE_EVENT,
   canUseEnhancedMotion,
+  canUseTheatreMotion,
   isBootDone,
 } from "@/lib/motion";
 
 /** Site void clear — matches :root `--color-bg` / BootField. */
 const CLEAR = 0x0a0a0a;
-const MAX_TRAIL = 200;
 const DEAD_ZONE_PAD = 24;
 const DEAD_ZONE_WEIGHT = 0.15;
 const PEAK_ALPHA = 0.55;
@@ -20,9 +20,18 @@ const ASK_RECT_CACHE_MS = 100;
 /** Soft comet head size in CSS pixels. */
 const SIZE_HEAD = 38;
 const SIZE_TAIL = 9;
-/** Spacing between stroke samples — denser = smoother ribbon. */
-const SAMPLE_SPACING = 2.4;
-const MAX_SAMPLES_PER_MOVE = 14;
+
+const DENSE_TRAIL = {
+  maxTrail: 200,
+  sampleSpacing: 2.4,
+  maxSamplesPerMove: 14,
+} as const;
+
+const LIGHT_TRAIL = {
+  maxTrail: 90,
+  sampleSpacing: 3.6,
+  maxSamplesPerMove: 8,
+} as const;
 
 const RED = { r: 1, g: 70 / 255, b: 85 / 255 };
 const BLUE = { r: 85 / 255, g: 130 / 255, b: 1 };
@@ -67,33 +76,27 @@ function makeSoftGlowTexture(THREE: typeof import("three")) {
 
 /**
  * Full-viewport fixed WebGL canvas behind content (all routes).
- * Soft red↔blue comet trail when enhanced motion + boot done; otherwise null.
+ * Soft red↔blue comet trail when theatre motion + boot done; otherwise null.
  * Ask-bar dead zone only applies when `.portfolio-guide-float` exists (home).
+ * Touch and mouse both drive the trail via pointermove.
  */
 export function Atmosphere() {
   const hostRef = useRef<HTMLDivElement>(null);
-  const [enhanced, setEnhanced] = useState(false);
+  const [theatre, setTheatre] = useState(false);
 
   useEffect(() => {
-    setEnhanced(canUseEnhancedMotion());
+    setTheatre(canUseTheatreMotion());
 
-    const mqDesktop = window.matchMedia("(min-width: 1024px)");
-    const mqPointer = window.matchMedia("(pointer: fine)");
     const mqMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-    const sync = () => setEnhanced(canUseEnhancedMotion());
-    mqDesktop.addEventListener("change", sync);
-    mqPointer.addEventListener("change", sync);
+    const sync = () => setTheatre(canUseTheatreMotion());
     mqMotion.addEventListener("change", sync);
 
     return () => {
-      mqDesktop.removeEventListener("change", sync);
-      mqPointer.removeEventListener("change", sync);
       mqMotion.removeEventListener("change", sync);
     };
   }, []);
 
-  const active = enhanced;
+  const active = theatre;
 
   useEffect(() => {
     if (!active) return;
@@ -109,6 +112,7 @@ export function Atmosphere() {
     let onResize: (() => void) | undefined;
     let onVisibility: (() => void) | undefined;
     let onPointerMove: ((e: PointerEvent) => void) | undefined;
+    let onPointerUp: (() => void) | undefined;
     let onPointerLeave: (() => void) | undefined;
     let onPointerEnter: (() => void) | undefined;
     let onBootDone: (() => void) | undefined;
@@ -116,6 +120,12 @@ export function Atmosphere() {
     void (async () => {
       const THREE = await import("three");
       if (disposed || !hostRef.current) return;
+
+      const dense = canUseEnhancedMotion();
+      const budget = dense ? DENSE_TRAIL : LIGHT_TRAIL;
+      const maxTrail = budget.maxTrail;
+      const sampleSpacing = budget.sampleSpacing;
+      const maxSamplesPerMove = budget.maxSamplesPerMove;
 
       let allowTrail = isBootDone();
       let pathHue = 0;
@@ -130,7 +140,7 @@ export function Atmosphere() {
       let lastX = 0;
       let lastY = 0;
 
-      const slots: TrailSlot[] = Array.from({ length: MAX_TRAIL }, () => ({
+      const slots: TrailSlot[] = Array.from({ length: maxTrail }, () => ({
         x: 0,
         y: 0,
         age: 0,
@@ -141,10 +151,10 @@ export function Atmosphere() {
         layer: 0,
       }));
 
-      const positions = new Float32Array(MAX_TRAIL * 3);
-      const colors = new Float32Array(MAX_TRAIL * 3);
-      const sizes = new Float32Array(MAX_TRAIL);
-      const alphas = new Float32Array(MAX_TRAIL);
+      const positions = new Float32Array(maxTrail * 3);
+      const colors = new Float32Array(maxTrail * 3);
+      const sizes = new Float32Array(maxTrail);
+      const alphas = new Float32Array(maxTrail);
 
       const refreshAskRect = (now: number) => {
         if (now - lastAskCache < ASK_RECT_CACHE_MS) return;
@@ -178,7 +188,7 @@ export function Atmosphere() {
       ) => {
         if (weight < 1 && Math.random() > weight * 1.5) return;
         const slot = slots[nextSlot];
-        nextSlot = (nextSlot + 1) % MAX_TRAIL;
+        nextSlot = (nextSlot + 1) % maxTrail;
         slot.x = x + ox;
         slot.y = y + oy;
         slot.age = 0;
@@ -193,9 +203,14 @@ export function Atmosphere() {
       const spawnAt = (x: number, y: number, weight: number, nx = 0, ny = 0) => {
         // Core + soft body for comet thickness
         spawnOne(x, y, weight, 0);
-        const spread = 4 + Math.random() * 5;
-        spawnOne(x, y, weight, 1, nx * spread, ny * spread);
-        spawnOne(x, y, weight, 1, -nx * spread * 0.7, -ny * spread * 0.7);
+        if (dense) {
+          const spread = 4 + Math.random() * 5;
+          spawnOne(x, y, weight, 1, nx * spread, ny * spread);
+          spawnOne(x, y, weight, 1, -nx * spread * 0.7, -ny * spread * 0.7);
+        } else {
+          const spread = 3 + Math.random() * 3;
+          spawnOne(x, y, weight, 1, nx * spread * 0.5, ny * spread * 0.5);
+        }
       };
 
       const scene = new THREE.Scene();
@@ -278,7 +293,7 @@ export function Atmosphere() {
 
       const writeBuffers = () => {
         const dpr = renderer!.getPixelRatio();
-        for (let i = 0; i < MAX_TRAIL; i++) {
+        for (let i = 0; i < maxTrail; i++) {
           const s = slots[i];
           const i3 = i * 3;
           if (!s.alive) {
@@ -327,7 +342,7 @@ export function Atmosphere() {
         const dt = lastTs ? Math.min((ts - lastTs) / 1000, 0.05) : 0.016;
         lastTs = ts;
 
-        for (let i = 0; i < MAX_TRAIL; i++) {
+        for (let i = 0; i < maxTrail; i++) {
           const s = slots[i];
           if (!s.alive) continue;
           s.age += dt;
@@ -380,8 +395,8 @@ export function Atmosphere() {
         const nx = -dy * inv;
         const ny = dx * inv;
         const samples = Math.min(
-          MAX_SAMPLES_PER_MOVE,
-          Math.max(1, Math.ceil(dist / SAMPLE_SPACING)),
+          maxSamplesPerMove,
+          Math.max(1, Math.ceil(dist / sampleSpacing)),
         );
         for (let i = 1; i <= samples; i++) {
           const u = i / samples;
@@ -390,6 +405,10 @@ export function Atmosphere() {
 
         lastX = x;
         lastY = y;
+      };
+
+      onPointerUp = () => {
+        hasLast = false;
       };
 
       onPointerLeave = () => {
@@ -410,7 +429,9 @@ export function Atmosphere() {
       onResize = resize;
       window.addEventListener("resize", onResize);
       document.addEventListener("visibilitychange", onVisibility);
-      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointermove", onPointerMove, { passive: true });
+      window.addEventListener("pointerup", onPointerUp, { passive: true });
+      window.addEventListener("pointercancel", onPointerUp, { passive: true });
       document.documentElement.addEventListener("pointerleave", onPointerLeave);
       document.documentElement.addEventListener("pointerenter", onPointerEnter);
 
@@ -432,6 +453,10 @@ export function Atmosphere() {
       }
       if (onPointerMove) {
         window.removeEventListener("pointermove", onPointerMove);
+      }
+      if (onPointerUp) {
+        window.removeEventListener("pointerup", onPointerUp);
+        window.removeEventListener("pointercancel", onPointerUp);
       }
       if (onPointerLeave) {
         document.documentElement.removeEventListener(

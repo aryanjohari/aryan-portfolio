@@ -20,10 +20,11 @@ export const metadata: Metadata = {
 };
 
 /**
- * When the enhanced-motion gate would fail, mark <html> so CSS hides
- * #boot-cover immediately — without removing the node (avoids hydration mismatch).
+ * When theatre motion would be skipped (reduced-motion only), mark <html> so
+ * CSS hides #boot-cover immediately — without removing the node (avoids
+ * hydration mismatch). Boot runs on all other viewports.
  */
-const BOOT_COVER_GATE_SCRIPT = `(function(){try{var m=window.matchMedia;if(!(m("(min-width: 1024px)").matches&&m("(pointer: fine)").matches&&!m("(prefers-reduced-motion: reduce)").matches))document.documentElement.dataset.bootCoverSkip="1";}catch(e){}})();`;
+const BOOT_COVER_GATE_SCRIPT = `(function(){try{if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.dataset.bootCoverSkip="1";}catch(e){}})();`;
 
 export default function RootLayout({
   children,

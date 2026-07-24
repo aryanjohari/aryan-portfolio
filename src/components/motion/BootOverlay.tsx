@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import {
   canUseEnhancedMotion,
+  canUseTheatreMotion,
   removeBootCover,
   signalBootDone,
 } from "@/lib/motion";
@@ -37,10 +38,18 @@ const CONTENT_DURATION =
   WIPE * 2 +
   FINAL_LINGER;
 
+const DENSE_BUDGET = { agentCount: 160, trailLen: 24, maxDpr: 2 } as const;
+const LIGHT_BUDGET = { agentCount: 80, trailLen: 14, maxDpr: 1.5 } as const;
+
+function isCoarsePointer(): boolean {
+  return window.matchMedia("(pointer: coarse)").matches;
+}
+
 /**
- * Desktop boot theatre: dark overlay, typed craft lines, void roam → one
- * center frame → ask-bar morph. Shared clock with BootField. Soft exit hold
- * then fade so home (same void + ask) reads continuous. Unmounts after.
+ * Boot theatre: dark overlay, typed craft lines, void roam → one center
+ * frame → ask-bar morph. Runs on all viewports unless reduced-motion.
+ * Shared clock with BootField. Soft exit hold then fade so home (same void
+ * + ask) reads continuous. Unmounts after.
  */
 export function BootOverlay() {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -55,35 +64,30 @@ export function BootOverlay() {
 
   const [active, setActive] = useState(false);
   const [done, setDone] = useState(false);
+  const [hintLabel, setHintLabel] = useState("click to enter");
 
   useEffect(() => {
-    const ok = canUseEnhancedMotion();
+    const ok = canUseTheatreMotion();
     if (!ok) {
       removeBootCover();
       setActive(false);
       setDone(true);
     } else {
       setActive(true);
+      setHintLabel(isCoarsePointer() ? "tap to enter" : "click to enter");
     }
 
-    const mqDesktop = window.matchMedia("(min-width: 1024px)");
-    const mqPointer = window.matchMedia("(pointer: fine)");
     const mqMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
     const sync = () => {
-      if (!canUseEnhancedMotion()) {
+      if (!canUseTheatreMotion()) {
         removeBootCover();
         setActive(false);
         setDone(true);
       }
     };
-    mqDesktop.addEventListener("change", sync);
-    mqPointer.addEventListener("change", sync);
     mqMotion.addEventListener("change", sync);
 
     return () => {
-      mqDesktop.removeEventListener("change", sync);
-      mqPointer.removeEventListener("change", sync);
       mqMotion.removeEventListener("change", sync);
     };
   }, []);
@@ -209,8 +213,12 @@ export function BootOverlay() {
       });
       if (cancelled || skippingRef.current) return;
 
+      const dense = canUseEnhancedMotion();
+      const budget = dense ? DENSE_BUDGET : LIGHT_BUDGET;
+
       const field = await createBootField(fieldHostRef.current, {
         getProgress: () => progressRef.current.value,
+        ...budget,
       });
       if (cancelled || skippingRef.current) {
         field.dispose();
@@ -356,6 +364,7 @@ export function BootOverlay() {
         paddingRight: "env(safe-area-inset-right)",
         paddingBottom: "env(safe-area-inset-bottom)",
         paddingLeft: "env(safe-area-inset-left)",
+        boxSizing: "border-box",
       }}
     >
       <div
@@ -389,7 +398,8 @@ export function BootOverlay() {
             margin: 0,
             textAlign: "center",
             fontFamily: "var(--font-mono), ui-monospace, monospace",
-            fontSize: "clamp(0.95rem, 1.6vw + 0.55rem + 0.4vh, 1.65rem)",
+            fontSize:
+              "clamp(0.85rem, 1.6vw + 0.5rem + 0.35vh, 1.65rem)",
             lineHeight: 1.45,
             letterSpacing: "0.01em",
             fontWeight: 400,
@@ -419,7 +429,7 @@ export function BootOverlay() {
           ref={hintRef}
           style={{
             position: "absolute",
-            bottom: "clamp(1rem, 3.5vh, 2rem)",
+            bottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
             left: 0,
             right: 0,
             margin: 0,
@@ -429,9 +439,10 @@ export function BootOverlay() {
             letterSpacing: "0.06em",
             color: FG,
             opacity: 0,
+            paddingInline: "1rem",
           }}
         >
-          click to enter
+          {hintLabel}
         </p>
       </div>
     </div>
