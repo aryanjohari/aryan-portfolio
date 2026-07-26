@@ -1352,7 +1352,15 @@ body:has(.workshop-page) .site-main {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  max-width: 72ch;
+  width: 100%;
+  max-width: min(100%, 1100px);
+  margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+  .project-exhibit {
+    max-width: min(70vw, 1100px);
+  }
 }
 
 .project-exhibit-hero {
@@ -1432,7 +1440,6 @@ body:has(.workshop-page) .site-main {
 
 .project-exhibit-stage {
   width: 100%;
-  max-width: min(100%, 720px);
 }
 
 .project-exhibit-stage .demo-panel {
@@ -1454,11 +1461,11 @@ body:has(.workshop-page) .site-main {
   margin: 0;
   font-size: 1rem;
   line-height: 1.7;
+  max-width: 65ch;
 }
 
 .project-diagram-section {
   width: 100%;
-  max-width: min(100%, 720px);
 }
 
 .project-diagram-source {
