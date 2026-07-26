@@ -1,13 +1,13 @@
 {
-  "fetchedAt": "2026-07-26T05:35:07.462Z",
+  "fetchedAt": "2026-07-26T10:39:28.246Z",
   "results": [
     {
       "slug": "background-studio",
       "status": "ok",
       "yaml": {
         "title": "Background Studio",
-        "summary": "A browser tool for creating animated full-screen hero backgrounds and exporting looks as JSON for your own site.",
-        "description": "Upload a hero image and adjust motion, color, and texture effects while the background animates live in the browser. Choose from 14 preset looks or describe a mood to restyle the scene. Export preset JSON to reuse the same look on a portfolio or landing page, or save a WebM loop or PNG still for sharing. Everything renders on one WebGL canvas that composites the hero image, optional overlay, and preview text in a single pass.",
+        "summary": "Design animated full-screen hero backgrounds in the browser and export the look as reusable JSON.",
+        "description": "Background Studio is a live WebGL tool for portfolio and landing-page heroes. Upload an image, pick one of fourteen looks or describe a mood, then tune motion and texture while the scene animates on a single canvas. Export preset JSON to reuse the same coefficients on your own site, or save a WebM loop or PNG still. Optional AI mood (when enabled) suggests a look and a small parameter patch; keyword matching works offline as a fallback.",
         "stack": [
           "TypeScript",
           "React",
@@ -25,13 +25,14 @@
           "demo": "https://image.arkhives.nz",
           "docs": "https://github.com/aryanjohari/web-image-editor/blob/main/src/lib/preset/PORTING.md"
         },
-        "slug": "background-studio"
+        "slug": "background-studio",
+        "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T05:34:54.157Z",
+      "fetchedAt": "2026-07-26T10:39:23.812Z",
       "diagram": {
         "source": "github",
-        "path": "PROJECT.md",
-        "mermaid": "flowchart LR\n  U[You in the browser]\n  C[Hero texture mood sliders]\n  G[GPU full viewport background]\n  J[Preset JSON embed]\n  U --> C\n  C --> G\n  G --> J\n  G --> W[WebM loop demo]\n  G --> P[PNG poster]"
+        "path": "docs/architecture.mmd",
+        "mermaid": "flowchart TB\n  subgraph inputs [Inputs]\n    Upload[Hero and overlay upload]\n    Looks[14 looks + mood text]\n    Tune[Intensity / Motion / Grit]\n  end\n\n  Store[Zustand scene state]\n  Material[SynthMaterial uniforms]\n  Shader[One GLSL fragment program]\n\n  subgraph pass [Single GPU pass]\n    L0[Hero layer L0]\n    L1[Overlay layer L1]\n    Text[Preview text T0–T3]\n  end\n\n  JSON[Preset JSON]\n  Media[WebM loop / PNG still]\n  Site[Embed behind HTML on your site]\n\n  Upload --> Store\n  Looks --> Store\n  Tune --> Store\n  Store --> Material\n  Material --> Shader\n  Shader --> L0 --> L1 --> Text\n  Text --> JSON\n  Text --> Media\n  JSON --> Site"
       }
     },
     {
@@ -39,26 +40,29 @@
       "status": "ok",
       "yaml": {
         "title": "Sound Visualiser",
-        "summary": "WebGL music visualizer that maps live audio to 3D shaders, camera motion, and particle effects in real time.",
-        "description": "A browser-based audio visualizer that turns music into moving 3D graphics. Load a track, use your microphone, or try the built-in demos — the app reads loudness and frequency bands and drives camera moves, a fluid background, particle knots, lighting, and color shifts in sync with the beat. Peaks are smoothed and self-calibrate to each track so the motion feels musical rather than jittery. Built for anyone curious how audio features connect to real-time WebGL rendering.",
+        "summary": "Turns music, your microphone, or your webcam into live 3D visuals that follow the beat in the browser.",
+        "description": "Sound Visualiser is a browser-based VJ rig. Play a track, talk into your microphone, or point your webcam at the room, and the whole screen becomes a reactive light show. Rather than just bouncing bars to the volume, it works out whether the music feels calm, groovy or intense, and tries to lock onto the tempo — when it is confident it has found the beat, the visuals step and pulse in time instead of jittering. Three looks are built in: a cinematic 3D scene, a sharp reactive webcam feed, and an \"acid\" mode that feeds every rendered frame back into the next to grow psychedelic trails. Nothing is uploaded or recorded; the audio, the video and the rendering all stay on your own machine.",
         "stack": [
           "TypeScript",
           "Vite",
           "Three.js",
           "GLSL",
+          "Web Audio API",
           "Meyda",
-          "GSAP",
-          "postprocessing"
+          "GSAP"
         ],
         "status": "active",
         "links": {
           "github": "https://github.com/aryanjohari/sound-visualiser",
           "demo": "https://music.arkhives.nz"
-        }
+        },
+        "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T05:34:57.381Z",
+      "fetchedAt": "2026-07-26T10:39:25.140Z",
       "diagram": {
-        "source": "base"
+        "source": "github",
+        "path": "docs/architecture.mmd",
+        "mermaid": "flowchart TD\n  MIC[\"Microphone\"] --> ENGINE\n  FILE[\"Your own audio file\"] --> ENGINE\n  DEMO[\"Built-in demo track\"] --> ENGINE\n\n  ENGINE[\"Audio engine<br/>loudness, bass / mid / treble,<br/>and how fast the sound is changing\"]\n  ENGINE --> SNAP[\"Latest audio snapshot<br/>read once per drawn frame\"]\n\n  SNAP --> ENERGY[\"Energy tracker<br/>calm to full-intensity blend\"]\n  SNAP --> MOOD[\"Mood reader<br/>calm / groove / intense\"]\n  SNAP --> BEAT[\"Beat tracker<br/>tempo guess, beat clock,<br/>and how sure it is\"]\n\n  ENERGY --> STATE\n  MOOD --> STATE\n  BEAT --> STATE\n  STATE[\"Scene state for this frame\"]\n\n  CAM[\"Webcam<br/>only for Live and Acid\"] --> VIDEO[\"Live video texture\"]\n\n  STATE --> ROUTER{\"Which visual mode?\"}\n  VIDEO --> ROUTER\n\n  ROUTER -->|Cinematic| SCENE[\"3D scene<br/>fluid sky, particle knot,<br/>reactive lights, roaming camera\"]\n  ROUTER -->|Live| LIVE[\"Webcam shader<br/>zoom, melt, colour split, glitch\"]\n  ROUTER -->|Acid| ACID[\"Acid shader<br/>kaleidoscope, hue drift, glitch\"]\n\n  SCENE --> POST[\"Colour-split post effect\"]\n  ACID <--> FB[\"Feedback buffers<br/>last frame folded back in<br/>to grow trails\"]\n\n  POST --> CANVAS[\"Full-screen canvas\"]\n  LIVE --> CANVAS\n  ACID --> CANVAS"
       }
     },
     {
@@ -67,7 +71,7 @@
       "yaml": {
         "title": "PII Gateway",
         "summary": "Self-hosted API that redacts personal data from JSON, text, and batch files before downstream use.",
-        "description": "PII Gateway helps engineering teams keep sensitive data out of analytics, logs, and third-party tools by centralizing redaction behind one API and one policy file. Call it over HTTP for live sanitization, or let it poll PostgreSQL exports and CSV or JSON inbox files on a schedule. Microsoft Presidio detects entities like emails and names in free text; structured JSON fields follow per-field rules such as redact, tokenize, or mask. Sanitized results can be returned inline or written to local disk or S3-compatible storage.",
+        "description": "PII Gateway is a Docker-first service for teams that want one place to scrub emails, names, and other personal data before it reaches analytics, logs, or third-party tools. Call POST /v1/sanitize for live JSON and free text, or let optional jobs pull PostgreSQL exports and CSV or JSON inbox files on a schedule. A mounted policy file sets entity types and per-field rules; secrets stay in environment variables. Microsoft Presidio handles NLP detection; undeclared structured fields still get scanned so nothing slips through by default.",
         "stack": [
           "Python",
           "FastAPI",
@@ -79,13 +83,14 @@
         "status": "active",
         "links": {
           "github": "https://github.com/aryanjohari/pii-gateway"
-        }
+        },
+        "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T05:35:00.534Z",
+      "fetchedAt": "2026-07-26T10:39:26.280Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
-        "mermaid": "%% PII Gateway architecture (Mermaid source of truth)\n%% View: https://mermaid.live  |  local: open docs/view-architecture.html\n%% If you edit this file, update the mermaid block under \"Architecture diagram\" in PROJECT.md.\n\nflowchart TB\n  subgraph callers[\"Who calls it\"]\n    C1[Apps / BFF / workers / scripts]\n    C2[Automation cron or internal jobs]\n  end\n\n  subgraph gw[\"PII Gateway FastAPI container\"]\n    R1[POST /v1/sanitize plus X-API-Key]\n    R2[POST /internal/jobs/* plus internal key]\n    AUTH[Auth and correlation middleware]\n    PL[sanitize pipeline]\n    PR[Presidio Analyzer and Anonymizer]\n    POL[Policy YAML or JSON mount]\n    R1 --> AUTH\n    R2 --> AUTH\n    AUTH --> PL\n    POL --> PL\n    PL --> PR\n    SCH[Optional APScheduler]\n    SCH -.-> R2\n  end\n\n  subgraph inbound[\"Configured batch or file paths\"]\n    PG[(PostgreSQL read-only exports)]\n    LOC[Local inbox CSV or JSON array]\n    S3IN[S3-compatible inbox]\n  end\n\n  subgraph outbound[\"Artifact storage\"]\n    DISK[Local volume]\n    S3OUT[S3-compatible bucket]\n  end\n\n  C1 -->|HTTP JSON| R1\n  C2 -->|HTTP trigger| R2\n  PG --> PL\n  LOC --> PL\n  S3IN --> PL\n  PL --> DISK\n  PL --> S3OUT\n\n  HZ[GET /healthz]\n  HZ -.-> gw"
+        "mermaid": "%% PII Gateway — portfolio / How it works diagram\n%% Canonical Mermaid source. Keep in sync with any embedded copy in docs.\n%% View: https://mermaid.live  |  local: open docs/view-architecture.html\n\nflowchart TB\n  subgraph callers[\"Callers\"]\n    APP[Apps / workers / scripts]\n    AUTO[Cron or internal automation]\n  end\n\n  subgraph gw[\"PII Gateway — single FastAPI container\"]\n    SAN[POST /v1/sanitize]\n    JOBS[POST /internal/jobs/*]\n    HZ[GET /healthz]\n    AUTH[API-key auth + correlation ID]\n    POL[Mounted policy YAML/JSON]\n    PIPE[Sanitize pipeline]\n    PR[Presidio engines — lifespan singleton]\n    SCH[Optional APScheduler]\n\n    SAN --> AUTH\n    JOBS --> AUTH\n    AUTH --> PIPE\n    POL --> PIPE\n    PIPE --> PR\n    SCH -.-> JOBS\n  end\n\n  subgraph inbound[\"Batch / file sources\"]\n    PG[(PostgreSQL read-only exports)]\n    LOC[Local CSV / JSON inbox]\n    S3IN[S3-compatible inbox]\n  end\n\n  subgraph out[\"Artifact storage\"]\n    DISK[Local volume]\n    S3OUT[S3-compatible bucket]\n  end\n\n  APP -->|JSON + X-API-Key| SAN\n  AUTO -->|internal key| JOBS\n  PG --> PIPE\n  LOC --> PIPE\n  S3IN --> PIPE\n  PIPE -->|optional raw / cleaned| DISK\n  PIPE -->|optional raw / cleaned| S3OUT\n  HZ -.-> gw"
       }
     },
     {
@@ -111,40 +116,47 @@
         "links": {
           "github": "https://github.com/aryanjohari/ADA",
           "docs": "https://github.com/aryanjohari/ADA/tree/main/docs"
-        }
+        },
+        "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T05:35:01.011Z",
+      "fetchedAt": "2026-07-26T10:39:26.834Z",
       "diagram": {
-        "source": "base"
+        "source": "github",
+        "path": "docs/architecture.mmd",
+        "mermaid": "flowchart TB\n  subgraph ingress [Operator surfaces]\n    Chat[\"ada chat\\nEntity / Agent / Plan\"]\n    Cron[\"cron / systemd\"]\n    HUD[\"ada hud\\nStreamlit read-only\"]\n  end\n\n  subgraph core [Agent core]\n    Orch[\"Orchestrator\\nmanual Gemini tools\"]\n    Tools[\"Tool executor\\nallowlist + skills\"]\n    Daemon[\"ada daemon\\ngoals + workflows\"]\n  end\n\n  subgraph truth [Local truth]\n    DB[\"state.db\\nSQLite WAL + FTS5\"]\n    Mem[\"memory/*.md\\nsoul + master\"]\n  end\n\n  subgraph data [Offline data plane]\n    Ingest[\"Ingest CLIs\\nRSS / GSC / brand\"]\n    Graph[\"Graph-lite\\ntriage + edges\"]\n    Wf[\"Publish workflows\\nENRICH → GATE? → DRAFT → DEPLOY\"]\n  end\n\n  Out[\"S3 page.json + manifest\\nISR consumer out of repo\"]\n\n  Chat --> Orch\n  Orch --> Tools\n  Tools --> DB\n  Orch --> Mem\n  Cron --> Ingest --> DB\n  Cron --> Graph --> DB\n  Cron --> Daemon\n  Daemon --> Orch\n  Daemon --> Wf --> Out\n  HUD --> DB"
       }
     },
     {
       "slug": "gstf",
       "status": "ok",
       "yaml": {
-        "title": "GSTF",
-        "summary": "Video forensics pipeline that detects deepfakes and attributes clips to the generator that produced them.",
-        "description": "GSTF (Generalized Spatio-Temporal Fingerprinting) is a four-phase research pipeline for deepfake forensics. It reads short face video clips, extracts motion patterns with an R(2+1)D backbone, and uses ArcFace metric learning to separate clips by generator on datasets like FaceForensics++ and DFDM. A continual-learning stage with Elastic Weight Consolidation lets the model adapt to new generators without wiping earlier training. Grad-CAM heatmaps and UMAP plots show where the model looks when it assigns attribution. On held-out FaceForensics++ clips, the ArcFace attribution stage reaches 86.5% accuracy.",
+        "title": "GSTF — Generator-Specific Temporal Forensics",
+        "summary": "Video deepfake research that attributes face-swap clips to specific generators, not just real vs fake.",
+        "description": "GSTF is a research codebase that classifies face-manipulation videos by which synthesis pipeline produced them (for example Real, Deepfakes, or Face2Face on FaceForensics++), rather than only labeling clips real or fake. It trains an R(2+1)D video backbone, then freezes it and learns an ArcFace metric head for sharper generator separation. A second stage studies transfer to the DFDM dataset with Elastic Weight Consolidation, optional replay and distillation, plus Grad-CAM and UMAP analysis. On FF++ validation, the ArcFace stage reaches 86.7% three-way attribution accuracy in the logged baseline run.",
         "stack": [
           "Python",
           "PyTorch",
-          "R(2+1)D",
-          "ArcFace",
-          "Elastic Weight Consolidation",
+          "torchvision",
           "OpenCV",
+          "YAML",
           "Grad-CAM",
           "scikit-learn",
           "UMAP",
-          "PyYAML"
+          "Docker",
+          "pytest"
         ],
         "status": "active",
         "links": {
-          "github": "https://github.com/aryanjohari/GSTF"
-        }
+          "github": "https://github.com/aryanjohari/GSTF",
+          "docs": "https://github.com/aryanjohari/GSTF/blob/main/docs/ARCHITECTURE.md"
+        },
+        "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T05:35:04.566Z",
+      "fetchedAt": "2026-07-26T10:39:27.693Z",
       "diagram": {
-        "source": "base"
+        "source": "github",
+        "path": "docs/architecture.mmd",
+        "mermaid": "flowchart TB\n  videos[\"Raw videos<br/>FF++ / DFDM\"] --> preprocess[\"Preprocess frames<br/>main.py preprocess\"]\n  preprocess --> clips[\"Frame folders<br/>class / video / frame_*.jpg\"]\n  clips --> datasets[\"Dataset loaders<br/>FF++ · DFDM · joint\"]\n  yaml[\"YAML configs<br/>base + phase overrides\"] --> cli[\"main.py CLI\"]\n  cli --> train[\"Train\"]\n  cli --> fisher[\"Compute Fisher\"]\n  cli --> eval[\"Evaluate\"]\n  cli --> xai[\"Grad-CAM / UMAP\"]\n  datasets --> train\n  yaml --> train\n  train --> p1[\"Phase 1: R(2+1)D or CNN-LSTM<br/>cross-entropy backbone\"]\n  p1 --> p2[\"Phase 2: freeze trunk<br/>train ArcFace head\"]\n  p2 --> fisher\n  fisher --> p3[\"Phase 3: DFDM adapt<br/>EWC ± replay ± KD\"]\n  p2 --> joint[\"Optional: joint 6-class<br/>FF++ ∪ DFDM\"]\n  p2 --> ckpt[\"Checkpoints + logs<br/>experiments/gstf/\"]\n  p3 --> ckpt\n  joint --> ckpt\n  ckpt --> eval\n  ckpt --> xai"
       }
     }
   ]

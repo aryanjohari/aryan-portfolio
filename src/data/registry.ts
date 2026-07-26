@@ -29,6 +29,7 @@ export const registry: RegistryEntry[] = [
   {
     repo: "aryanjohari/gstf",
     slug: "gstf",
+    branch: "mva",
     demo: { type: "exhibit", variant: "metrics" },
   },
 ];
