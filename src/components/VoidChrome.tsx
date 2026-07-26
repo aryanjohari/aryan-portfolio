@@ -789,6 +789,16 @@ export function VoidChrome({ children }: { children: ReactNode }) {
             >
               {navItems.map((item, index) => {
                 const siteOnly = item.href === "/";
+                const inAppRoute = isInAppChromeRoute(item.href);
+                const linkClassName = item.glyph
+                  ? "glyph-link void-chrome-nav-link"
+                  : "void-chrome-nav-link";
+                const linkContent = (
+                  <>
+                    {item.glyph ? <SoftGlyph kind={item.glyph} /> : null}
+                    <span className="glyph-link-label">{item.label}</span>
+                  </>
+                );
                 return (
                   <span
                     key={item.href}
@@ -802,19 +812,24 @@ export function VoidChrome({ children }: { children: ReactNode }) {
                         ·{" "}
                       </span>
                     )}
-                    <Link
-                      href={item.href}
-                      title={item.title}
-                      className={
-                        item.glyph
-                          ? "glyph-link void-chrome-nav-link"
-                          : "void-chrome-nav-link"
-                      }
-                      onClick={(event) => onChromeNavClick(event, item.href)}
-                    >
-                      {item.glyph ? <SoftGlyph kind={item.glyph} /> : null}
-                      <span className="glyph-link-label">{item.label}</span>
-                    </Link>
+                    {inAppRoute ? (
+                      <Link
+                        href={item.href}
+                        title={item.title}
+                        className={linkClassName}
+                        onClick={(event) => onChromeNavClick(event, item.href)}
+                      >
+                        {linkContent}
+                      </Link>
+                    ) : (
+                      <a
+                        href={item.href}
+                        title={item.title}
+                        className={linkClassName}
+                      >
+                        {linkContent}
+                      </a>
+                    )}
                   </span>
                 );
               })}
