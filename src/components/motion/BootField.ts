@@ -447,7 +447,9 @@ export async function createBootField(
   const fovRad = (CAMERA_FOV * Math.PI) / 180;
 
   const measureAsk = (vw: number, vh: number): LayoutShape | null => {
-    const el = document.querySelector(".portfolio-guide-float");
+    const el = document.querySelector(
+      ".void-chrome--home .portfolio-guide-float",
+    );
     if (!el) return null;
     const box = el.getBoundingClientRect();
     if (box.width < 2 || box.height < 2) return null;

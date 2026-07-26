@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
   type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 
+import type { WorkshopCarouselHandle } from "@/components/motion/WorkshopCarousel";
 import type { Project } from "@/lib/projects";
 import {
   canUseEnhancedMotion,
@@ -21,26 +25,28 @@ type ProjectGalleryProps = {
   projects: Project[];
 };
 
-type DragInstance = {
-  kill: () => void;
-  update: (soft?: boolean) => void;
-  applyBounds: (bounds: { minX: number; maxX: number }) => void;
-  x: number;
-  endX: number;
-};
+const HOOK_MAX = 90;
 
-function indexSummary(project: Project): string {
+function truncateHook(text: string, max = HOOK_MAX): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  const base = (lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trimEnd();
+  return `${base}…`;
+}
+
+function indexHook(project: Project): string {
   if (project.contentStatus !== "ok") {
     return "yaml not configured";
   }
-  return project.summary;
+  return truncateHook(project.summary);
 }
 
 function padIndex(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-/** Deterministic hue 0–359 from slug for void-friendly gradient accents. */
+/** Deterministic hue 0–359 from slug for void-friendly accents. */
 function slugHue(slug: string): number {
   let h = 2166136261;
   for (let i = 0; i < slug.length; i++) {
@@ -50,36 +56,12 @@ function slugHue(slug: string): number {
   return (h >>> 0) % 360;
 }
 
-function StackTags({ stack }: { stack: string[] }) {
-  if (stack.length === 0) {
-    return <span className="project-gallery-empty">—</span>;
-  }
-
-  return (
-    <span className="stack-tags">
-      {stack.map((item) => (
-        <span key={item} className="stack-tag">
-          {item}
-        </span>
-      ))}
-    </span>
-  );
-}
-
-function CardBody({
-  project,
-  interactive,
-}: {
-  project: Project;
-  interactive: boolean;
-}) {
+function FallbackCard({ project }: { project: Project }) {
   const missing = project.contentStatus !== "ok";
-  const tabIndex = interactive ? undefined : -1;
-
   return (
-    <div className="project-gallery-card-inner">
+    <li className="project-gallery-fallback-card">
       <div
-        className="project-gallery-visual"
+        className="project-gallery-fallback-visual"
         style={
           {
             "--gallery-hue": String(slugHue(project.slug)),
@@ -87,34 +69,23 @@ function CardBody({
         }
         aria-hidden="true"
       />
-
-      <div className="project-gallery-card-head">
+      <div className="project-gallery-fallback-body">
         <Link
           href={`/projects/${project.slug}`}
-          className="project-gallery-title"
-          tabIndex={tabIndex}
+          className="project-gallery-fallback-title"
         >
           {project.title}
         </Link>
-        <span className="project-gallery-slug">{project.slug}</span>
-      </div>
-
-      <p
-        className={
-          missing
-            ? "project-gallery-summary project-gallery-summary--missing"
-            : "project-gallery-summary"
-        }
-      >
-        {indexSummary(project)}
-      </p>
-
-      <div className="project-gallery-meta">
-        <StackTags stack={project.stack} />
-        <span className="project-gallery-sep" aria-hidden="true">
-          ·
-        </span>
-        <span className="project-gallery-status">
+        <p
+          className={
+            missing
+              ? "project-gallery-fallback-summary is-missing"
+              : "project-gallery-fallback-summary"
+          }
+        >
+          {indexHook(project)}
+        </p>
+        <p className="project-gallery-fallback-status">
           {project.status}
           {missing && (
             <span
@@ -125,55 +96,40 @@ function CardBody({
               ⚠
             </span>
           )}
-        </span>
-      </div>
-
-      <div className="project-gallery-actions">
+        </p>
         <Link
           href={`/projects/${project.slug}`}
-          className="project-gallery-open"
-          tabIndex={tabIndex}
+          className="project-gallery-fallback-open"
         >
           open project
         </Link>
-        {project.demo ? (
-          <Link
-            href={`/projects/${project.slug}`}
-            className="project-gallery-demo"
-            tabIndex={tabIndex}
-          >
-            try demo
-          </Link>
-        ) : (
-          <span className="demo-empty" aria-label="No demo available">
-            —
-          </span>
-        )}
       </div>
-    </div>
+    </li>
   );
 }
 
 /**
- * Self-contained coverflow gallery: center active card, drag / arrows / dots.
- * No page-scroll pin scrub — document scroll stays normal.
+ * Workshop edge-glow tablet carousel: Three.js stage + drag/snap, with DOM
+ * a11y list and static-card fallback when WebGL / motion are unavailable.
+ * Mount plays rim-ignite + depth-assemble; unmount extinguishes then disposes.
  */
 export function ProjectGallery({ projects }: ProjectGalleryProps) {
-  const sectionRef = useRef<HTMLElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const deckRef = useRef<HTMLUListElement>(null);
-  const cardRefs = useRef<Array<HTMLLIElement | null>>([]);
+  const router = useRouter();
+  const hostRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<WorkshopCarouselHandle | null>(null);
+  const gsapRef = useRef<typeof import("gsap").gsap | null>(null);
+  const snapTweenRef = useRef<{ kill: () => void } | null>(null);
+  const floatRef = useRef(0);
   const activeRef = useRef(0);
-  const goToRef = useRef<(index: number, opts?: { animate?: boolean }) => void>(
-    () => {},
-  );
-  const proxyRef = useRef<HTMLDivElement | null>(null);
-  const dragRef = useRef<DragInstance | null>(null);
-  const spacingRef = useRef(280);
-  const tweenRef = useRef<{ kill: () => void } | null>(null);
+  const dragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startIndex: number;
+    moved: boolean;
+  } | null>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [ready, setReady] = useState(false);
+  const [mode, setMode] = useState<"pending" | "webgl" | "fallback">("pending");
   const labelId = useId();
   const total = projects.length;
   const showChrome = total > 1;
@@ -182,233 +138,166 @@ export function ProjectGallery({ projects }: ProjectGalleryProps) {
     activeRef.current = activeIndex;
   }, [activeIndex]);
 
-  // —— Coverflow + Draggable (all breakpoints; gates 3D / inertia) ——
   useEffect(() => {
     if (total === 0) return;
 
-    const stage = stageRef.current;
-    const deck = deckRef.current;
-    if (!stage || !deck) return;
-
     let cancelled = false;
-    let resizeObserver: ResizeObserver | undefined;
-    let draggable: DragInstance | null = null;
+    let exitHandle: WorkshopCarouselHandle | null = null;
 
     void (async () => {
-      const [{ gsap }, { Draggable }] = await Promise.all([
-        import("gsap"),
-        import("gsap/Draggable"),
-      ]);
-      if (cancelled) return;
-
-      let inertiaOk = false;
-      try {
-        const { InertiaPlugin } = await import("gsap/InertiaPlugin");
-        gsap.registerPlugin(Draggable, InertiaPlugin);
-        inertiaOk = true;
-      } catch {
-        gsap.registerPlugin(Draggable);
+      if (prefersReducedMotion()) {
+        if (!cancelled) setMode("fallback");
+        return;
       }
 
-      const use3D = canUseEnhancedMotion();
-      const useInertia = inertiaOk && !prefersReducedMotion() && total > 1;
-      const reduced = prefersReducedMotion();
+      const [{ canUseWorkshopWebGL, createWorkshopCarousel }, { gsap }] =
+        await Promise.all([
+          import("@/components/motion/WorkshopCarousel"),
+          import("gsap"),
+        ]);
 
-      const cards = cardRefs.current.filter(Boolean) as HTMLLIElement[];
-      if (cards.length === 0) return;
+      if (cancelled) return;
 
-      const proxy = document.createElement("div");
-      proxyRef.current = proxy;
-      gsap.set(proxy, { x: 0 });
+      if (!canUseWorkshopWebGL() || !hostRef.current) {
+        setMode("fallback");
+        return;
+      }
 
-      const measureSpacing = () => {
-        const card = cards[0];
-        const width = card?.offsetWidth || Math.min(480, stage.clientWidth * 0.72);
-        spacingRef.current = Math.max(160, width * 0.48);
-        return spacingRef.current;
-      };
+      gsapRef.current = gsap;
+      const enhanced = canUseEnhancedMotion();
 
-      const applyProgress = (floatIndex: number) => {
-        const spacing = spacingRef.current;
-        cards.forEach((card, i) => {
-          const d = i - floatIndex;
-          const abs = Math.min(Math.abs(d), 2);
-          const nearest = Math.round(floatIndex);
-          const isNear = i === nearest;
-
-          if (reduced) {
-            gsap.set(card, {
-              xPercent: -50,
-              yPercent: -50,
-              x: 0,
-              y: 0,
-              scale: 1,
-              rotateY: 0,
-              opacity: i === nearest ? 1 : 0,
-              zIndex: i === nearest ? total : 0,
-              pointerEvents: i === nearest ? "auto" : "none",
-            });
-            card.classList.toggle("is-active", i === nearest);
-            return;
-          }
-
-          const props: Record<string, number | string> = {
-            xPercent: -50,
-            yPercent: -50,
-            x: d * spacing,
-            scale: 1 - abs * 0.08,
-            opacity: Math.max(0.3, 1 - abs * 0.35),
-            zIndex: total - Math.round(Math.abs(d)),
-            pointerEvents: isNear ? "auto" : "none",
-          };
-          if (use3D) {
-            props.rotateY = gsap.utils.clamp(-24, 24, d * -12);
-            props.transformPerspective = 900;
-          } else {
-            props.rotateY = 0;
-          }
-          gsap.set(card, props);
-          card.classList.toggle("is-active", isNear);
+      try {
+        const handle = await createWorkshopCarousel(hostRef.current, {
+          projects: projects.map((p) => ({
+            slug: p.slug,
+            title: p.title,
+            hook: indexHook(p),
+            status: p.status,
+            missing: p.contentStatus !== "ok",
+            hue: slugHue(p.slug),
+          })),
+          enhanced,
+          maxDpr: enhanced
+            ? MOTION.workshop.dprEnhanced
+            : MOTION.workshop.dprDefault,
+          tokens: MOTION.workshop,
+          onContextLost: () => {
+            if (cancelled) return;
+            snapTweenRef.current?.kill();
+            snapTweenRef.current = null;
+            carouselRef.current?.dispose();
+            carouselRef.current = null;
+            exitHandle = null;
+            setMode("fallback");
+          },
         });
-      };
 
-      const commitIndex = (index: number) => {
-        const clamped = Math.max(0, Math.min(total - 1, index));
-        activeRef.current = clamped;
-        setActiveIndex(clamped);
-        applyProgress(clamped);
-      };
-
-      const goTo = (index: number, opts?: { animate?: boolean }) => {
-        const clamped = Math.max(0, Math.min(total - 1, index));
-        const spacing = spacingRef.current;
-        const targetX = -clamped * spacing;
-        const animate = opts?.animate !== false && !reduced;
-
-        tweenRef.current?.kill();
-        tweenRef.current = null;
-
-        activeRef.current = clamped;
-        setActiveIndex(clamped);
-
-        if (!animate) {
-          gsap.set(proxy, { x: targetX });
-          draggable?.update(true);
-          applyProgress(clamped);
+        if (cancelled) {
+          handle.dispose();
           return;
         }
 
-        const tween = gsap.to(proxy, {
-          x: targetX,
-          duration: MOTION.medium,
-          ease: MOTION.ease,
-          onUpdate: () => {
-            const x = Number(gsap.getProperty(proxy, "x"));
-            applyProgress(-x / spacing);
-          },
-          onComplete: () => {
-            applyProgress(clamped);
-            draggable?.update(true);
-          },
-        });
-        tweenRef.current = tween;
-      };
-      goToRef.current = goTo;
-
-      const getBounds = () => ({
-        minX: -(total - 1) * spacingRef.current,
-        maxX: 0,
-      });
-
-      measureSpacing();
-      gsap.set(proxy, { x: -activeRef.current * spacingRef.current });
-      applyProgress(activeRef.current);
-
-      if (total > 1) {
-        const instances = Draggable.create(proxy, {
-          trigger: stage,
-          type: "x",
-          inertia: useInertia,
-          dragClickables: false,
-          minimumMovement: 8,
-          bounds: getBounds(),
-          snap: useInertia
-            ? {
-                x: (value: number) =>
-                  gsap.utils.snap(spacingRef.current, value),
-              }
-            : undefined,
-          onPress() {
-            tweenRef.current?.kill();
-            tweenRef.current = null;
-            stage.classList.add("is-dragging");
-          },
-          onDrag(this: DragInstance) {
-            const spacing = spacingRef.current || 1;
-            applyProgress(-this.x / spacing);
-          },
-          onThrowUpdate(this: DragInstance) {
-            const spacing = spacingRef.current || 1;
-            applyProgress(-this.x / spacing);
-          },
-          onDragEnd(this: DragInstance) {
-            stage.classList.remove("is-dragging");
-            if (useInertia) return;
-            const spacing = spacingRef.current || 1;
-            const raw = -this.x / spacing;
-            const current = activeRef.current;
-            const delta = raw - current;
-            let next = Math.round(raw);
-            if (Math.abs(delta) < 0.2) {
-              next = current;
-            }
-            next = Math.max(0, Math.min(total - 1, next));
-            goTo(next, { animate: !reduced });
-          },
-          onThrowComplete(this: DragInstance) {
-            stage.classList.remove("is-dragging");
-            const spacing = spacingRef.current || 1;
-            const next = Math.max(
-              0,
-              Math.min(total - 1, Math.round(-this.x / spacing)),
-            );
-            commitIndex(next);
-            gsap.set(proxy, { x: -next * spacing });
-            this.update(true);
-          },
-        }) as DragInstance[];
-
-        draggable = instances[0] ?? null;
-        dragRef.current = draggable;
+        carouselRef.current = handle;
+        exitHandle = handle;
+        handle.setIndex(0);
+        floatRef.current = 0;
+        setMode("webgl");
+        await handle.playEnter();
+      } catch {
+        if (!cancelled) setMode("fallback");
       }
-
-      resizeObserver = new ResizeObserver(() => {
-        const spacing = measureSpacing();
-        gsap.set(proxy, { x: -activeRef.current * spacing });
-        draggable?.applyBounds(getBounds());
-        draggable?.update(true);
-        applyProgress(activeRef.current);
-      });
-      resizeObserver.observe(stage);
-      cards.forEach((c) => resizeObserver?.observe(c));
-
-      if (!cancelled) setReady(true);
     })();
 
     return () => {
       cancelled = true;
-      tweenRef.current?.kill();
-      tweenRef.current = null;
-      resizeObserver?.disconnect();
-      dragRef.current?.kill();
-      dragRef.current = null;
-      proxyRef.current = null;
-      setReady(false);
+      snapTweenRef.current?.kill();
+      snapTweenRef.current = null;
+      const handle = exitHandle ?? carouselRef.current;
+      carouselRef.current = null;
+      exitHandle = null;
+      gsapRef.current = null;
+      if (!handle) return;
+      void handle.playExit().finally(() => {
+        handle.dispose();
+      });
     };
   }, [projects, total]);
 
+  // Quiet intro + chrome settle once the WebGL stage exists (VoidChrome
+  // already faded the page; this is a local secondary beat).
+  useLayoutEffect(() => {
+    if (mode !== "webgl") return;
+    const gsap = gsapRef.current;
+    if (!gsap) return;
+
+    const intro = document.querySelector(".workshop-intro");
+    const chrome = document.querySelector(".project-gallery-chrome");
+    const tweens: Array<{ kill: () => void }> = [];
+
+    if (intro instanceof HTMLElement) {
+      gsap.set(intro, { opacity: 0, y: 6 });
+      tweens.push(
+        gsap.to(intro, {
+          opacity: 1,
+          y: 0,
+          duration: MOTION.medium,
+          ease: MOTION.ease,
+          clearProps: "transform",
+        }),
+      );
+    }
+    if (chrome instanceof HTMLElement) {
+      gsap.set(chrome, { opacity: 0 });
+      tweens.push(
+        gsap.to(chrome, {
+          opacity: 1,
+          duration: MOTION.medium,
+          ease: MOTION.ease,
+          delay: 0.06,
+        }),
+      );
+    }
+
+    return () => {
+      for (const tw of tweens) tw.kill();
+    };
+  }, [mode]);
+
+  function commitActive(nearest: number) {
+    const clamped = Math.max(0, Math.min(total - 1, nearest));
+    if (clamped !== activeRef.current) {
+      activeRef.current = clamped;
+      setActiveIndex(clamped);
+    }
+  }
+
+  function setFloatIndex(t: number) {
+    floatRef.current = t;
+    carouselRef.current?.setIndex(t);
+    commitActive(Math.round(t));
+  }
+
   function goToIndex(index: number) {
-    goToRef.current(index, { animate: true });
+    const clamped = Math.max(0, Math.min(total - 1, index));
+    const gsap = gsapRef.current;
+    snapTweenRef.current?.kill();
+
+    if (!gsap || mode !== "webgl") {
+      setFloatIndex(clamped);
+      return;
+    }
+
+    const proxy = { t: floatRef.current };
+    snapTweenRef.current = gsap.to(proxy, {
+      t: clamped,
+      duration: MOTION.workshop.snapDuration,
+      ease: MOTION.ease,
+      onUpdate: () => setFloatIndex(proxy.t),
+      onComplete: () => {
+        snapTweenRef.current = null;
+        setFloatIndex(clamped);
+      },
+    });
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>) {
@@ -423,28 +312,128 @@ export function ProjectGallery({ projects }: ProjectGalleryProps) {
       return;
     }
 
-    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+    const key = event.key;
+    if (
+      key === "ArrowRight" ||
+      key === "ArrowDown" ||
+      key === "j" ||
+      key === "J"
+    ) {
       event.preventDefault();
       goToIndex(activeIndex + 1);
-    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+    } else if (
+      key === "ArrowLeft" ||
+      key === "ArrowUp" ||
+      key === "k" ||
+      key === "K"
+    ) {
       event.preventDefault();
       goToIndex(activeIndex - 1);
-    } else if (event.key === "Home") {
+    } else if (key === "Home") {
       event.preventDefault();
       goToIndex(0);
-    } else if (event.key === "End") {
+    } else if (key === "End") {
       event.preventDefault();
       goToIndex(total - 1);
+    } else if (key === "Enter" || key === " ") {
+      const project = projects[activeIndex];
+      if (!project) return;
+      event.preventDefault();
+      router.push(`/projects/${project.slug}`);
     }
   }
 
+  function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (mode !== "webgl" || total <= 1) return;
+    if (event.button !== 0) return;
+    snapTweenRef.current?.kill();
+    snapTweenRef.current = null;
+    carouselRef.current?.setDragging(true);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startIndex: floatRef.current,
+      moved: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function onPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) {
+      // Hover tilt on enhanced mouse only
+      if (
+        mode === "webgl" &&
+        !dragRef.current &&
+        canUseEnhancedMotion() &&
+        event.pointerType === "mouse"
+      ) {
+        const host = hostRef.current;
+        if (!host) return;
+        const rect = host.getBoundingClientRect();
+        const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        const ny = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+        const max = MOTION.workshop.hoverTiltMax;
+        carouselRef.current?.setHoverTilt(nx * max, -ny * max);
+      }
+      return;
+    }
+
+    const dx = event.clientX - drag.startX;
+    if (Math.abs(dx) > MOTION.workshop.dragThreshold) {
+      drag.moved = true;
+    }
+    const next =
+      drag.startIndex - dx / MOTION.workshop.dragSensitivity;
+    const clamped = Math.max(-0.15, Math.min(total - 1 + 0.15, next));
+    setFloatIndex(clamped);
+  }
+
+  function endDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    carouselRef.current?.setDragging(false);
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      /* already released */
+    }
+
+    if (!drag.moved) {
+      const slug = carouselRef.current?.pick(event.clientX, event.clientY);
+      if (slug) router.push(`/projects/${slug}`);
+      return;
+    }
+
+    const nearest = Math.round(floatRef.current);
+    goToIndex(nearest);
+  }
+
+  function onPointerLeave() {
+    if (dragRef.current) return;
+    carouselRef.current?.setHoverTilt(0, 0);
+  }
+
+  if (total === 0) {
+    return (
+      <section className="project-gallery" aria-label="Project gallery">
+        <p className="project-gallery-empty-state">No projects yet.</p>
+      </section>
+    );
+  }
+
+  const useFallback = mode === "fallback";
+  const useWebgl = mode === "webgl";
+
   return (
     <section
-      ref={sectionRef}
       className={
-        ready
-          ? "project-gallery project-gallery--ready"
-          : "project-gallery"
+        useWebgl
+          ? "project-gallery project-gallery--webgl"
+          : useFallback
+            ? "project-gallery project-gallery--fallback"
+            : "project-gallery"
       }
       aria-roledescription="carousel"
       aria-label="Project gallery"
@@ -452,91 +441,93 @@ export function ProjectGallery({ projects }: ProjectGalleryProps) {
       tabIndex={0}
       onKeyDown={onKeyDown}
     >
-      {showChrome && (
+      {showChrome && !useFallback && (
         <div className="project-gallery-chrome">
-          <button
-            type="button"
-            className="project-gallery-arrow project-gallery-arrow--prev"
-            aria-label="Previous project"
-            disabled={activeIndex <= 0}
-            onClick={() => goToIndex(activeIndex - 1)}
-          >
-            ←
-          </button>
-
-          <div className="project-gallery-chrome-center">
-            <p id={labelId} className="project-gallery-affordance">
-              drag or use arrows
-            </p>
+          <p id={labelId} className="visually-hidden">
+            Project gallery — drag to browse
+          </p>
+          <div className="project-gallery-nav" role="group" aria-label="Browse projects">
+            <button
+              type="button"
+              className="project-gallery-arrow"
+              aria-label="Previous project"
+              disabled={activeIndex <= 0}
+              onClick={() => goToIndex(activeIndex - 1)}
+            >
+              ←
+            </button>
             <p className="project-gallery-index" aria-live="polite">
               <span className="visually-hidden">Project </span>
-              {padIndex(activeIndex + 1)}
-              <span aria-hidden="true"> / </span>
+              <span className="project-gallery-index-current">
+                {padIndex(activeIndex + 1)}
+              </span>
+              <span className="project-gallery-index-sep" aria-hidden="true">
+                {" / "}
+              </span>
               <span className="visually-hidden">of </span>
-              {padIndex(total)}
+              <span className="project-gallery-index-total">
+                {padIndex(total)}
+              </span>
             </p>
-            <div className="project-gallery-dots" role="group" aria-label="Projects">
-              {projects.map((project, i) => (
-                <button
-                  key={project.slug}
-                  type="button"
-                  aria-label={`${project.title} (${padIndex(i + 1)} of ${padIndex(total)})`}
-                  aria-current={i === activeIndex ? "true" : undefined}
-                  className={
-                    i === activeIndex
-                      ? "project-gallery-dot is-active"
-                      : "project-gallery-dot"
-                  }
-                  onClick={() => goToIndex(i)}
-                />
-              ))}
-            </div>
+            <button
+              type="button"
+              className="project-gallery-arrow"
+              aria-label="Next project"
+              disabled={activeIndex >= total - 1}
+              onClick={() => goToIndex(activeIndex + 1)}
+            >
+              →
+            </button>
           </div>
-
-          <button
-            type="button"
-            className="project-gallery-arrow project-gallery-arrow--next"
-            aria-label="Next project"
-            disabled={activeIndex >= total - 1}
-            onClick={() => goToIndex(activeIndex + 1)}
-          >
-            →
-          </button>
         </div>
       )}
 
-      {!showChrome && (
+      {useFallback && (
         <p id={labelId} className="visually-hidden">
           Project gallery
         </p>
       )}
 
-      <div ref={stageRef} className="project-gallery-stage">
-        <ul ref={deckRef} className="project-gallery-deck">
-          {projects.map((project, i) => {
-            const isActive = i === activeIndex;
-            return (
-              <li
-                key={project.slug}
-                ref={(el) => {
-                  cardRefs.current[i] = el;
-                }}
-                className={
-                  isActive
-                    ? "project-gallery-card is-active"
-                    : "project-gallery-card"
-                }
-                data-gallery-card
-                aria-hidden={isActive ? undefined : true}
-                aria-roledescription="slide"
-                aria-label={`${padIndex(i + 1)} of ${padIndex(total)}: ${project.title}`}
-              >
-                <CardBody project={project} interactive={isActive} />
-              </li>
-            );
-          })}
+      {!showChrome && !useFallback && (
+        <p id={labelId} className="visually-hidden">
+          Project gallery
+        </p>
+      )}
+
+      {/* WebGL host — hidden in fallback; always mounted until mode resolves so ref exists */}
+      {!useFallback && (
+        <div
+          ref={hostRef}
+          className="project-gallery-stage"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onPointerLeave={onPointerLeave}
+        />
+      )}
+
+      {useFallback && (
+        <ul className="project-gallery-fallback-list">
+          {projects.map((project) => (
+            <FallbackCard key={project.slug} project={project} />
+          ))}
         </ul>
-      </div>
+      )}
+
+      {/* Always in the a11y tree when WebGL is showing */}
+      {useWebgl && (
+        <ul className="project-gallery-a11y-list visually-hidden">
+          {projects.map((project) => (
+            <li key={project.slug}>
+              <Link href={`/projects/${project.slug}`}>
+                {project.title}
+                <span> — {indexHook(project)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

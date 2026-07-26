@@ -1,10 +1,12 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import {
   canUseEnhancedMotion,
   canUseTheatreMotion,
+  isBootDone,
   MOTION,
   removeBootCover,
   signalBootDone,
@@ -45,12 +47,13 @@ function isCoarsePointer(): boolean {
 }
 
 /**
- * Boot theatre: dark overlay, typed craft lines, void roam → one center
- * frame → ask-bar morph. Runs on all viewports unless reduced-motion.
+ * Route-aware boot: the home route gets the full theatre; direct non-home
+ * loads get a short, centered void wake. Neither replays on client navigation.
  * Shared clock with BootField. Soft exit hold then fade so home (same void
  * + ask) reads continuous. Unmounts after.
  */
 export function BootOverlay() {
+  const pathname = usePathname();
   const overlayRef = useRef<HTMLDivElement>(null);
   const fieldHostRef = useRef<HTMLDivElement>(null);
   const lineWrapRef = useRef<HTMLParagraphElement>(null);
@@ -60,27 +63,39 @@ export function BootOverlay() {
   const fieldRef = useRef<BootFieldHandle | null>(null);
   const progressRef = useRef({ value: 0 });
   const skippingRef = useRef(false);
+  const initializedRef = useRef(false);
 
-  const [active, setActive] = useState(false);
+  const [mode, setMode] = useState<"idle" | "home" | "wake">("idle");
   const [done, setDone] = useState(false);
   const [hintLabel, setHintLabel] = useState("click to enter");
 
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    if (isBootDone()) {
+      removeBootCover();
+      setDone(true);
+      return;
+    }
+
     const ok = canUseTheatreMotion();
     if (!ok) {
       removeBootCover();
-      setActive(false);
+      setMode("idle");
       setDone(true);
-    } else {
-      setActive(true);
+    } else if (pathname === "/") {
+      setMode("home");
       setHintLabel(isCoarsePointer() ? "tap to enter" : "click to enter");
+    } else {
+      setMode("wake");
     }
 
     const mqMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const sync = () => {
       if (!canUseTheatreMotion()) {
         removeBootCover();
-        setActive(false);
+        setMode("idle");
         setDone(true);
       }
     };
@@ -89,19 +104,42 @@ export function BootOverlay() {
     return () => {
       mqMotion.removeEventListener("change", sync);
     };
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (done) signalBootDone();
   }, [done]);
 
   useLayoutEffect(() => {
-    if (!active || done) return;
+    if (mode === "idle" || done) return;
     removeBootCover();
-  }, [active, done]);
+  }, [mode, done]);
 
   useEffect(() => {
-    if (!active || done) return;
+    if (mode !== "wake" || done) return;
+    const overlay = overlayRef.current;
+    if (!overlay) return;
+
+    let secondFrame = 0;
+    let finishTimer = 0;
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => {
+        overlay.style.opacity = "0";
+        finishTimer = window.setTimeout(() => {
+          setDone(true);
+        }, MOTION.medium * 1000);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+      window.clearTimeout(finishTimer);
+    };
+  }, [mode, done]);
+
+  useEffect(() => {
+    if (mode !== "home" || done) return;
     const overlay = overlayRef.current;
     const fieldHost = fieldHostRef.current;
     const textEl = textRef.current;
@@ -127,7 +165,9 @@ export function BootOverlay() {
 
     /** Pin typed line to measured ask bar so morph shares the same center. */
     const syncLineToAsk = () => {
-      const ask = document.querySelector(".portfolio-guide-float");
+      const ask = document.querySelector(
+        ".void-chrome--home .portfolio-guide-float",
+      );
       const wrap = lineWrapRef.current;
       const overlayEl = overlayRef.current;
       if (!ask || !wrap || !overlayEl) return false;
@@ -339,9 +379,47 @@ export function BootOverlay() {
       fieldRef.current?.dispose();
       fieldRef.current = null;
     };
-  }, [active, done]);
+  }, [mode, done]);
 
-  if (!active || done) return null;
+  if (mode === "idle" || done) return null;
+
+  if (mode === "wake") {
+    return (
+      <div
+        ref={overlayRef}
+        role="presentation"
+        aria-hidden
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 50,
+          width: "100%",
+          height: "100dvh",
+          display: "grid",
+          placeItems: "center",
+          overflow: "hidden",
+          boxSizing: "border-box",
+          padding:
+            "env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)",
+          backgroundColor: BG,
+          opacity: 1,
+          transition: `opacity ${MOTION.medium}s ease-out`,
+          pointerEvents: "none",
+        }}
+      >
+        <span
+          style={{
+            display: "block",
+            width: "clamp(2.5rem, 12vw, 5rem)",
+            height: "1px",
+            maxWidth: "calc(100vw - 2rem)",
+            backgroundColor: FG,
+            opacity: 0.32,
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div

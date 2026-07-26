@@ -20,6 +20,7 @@ flowchart TD
   JSON["fetched-projects.json"]
   Merge["merge registry + fetch results\nsrc/lib/projects.ts"]
   IndexPage["/ index"]
+  WorkshopPage["/workshop\nProjectGallery"]
   ProjectPage["/projects/slug"]
   Registry --> Fetch
   Fetch --> Raw
@@ -28,7 +29,9 @@ flowchart TD
   JSON --> Merge
   Registry --> Merge
   Merge --> IndexPage
+  Merge --> WorkshopPage
   Merge --> ProjectPage
+  WorkshopPage -->|open project| ProjectPage
 ```
 
 ### Build-time fetch
@@ -154,11 +157,13 @@ Runtime stack:
 
 - `next`, `react`, `react-dom`
 - `yaml` (portfolio.yaml parsing at build time)
+- `three` (client-only: BootField, Atmosphere, workshop `WorkshopCarousel`)
+- `gsap` (client-only: boot theatre, void-chrome morph, workshop snap, diagram scroll-draw)
 - `tailwindcss` (dev)
 - `tsx` (dev — runs fetch script)
 - IBM Plex Mono via `next/font/google` (no npm package)
 
-**Explicitly excluded from the portfolio shell:** Three.js, React Three Fiber, GSAP, Lenis, animation libraries, scroll hijacking.
+**Excluded:** React Three Fiber / drei, Framer Motion, Lenis, site-wide scroll hijacking. Three/GSAP stay in client motion modules and page-local clients (`ProjectGallery`) — never required for SSR shell paint.
 
 ## Phase roadmap
 

@@ -15,10 +15,7 @@ export default function WorkshopPage() {
     <div className="workshop-page">
       <header className="workshop-intro">
         <h1 className="page-heading">workshop</h1>
-        <p className="workshop-lede">
-          Selected projects with context — browse the gallery, then open a
-          project.
-        </p>
+        <p className="workshop-lede">Selected projects — drag to browse.</p>
       </header>
       <ProjectGallery projects={projects} />
     </div>

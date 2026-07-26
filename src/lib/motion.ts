@@ -15,7 +15,7 @@ export function canUseTheatreMotion(): boolean {
 }
 
 /**
- * Desktop extras gate (gallery rotateY, dense particle budgets).
+ * Desktop extras gate (workshop slab detail / hover tilt, dense particle budgets).
  * Safe on the server (always false). Client: all media queries must match.
  */
 export function canUseEnhancedMotion(): boolean {
