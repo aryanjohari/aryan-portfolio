@@ -17,7 +17,8 @@ links:
   github: string       # Required — full GitHub repo URL
   demo?: string        # Optional external demo URL (registry overrides for embedded demos)
   docs?: string        # Optional documentation URL
-diagram?: string       # Optional path to architecture diagram (e.g. docs/architecture.mmd)
+diagram?: string       # Optional path to Mermaid architecture (e.g. docs/architecture.mmd)
+graph?: string         # Optional path to owned graph IR (e.g. docs/architecture.graph.json)
 ```
 
 ## TypeScript alignment
@@ -40,12 +41,16 @@ type PortfolioYaml = {
   status: ProjectStatus;
   links: PortfolioLinks;
   diagram?: string;
+  graph?: string;
 };
 
 type ProjectDiagramData = {
   source: "github" | "base";
   path?: string;
   mermaid?: string;
+  graph?: ArchitectureGraph; // owned IR — preferred for site maps
+  graphSource?: "github" | "local";
+  graphPath?: string;
 };
 ```
 
@@ -74,6 +79,7 @@ type Project = PortfolioYaml & {
 | `links.demo` | Optional URL; used for “Open live demo” when present |
 | `links.docs` | Optional URL |
 | `diagram` | Optional path hint to a Mermaid file or markdown with a mermaid fence |
+| `graph` | Optional path hint to owned architecture graph JSON (`ArchitectureGraph`) |
 
 Build should fail (or warn) on missing required fields or invalid status values.
 
@@ -81,11 +87,22 @@ Build should fail (or warn) on missing required fields or invalid status values.
 
 At build time the fetch script resolves a **How it works** diagram for each project:
 
+### Mermaid (GitHub + temporary site render)
+
 1. Explicit `diagram` path in `portfolio.yaml` (if set)
 2. Fallbacks: `docs/architecture.mmd`, `docs/architecture.mermaid`, then first ` ```mermaid ` block in `docs/ARCHITECTURE.md` / `PROJECT.md` / `docs/architecture.md`
 3. Else a shared **base** flowchart SVG in the portfolio repo (Input → core → Output)
 
-Fetched Mermaid source is stored on the ok fetch result; the project page renders it via a dynamic Mermaid import, or the base SVG when none is found. Missing diagrams never break the page.
+### Owned graph IR (preferred for future site maps)
+
+1. Explicit `graph` path in `portfolio.yaml` (if set)
+2. Fallback: `docs/architecture.graph.json` in the project repo
+3. Else portfolio-local fixture at `src/data/architecture-graphs/<slug>.graph.json`
+4. Else no `graph` — site keeps Mermaid or base template
+
+See [architecture-graph.md](./architecture-graph.md) for the IR schema, authoring rules, layout, and tour requirements.
+
+Fetched Mermaid source is stored on the ok fetch result; the project page may still render it via a dynamic Mermaid import while IR rollout completes. Missing diagrams never break the page.
 
 ## Status semantics
 

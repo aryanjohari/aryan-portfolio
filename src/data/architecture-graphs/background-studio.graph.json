@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "title": "Background Studio",
+  "summary": "Uploads and looks land in scene state, drive one GLSL pass, then fan out to preset JSON and media exports.",
+  "notes": "Collapsed L0 / L1 / preview-text into a single GPU-pass node; Mermaid keeps the layered detail.",
+  "groups": [
+    { "id": "inputs", "label": "Inputs" },
+    { "id": "exports", "label": "Exports" }
+  ],
+  "nodes": [
+    { "id": "upload", "label": "Hero & overlay upload", "kind": "input", "groupId": "inputs" },
+    { "id": "looks", "label": "14 looks + mood text", "kind": "input", "groupId": "inputs" },
+    { "id": "tune", "label": "Intensity / Motion / Grit", "kind": "input", "groupId": "inputs" },
+    { "id": "store", "label": "Zustand scene state", "kind": "store" },
+    { "id": "material", "label": "SynthMaterial uniforms", "kind": "process" },
+    { "id": "shader", "label": "One GLSL fragment program", "kind": "process" },
+    { "id": "pass", "label": "Single GPU pass (layers + text)", "kind": "process" },
+    { "id": "json", "label": "Preset JSON", "kind": "output", "groupId": "exports" },
+    { "id": "media", "label": "WebM loop / PNG still", "kind": "output", "groupId": "exports" },
+    { "id": "site", "label": "Embed behind HTML on your site", "kind": "output", "groupId": "exports" }
+  ],
+  "edges": [
+    { "from": "upload", "to": "store" },
+    { "from": "looks", "to": "store" },
+    { "from": "tune", "to": "store" },
+    { "from": "store", "to": "material" },
+    { "from": "material", "to": "shader" },
+    { "from": "shader", "to": "pass" },
+    { "from": "pass", "to": "json" },
+    { "from": "pass", "to": "media" },
+    { "from": "json", "to": "site" }
+  ],
+  "tour": ["upload", "store", "shader", "pass", "json"]
+}

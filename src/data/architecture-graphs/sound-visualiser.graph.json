@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "title": "Sound Visualiser",
+  "summary": "Audio sources feed analyzers into scene state; a mode router picks the look and paints the full-screen canvas.",
+  "notes": "Collapsed loudness / mood / beat into one analyzers node and folded the per-frame snapshot into the engine step. Acid feedback is noted on the acid node label (no separate buffer). Webcam is a dashed secondary input into the router.",
+  "groups": [
+    { "id": "audio-in", "label": "Audio in" },
+    { "id": "modes", "label": "Visual modes" }
+  ],
+  "nodes": [
+    { "id": "mic", "label": "Microphone", "kind": "input", "groupId": "audio-in" },
+    { "id": "file", "label": "Your own audio file", "kind": "input", "groupId": "audio-in" },
+    { "id": "demo", "label": "Built-in demo track", "kind": "input", "groupId": "audio-in" },
+    {
+      "id": "engine",
+      "label": "Audio engine + frame snapshot",
+      "kind": "process"
+    },
+    {
+      "id": "analyzers",
+      "label": "Energy · mood · beat trackers",
+      "kind": "process"
+    },
+    { "id": "state", "label": "Scene state for this frame", "kind": "store" },
+    { "id": "webcam", "label": "Webcam texture (Live & Acid)", "kind": "input" },
+    {
+      "id": "router",
+      "label": "Which visual mode?",
+      "kind": "decision",
+      "shape": "diamond"
+    },
+    {
+      "id": "cinematic",
+      "label": "Cinematic 3D scene",
+      "kind": "process",
+      "groupId": "modes"
+    },
+    {
+      "id": "live",
+      "label": "Webcam shader",
+      "kind": "process",
+      "groupId": "modes"
+    },
+    {
+      "id": "acid",
+      "label": "Acid shader (+ frame feedback)",
+      "kind": "process",
+      "groupId": "modes"
+    },
+    { "id": "canvas", "label": "Full-screen canvas", "kind": "output" }
+  ],
+  "edges": [
+    { "from": "mic", "to": "engine" },
+    { "from": "file", "to": "engine" },
+    { "from": "demo", "to": "engine" },
+    { "from": "engine", "to": "analyzers" },
+    { "from": "analyzers", "to": "state" },
+    { "from": "state", "to": "router" },
+    { "from": "webcam", "to": "router", "style": "dashed" },
+    { "id": "e-cinematic", "from": "router", "to": "cinematic", "label": "Cinematic" },
+    { "id": "e-live", "from": "router", "to": "live", "label": "Live" },
+    { "id": "e-acid", "from": "router", "to": "acid", "label": "Acid" },
+    { "from": "cinematic", "to": "canvas" },
+    { "from": "live", "to": "canvas" },
+    { "from": "acid", "to": "canvas" }
+  ],
+  "tour": ["mic", "engine", "state", "router", "cinematic", "canvas"]
+}

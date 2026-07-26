@@ -1,5 +1,6 @@
 import type { DemoConfig, RegistryEntry } from "@/data/registry";
 import { registry } from "@/data/registry";
+import { getLocalArchitectureGraph } from "@/data/architecture-graphs";
 import fetchedProjects from "@/lib/fetched-projects.json";
 import { mockProjects } from "@/lib/mock-projects";
 import type {
@@ -23,6 +24,21 @@ export type {
 export type { DemoConfig };
 
 const BASE_DIAGRAM: ProjectDiagramData = { source: "base" };
+
+function attachLocalGraphIfMissing(
+  diagram: ProjectDiagramData,
+  slug: string,
+): ProjectDiagramData {
+  if (diagram.graph) return diagram;
+  const local = getLocalArchitectureGraph(slug);
+  if (!local) return diagram;
+  return {
+    ...diagram,
+    graph: local,
+    graphSource: "local",
+    graphPath: `src/data/architecture-graphs/${slug}.graph.json`,
+  };
+}
 
 type PlaceholderContent = {
   title: string;
@@ -87,7 +103,7 @@ function buildPlaceholder(entry: RegistryEntry, status: ContentStatus, message?:
     demo: entry.demo,
     contentStatus: status,
     contentMessage: message,
-    diagram: BASE_DIAGRAM,
+    diagram: attachLocalGraphIfMissing(BASE_DIAGRAM, entry.slug),
     title: humanizeSlug(entry.slug),
     summary: placeholderSummary(status),
     description: placeholderDescription(status, entry.repo, message),
@@ -122,7 +138,15 @@ export function mergeProject(
     demo: entry.demo,
     contentStatus,
     contentMessage,
-    diagram,
+    diagram: attachLocalGraphIfMissing(
+      {
+        ...diagram,
+        ...(yaml.walkthrough && yaml.walkthrough.length > 0
+          ? { walkthrough: yaml.walkthrough }
+          : {}),
+      },
+      entry.slug,
+    ),
   };
 }
 

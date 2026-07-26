@@ -15,7 +15,8 @@ You are documenting THIS repository so it is (1) clear to GitHub visitors, (2) c
 | File | Audience | Job |
 |------|----------|-----|
 | `portfolio.yaml` | Portfolio site + Gemini guide | Short visitor copy only |
-| `docs/architecture.mmd` | Portfolio “How it works” diagram | One accurate Mermaid flowchart |
+| `docs/architecture.mmd` | GitHub + temporary portfolio Mermaid | One accurate Mermaid flowchart |
+| `docs/architecture.graph.json` | Portfolio owned map (preferred) | Graph IR + tour — see portfolio `docs/architecture-graph.md` |
 | `docs/ARCHITECTURE.md` | Engineers / interviewers on GitHub | Deeper case study of design & tradeoffs |
 | `README.md` | Developers who clone | Run, install, test, contribute |
 | `PROJECT.md` (optional) | Narrative overview on GitHub | Story + link to architecture; keep mermaid IN SYNC with `.mmd` or omit mermaid here |
@@ -28,9 +29,14 @@ The portfolio fetches:
    - else `docs/architecture.mmd`
    - else `docs/architecture.mermaid`
    - else first ```mermaid fence in `docs/ARCHITECTURE.md` → `PROJECT.md` → `docs/architecture.md`
-3. Else portfolio shows a generic base diagram
-Prefer shipping **`docs/architecture.mmd`** and set in yaml:
+3. Owned architecture graph IR (preferred for site maps), first match:
+   - `graph:` path in yaml if set
+   - else `docs/architecture.graph.json`
+   - else portfolio-local fixture while rolling out
+4. Else portfolio shows a generic base diagram
+Prefer shipping **`docs/architecture.mmd`** (GitHub) and **`docs/architecture.graph.json`** (portfolio), and set in yaml:
 `diagram: docs/architecture.mmd`
+`graph: docs/architecture.graph.json`
 ### portfolio.yaml schema
 ```yaml
 title: string

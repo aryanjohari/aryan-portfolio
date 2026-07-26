@@ -102,7 +102,9 @@ export const revalidate = 3600; // 1 hour ISR
 - Project pages regenerate at most once per hour when visited.
 - Index page can use the same revalidation or be fully static depending on fetch strategy.
 - `generateStaticParams()` pre-builds all known slugs from the registry.
-- `prebuild` runs `npm run fetch:projects` on every production build.
+- `prebuild` runs `npm run validate:graphs`, `npm run fetch:projects`, then guide-context on every production build.
+
+Owned architecture graph IR (preferred for future site maps) is documented in [architecture-graph.md](./architecture-graph.md). Mermaid fetch remains; local fixtures live under `src/data/architecture-graphs/`.
 
 ### Optional deploy hook (Phase 3)
 
@@ -142,9 +144,12 @@ aryan-portfolio/
 │   ├── data/
 │   │   ├── registry.ts            # Curated project list + demo config
 │   │   ├── exhibits.ts
-│   │   └── base-diagram.ts        # Fallback How-it-works SVG
+│   │   ├── base-diagram.ts        # Fallback How-it-works SVG
+│   │   └── architecture-graphs/   # Owned graph IR fixtures (rollout)
 │   └── lib/
 │       ├── portfolio-schema.ts    # YAML types + validation
+│       ├── architecture-graph.ts  # Graph IR types + validation
+│       ├── architecture-graph-layout.ts
 │       ├── projects.ts            # Types, merge helper, getters
 │       ├── fetched-projects.json  # Build output from fetch script
 │       └── mock-projects.ts       # Dev fallback when fetch skipped

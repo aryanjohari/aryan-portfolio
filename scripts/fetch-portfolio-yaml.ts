@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { parse } from "yaml";
 
 import { registry } from "../src/data/registry";
+import { getLocalArchitectureGraph } from "../src/data/architecture-graphs";
 import type {
   FetchResult,
   FetchedProjectsFile,
@@ -12,6 +13,7 @@ import type {
   ProjectDiagramData,
 } from "../src/lib/portfolio-schema";
 import { validatePortfolioYaml } from "../src/lib/portfolio-schema";
+import { validateArchitectureGraph } from "../src/lib/architecture-graph";
 
 const OUTPUT_PATH = resolve(process.cwd(), "src/lib/fetched-projects.json");
 const DEFAULT_BRANCH = "main";
@@ -22,6 +24,7 @@ const DIAGRAM_MARKDOWN_FALLBACKS = [
   "PROJECT.md",
   "docs/architecture.md",
 ] as const;
+const GRAPH_FALLBACKS = ["docs/architecture.graph.json"] as const;
 
 const MERMAID_FENCE_RE = /```mermaid\s*\n([\s\S]*?)```/i;
 
@@ -200,6 +203,67 @@ async function resolveDiagram(
   return { source: "base" };
 }
 
+/**
+ * Resolve owned architecture graph IR.
+ * Prefer repo `graph:` / docs/architecture.graph.json; fall back to portfolio fixtures.
+ */
+async function resolveGraph(
+  slug: string,
+  repo: string,
+  branch: string,
+  yaml: PortfolioYaml,
+  token: string | undefined,
+): Promise<Pick<ProjectDiagramData, "graph" | "graphSource" | "graphPath">> {
+  const candidates: string[] = [];
+  if (yaml.graph) candidates.push(yaml.graph);
+  for (const path of GRAPH_FALLBACKS) candidates.push(path);
+
+  const seen = new Set<string>();
+  for (const path of candidates) {
+    if (seen.has(path)) continue;
+    seen.add(path);
+
+    const file = await fetchRepoFile(repo, branch, path, token);
+    if (!file.ok) continue;
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(file.text);
+    } catch {
+      console.warn(`  [${slug}] graph JSON parse failed at ${path}`);
+      continue;
+    }
+
+    const validation = validateArchitectureGraph(parsed);
+    if (!validation.ok) {
+      const detail = validation.issues.map((i) => i.message).join("; ");
+      console.warn(`  [${slug}] invalid graph at ${path}: ${detail}`);
+      continue;
+    }
+
+    for (const w of validation.warnings) {
+      console.warn(`  [${slug}] graph warning (${path}): ${w.message}`);
+    }
+
+    return {
+      graph: validation.graph,
+      graphSource: "github",
+      graphPath: path,
+    };
+  }
+
+  const local = getLocalArchitectureGraph(slug);
+  if (local) {
+    return {
+      graph: local,
+      graphSource: "local",
+      graphPath: `src/data/architecture-graphs/${slug}.graph.json`,
+    };
+  }
+
+  return {};
+}
+
 function parseAndValidate(raw: string, slug: string, repo: string): FetchResult {
   let parsed: unknown;
   try {
@@ -320,11 +384,46 @@ async function fetchEntry(
       } else {
         console.log(`  ${slug.padEnd(20)} diagram ← base template`);
       }
-      return { ...result, diagram };
+
+      const graphFields = await resolveGraph(slug, repo, branch, result.yaml, token);
+      if (graphFields.graphSource === "github") {
+        console.log(`  ${slug.padEnd(20)} graph   ← ${graphFields.graphPath}`);
+      } else if (graphFields.graphSource === "local") {
+        console.log(`  ${slug.padEnd(20)} graph   ← local fixture`);
+      } else {
+        console.log(`  ${slug.padEnd(20)} graph   ← (none)`);
+      }
+
+      return {
+        ...result,
+        diagram: {
+          ...diagram,
+          ...graphFields,
+          ...(result.yaml.walkthrough && result.yaml.walkthrough.length > 0
+            ? { walkthrough: result.yaml.walkthrough }
+            : {}),
+        },
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : "diagram resolve error";
       console.warn(`  [${slug}] diagram fallback to base: ${message}`);
-      return { ...result, diagram: { source: "base" } };
+      const local = getLocalArchitectureGraph(slug);
+      return {
+        ...result,
+        diagram: {
+          source: "base",
+          ...(local
+            ? {
+                graph: local,
+                graphSource: "local" as const,
+                graphPath: `src/data/architecture-graphs/${slug}.graph.json`,
+              }
+            : {}),
+          ...(result.yaml.walkthrough && result.yaml.walkthrough.length > 0
+            ? { walkthrough: result.yaml.walkthrough }
+            : {}),
+        },
+      };
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown fetch error";
@@ -345,7 +444,10 @@ function statusNotes(result: FetchResult): string {
         result.diagram?.source === "github"
           ? `diagram:${result.diagram.path ?? "github"}`
           : "diagram:base";
-      return `validated (${result.yaml.stack.length} stack items, ${diagramNote})`;
+      const graphNote = result.diagram?.graph
+        ? `graph:${result.diagram.graphSource ?? "yes"}`
+        : "graph:none";
+      return `validated (${result.yaml.stack.length} stack items, ${diagramNote}, ${graphNote})`;
     }
     case "missing_yaml":
       return result.message;

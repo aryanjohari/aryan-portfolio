@@ -1,9 +1,21 @@
+import type { ArchitectureGraph } from "@/lib/architecture-graph";
+
 export type ProjectStatus = "active" | "wip" | "archived";
 
 export type PortfolioLinks = {
   github: string;
   demo?: string;
   docs?: string;
+};
+
+/** Optional authored architecture walkthrough step (visitor path story). */
+export type PortfolioWalkthroughStep = {
+  id?: string;
+  title: string;
+  body?: string;
+  /** Match Mermaid node / cluster label for spotlight */
+  highlight?: string;
+  mermaidNodeId?: string;
 };
 
 export type PortfolioYaml = {
@@ -14,14 +26,31 @@ export type PortfolioYaml = {
   stack: string[];
   status: ProjectStatus;
   links: PortfolioLinks;
-  /** Optional path hint to architecture diagram (e.g. docs/architecture.mmd). */
+  /** Optional path hint to architecture Mermaid (e.g. docs/architecture.mmd). */
   diagram?: string;
+  /**
+   * Optional path hint to owned architecture graph IR
+   * (e.g. docs/architecture.graph.json). Preferred over Mermaid on the site.
+   */
+  graph?: string;
+  /** Optional 3–5 step path story; portfolio derives steps when omitted. */
+  walkthrough?: PortfolioWalkthroughStep[];
 };
 
 export type ProjectDiagramData = {
   source: "github" | "base";
   path?: string;
   mermaid?: string;
+  /**
+   * Owned graph IR when fetched from the project repo or loaded from a
+   * portfolio-local fixture. Site render should prefer this over `mermaid`.
+   */
+  graph?: ArchitectureGraph;
+  /** Where `graph` came from when present. */
+  graphSource?: "github" | "local";
+  graphPath?: string;
+  /** Normalized walkthrough from portfolio.yaml when authored */
+  walkthrough?: PortfolioWalkthroughStep[];
 };
 
 export type ContentStatus = "ok" | "missing_yaml" | "invalid_yaml" | "fetch_error";
@@ -111,6 +140,57 @@ export function validatePortfolioYaml(data: unknown): { ok: true; yaml: Portfoli
     return { ok: false, message: "Field diagram must be a non-empty string when provided" };
   }
 
+  if (record.graph !== undefined && !isNonEmptyString(record.graph)) {
+    return { ok: false, message: "Field graph must be a non-empty string when provided" };
+  }
+
+  let walkthrough: PortfolioWalkthroughStep[] | undefined;
+  if (record.walkthrough !== undefined) {
+    if (!Array.isArray(record.walkthrough)) {
+      return { ok: false, message: "Field walkthrough must be an array when provided" };
+    }
+    walkthrough = [];
+    for (const item of record.walkthrough) {
+      if (item === null || typeof item !== "object" || Array.isArray(item)) {
+        return { ok: false, message: "Each walkthrough entry must be an object" };
+      }
+      const step = item as Record<string, unknown>;
+      if (!isNonEmptyString(step.title)) {
+        return { ok: false, message: "Each walkthrough entry needs a non-empty title" };
+      }
+      const entry: PortfolioWalkthroughStep = { title: step.title.trim() };
+      if (step.id !== undefined) {
+        if (!isNonEmptyString(step.id)) {
+          return { ok: false, message: "walkthrough.id must be a non-empty string when provided" };
+        }
+        entry.id = step.id.trim();
+      }
+      if (step.body !== undefined) {
+        if (!isNonEmptyString(step.body)) {
+          return { ok: false, message: "walkthrough.body must be a non-empty string when provided" };
+        }
+        entry.body = step.body.trim();
+      }
+      if (step.highlight !== undefined) {
+        if (!isNonEmptyString(step.highlight)) {
+          return { ok: false, message: "walkthrough.highlight must be a non-empty string when provided" };
+        }
+        entry.highlight = step.highlight.trim();
+      }
+      if (step.mermaidNodeId !== undefined) {
+        if (!isNonEmptyString(step.mermaidNodeId)) {
+          return {
+            ok: false,
+            message: "walkthrough.mermaidNodeId must be a non-empty string when provided",
+          };
+        }
+        entry.mermaidNodeId = step.mermaidNodeId.trim();
+      }
+      walkthrough.push(entry);
+      if (walkthrough.length >= 5) break;
+    }
+  }
+
   const yaml: PortfolioYaml = {
     title: record.title.trim(),
     summary: record.summary.trim(),
@@ -130,6 +210,14 @@ export function validatePortfolioYaml(data: unknown): { ok: true; yaml: Portfoli
 
   if (record.diagram !== undefined) {
     yaml.diagram = (record.diagram as string).trim();
+  }
+
+  if (record.graph !== undefined) {
+    yaml.graph = (record.graph as string).trim();
+  }
+
+  if (walkthrough && walkthrough.length > 0) {
+    yaml.walkthrough = walkthrough;
   }
 
   return { ok: true, yaml };

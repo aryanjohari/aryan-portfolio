@@ -26,9 +26,11 @@ links:
   demo?: string           # only if publicly deployed today
   docs?: string           # only if real docs exist
 diagram?: string          # optional path to architecture mermaid, e.g. docs/architecture.mmd
+graph?: string            # optional path to owned graph IR, e.g. docs/architecture.graph.json
 ```
 Optional: slug (kebab-case) — omit unless repo name is a bad slug.
 Optional: diagram — only if this repo has a real architecture Mermaid file or markdown fence; otherwise omit (portfolio uses a base flowchart).
+Optional: graph — only if this repo has `docs/architecture.graph.json` (see portfolio `docs/architecture-graph.md`); otherwise omit (portfolio may use a local fixture).
 
 ## How to write it
 Read README.md and scan the codebase to confirm what the project actually does and which technologies are used.
