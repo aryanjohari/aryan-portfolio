@@ -17,8 +17,14 @@ import { MOTION, prefersReducedMotion } from "@/lib/motion";
 
 /**
  * Morph-first void chrome — see docs/void-chrome-transitions.md.
- * Home ↔ site: morph chrome, then router.push. Site ↔ site: push + content fade.
+ * Home ↔ site: morph chrome, then router.push.
+ * Site ↔ site: exit content, push, then entry shift.
  */
+
+/** Site ↔ site exit translate (px). */
+const PAGE_EXIT_Y = -8;
+/** Site ↔ site entry translate (px). */
+const PAGE_ENTER_Y = 12;
 
 const navItems = [
   {
@@ -209,6 +215,8 @@ export function VoidChrome({ children }: { children: ReactNode }) {
   const modeRef = useRef(mode);
   const pathnameRef = useRef(pathname);
   const morphingRef = useRef(false);
+  /** Site ↔ site exit→push→entry in flight (does not set data-chrome-morphing). */
+  const pageTransitioningRef = useRef(false);
   const navSettledRef = useRef(pathMode === "site");
   /** Set before router.push after a morph we drove; cleared when pathname lands. */
   const pendingPushRef = useRef<string | null>(null);
@@ -481,24 +489,64 @@ export function VoidChrome({ children }: { children: ReactNode }) {
     const content = contentRef.current;
     if (!content) return;
     const { gsap } = await import("gsap");
-    await new Promise<void>((resolve) => {
-      gsap.to(content, {
-        opacity: to,
-        duration: MOTION.chrome.content,
-        ease: MOTION.chrome.ease,
-        onComplete: () => {
-          if (opts?.pointerEvents) {
-            content.style.pointerEvents = opts.pointerEvents;
-          }
-          resolve();
-        },
-      });
+    await gsap.to(content, {
+      opacity: to,
+      duration: MOTION.chrome.content,
+      ease: MOTION.chrome.ease,
+      onComplete: () => {
+        if (opts?.pointerEvents) {
+          content.style.pointerEvents = opts.pointerEvents;
+        }
+      },
     });
+  }
+
+  async function settlePageContent(): Promise<void> {
+    const content = contentRef.current;
+    if (!content) return;
+    const { gsap } = await import("gsap");
+    gsap.killTweensOf(content);
+    gsap.set(content, { opacity: 1, y: 0, clearProps: "transform" });
+    content.style.pointerEvents = "auto";
+  }
+
+  async function exitPageContent(): Promise<void> {
+    const content = contentRef.current;
+    if (!content) return;
+    const { gsap } = await import("gsap");
+    gsap.killTweensOf(content);
+    content.style.pointerEvents = "none";
+    await gsap.to(content, {
+      opacity: 0,
+      y: PAGE_EXIT_Y,
+      duration: MOTION.chrome.pageExit,
+      ease: "power2.in",
+    });
+  }
+
+  async function enterPageContent(): Promise<void> {
+    const content = contentRef.current;
+    if (!content) return;
+    window.scrollTo(0, 0);
+    const { gsap } = await import("gsap");
+    gsap.killTweensOf(content);
+    content.style.pointerEvents = "auto";
+    await gsap.fromTo(
+      content,
+      { opacity: 0, y: PAGE_ENTER_Y },
+      {
+        opacity: 1,
+        y: 0,
+        duration: MOTION.chrome.pageEnter,
+        ease: MOTION.ease,
+        clearProps: "transform",
+      },
+    );
   }
 
   /**
    * Primary navigation: morph chrome when home ↔ site, then push.
-   * Site ↔ site: push immediately; content fade handled on pathname settle.
+   * Site ↔ site: exit content, then push; entry on pathname settle.
    */
   async function navigate(href: string): Promise<void> {
     if (!isInAppChromeRoute(href)) {
@@ -506,7 +554,13 @@ export function VoidChrome({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (href === pathnameRef.current || morphingRef.current) return;
+    if (
+      href === pathnameRef.current ||
+      morphingRef.current ||
+      pageTransitioningRef.current
+    ) {
+      return;
+    }
 
     const fromMode = modeRef.current;
     const toMode = modeFromPath(href);
@@ -523,10 +577,17 @@ export function VoidChrome({ children }: { children: ReactNode }) {
       return;
     }
 
-    /* Same chrome mode: let the router swap; fade on pathname effect. */
+    /* Same chrome mode: exit current page, then push; entry on settle. */
     if (fromMode === toMode) {
-      pendingPushRef.current = href;
-      router.push(href);
+      pageTransitioningRef.current = true;
+      try {
+        await exitPageContent();
+        pendingPushRef.current = href;
+        router.push(href);
+      } catch {
+        await settlePageContent();
+        pageTransitioningRef.current = false;
+      }
       return;
     }
 
@@ -593,53 +654,62 @@ export function VoidChrome({ children }: { children: ReactNode }) {
     pendingPushRef.current = null;
 
     const nextMode = modeFromPath(pathname);
+    let cancelled = false;
 
-    /* Morph-first navigate already set mode; just reveal content. */
+    const cleanupPageTween = () => {
+      cancelled = true;
+      const content = contentRef.current;
+      if (content) {
+        void import("gsap").then(({ gsap }) => {
+          gsap.killTweensOf(content);
+        });
+      }
+      /* Never leave a site page stuck hidden; do not force-show on home. */
+      if (modeFromPath(pathnameRef.current) === "site") {
+        void settlePageContent();
+      }
+      pageTransitioningRef.current = false;
+    };
+
+    /* Morph-first / site↔site navigate already set mode; reveal content. */
     if (drivenByUs) {
       if (nextMode === "site") {
         setAskMountKey(`site:${pathname}`);
         if (prefersReducedMotion()) {
-          if (contentRef.current) {
-            contentRef.current.style.opacity = "1";
-            contentRef.current.style.pointerEvents = "auto";
-          }
+          void settlePageContent().then(() => {
+            pageTransitioningRef.current = false;
+          });
         } else {
           void (async () => {
-            const el = contentRef.current;
-            if (!el) return;
-            const { gsap } = await import("gsap");
-            gsap.fromTo(
-              el,
-              { opacity: 0 },
-              {
-                opacity: 1,
-                duration: MOTION.chrome.content,
-                ease: MOTION.chrome.ease,
-                onStart: () => {
-                  el.style.pointerEvents = "auto";
-                },
-              },
-            );
+            try {
+              await enterPageContent();
+            } finally {
+              if (cancelled) {
+                if (modeFromPath(pathnameRef.current) === "site") {
+                  await settlePageContent();
+                }
+              }
+              pageTransitioningRef.current = false;
+            }
           })();
         }
+      } else {
+        pageTransitioningRef.current = false;
       }
-      return;
+      return cleanupPageTween;
     }
 
     /* Back/forward or Link outside VoidChrome. */
     void (async () => {
-      if (morphingRef.current) return;
+      if (morphingRef.current || cancelled) return;
 
       if (modeRef.current === nextMode) {
         if (nextMode === "site") {
           setAskMountKey(`site:${pathname}`);
           if (prefersReducedMotion()) {
-            if (contentRef.current) {
-              contentRef.current.style.opacity = "1";
-              contentRef.current.style.pointerEvents = "auto";
-            }
+            await settlePageContent();
           } else {
-            void fadeContent(1, { pointerEvents: "auto" });
+            await enterPageContent();
           }
         }
         return;
@@ -668,6 +738,7 @@ export function VoidChrome({ children }: { children: ReactNode }) {
           contentRef.current.style.pointerEvents = "none";
         }
         await tweenChrome(nextMode);
+        if (cancelled) return;
         if (nextMode === "site") {
           setAskMountKey(`site:${pathname}`);
           await fadeContent(1, { pointerEvents: "auto" });
@@ -677,6 +748,8 @@ export function VoidChrome({ children }: { children: ReactNode }) {
         delete document.documentElement.dataset.chromeMorphing;
       }
     })();
+
+    return cleanupPageTween;
   }, [pathname, pathMode]);
 
   const guideVariant = mode === "home" ? "home" : "mini";

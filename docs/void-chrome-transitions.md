@@ -32,8 +32,11 @@ Problems:
 
 ```
 click in-app nav (home / workshop / about)
-  → if reduced-motion: router.push immediately
-  → if same chrome mode (site → site): router.push + soft content fade
+  → if reduced-motion: sync mode + router.push immediately
+  → if same chrome mode (site → site):
+       1. EXIT .void-chrome-page (opacity + slight y up)
+       2. await exit → router.push(href)
+       3. pathname settle → scroll to top → ENTRY (opacity + slight y up→0)
   → if home ↔ site:
        1. prevent default navigation
        2. (site → home only) fade current page out, keep it mounted until morph starts
@@ -42,7 +45,7 @@ click in-app nav (home / workshop / about)
        5. tween name / nav / ask first→last (MOTION.chrome.*)
        6. on complete → router.push(href)
        7. new page mounts under the already-settled chrome
-       8. soft-fade content in
+       8. soft-fade / entry content in
 ```
 
 `resume.pdf` and external URLs are not intercepted (full navigation / download).
@@ -52,18 +55,38 @@ click in-app nav (home / workshop / about)
 | Concern | Owner |
 |---------|--------|
 | Chrome layout mode (`home` \| `site`) | `VoidChrome` state (set **during** morph, before push) |
-| URL / `{children}` | Next App Router (`router.push` **after** morph) |
-| Content visibility | `.void-chrome-page` opacity after settle |
-| Browser back/forward | Pathname sync: if mode ≠ path mode and not mid-morph, run morph then settle (or instant if reduced-motion) |
+| URL / `{children}` | Next App Router (`router.push` **after** morph / exit) |
+| Content visibility | `.void-chrome-page` opacity (+ y on site↔site) after settle |
+| Browser back/forward | Pathname sync: if mode ≠ path mode and not mid-morph, run morph then settle (or instant if reduced-motion). Same-mode: entry only (no exit). |
 
 ### Transition matrix
 
 | From → To | Behavior |
 |-----------|----------|
-| `/` → `/workshop` etc. | Morph home→site, **then** push, fade content in |
+| `/` → `/workshop` etc. | Morph home→site, **then** push, content entry |
 | `/workshop` → `/` | Fade content out, morph site→home, **then** push (home body is empty) |
-| `/workshop` → `/about` | Site chrome stays; push + soft content fade |
-| Reduced motion | Instant mode + push; no morph |
+| `/workshop` → `/about` (etc.) | Site chrome stays; **exit → push → entry** shift on `.void-chrome-page` |
+| Reduced motion | Instant mode + push; no morph / no exit-entry motion |
+
+## Site ↔ site content transition
+
+When both routes share chrome mode `site` (workshop ↔ about ↔ `/projects/[slug]`):
+
+1. **Exit** (still on the old route): `.void-chrome-page` fades out and shifts slightly up (`y: 0 → -8px`), `MOTION.chrome.pageExit` (~0.28s), ease `power2.in`. Pointer-events none for the duration.
+2. **Push:** `await` exit completion, then `router.push(href)` (same pattern as site→home awaiting `fadeContent(0)` before morph).
+3. **Entry** (pathname settle, `drivenByUs`): `window.scrollTo(0, 0)`, then opacity + `y: +12px → 0` with `MOTION.chrome.pageEnter` (~0.4s) and `MOTION.ease` (`power2.out`). Restore pointer-events; clear transform via `clearProps`.
+
+**Tokens:** `MOTION.chrome.pageExit` / `MOTION.chrome.pageEnter` in `src/lib/motion-tokens.ts`. Morph path still uses `MOTION.chrome.content` for opacity-only fades around home↔site.
+
+**Guard:** `pageTransitioningRef` blocks rapid double-clicks while exit→push→entry is in flight (separate from `morphingRef` / `data-chrome-morphing`).
+
+**Reduced motion:** no exit/entry tweens — instant swap, opacity 1, pointer-events auto (existing reduced-motion push path).
+
+**Back/forward & Links outside VoidChrome:** the page has already swapped. Run **entry only** (or instant under reduced motion). Do **not** attempt an exit animation.
+
+**Interrupt safety:** killing mid-tween settles site pages to opacity 1 / usable pointer-events; never force-show content on home.
+
+The whole `.void-chrome-page` animates as one block so nested mount effects (`ProjectGallery`, `AboutAnchorNav`, `ProjectDiagram`) are not remounted or delayed.
 
 ## Implementation notes
 

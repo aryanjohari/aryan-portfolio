@@ -31,6 +31,8 @@ Shared timing lives in `src/lib/motion-tokens.ts` (re-exported from `src/lib/mot
 | `MOTION.slow` | `0.6` s | Larger section / page-ish moves |
 | `MOTION.chrome.morph` | `0.9` s | Home ↔ site void-chrome measure→tween (both directions) |
 | `MOTION.chrome.content` | `0.5` s | Page fade before (→home) / after (←home) morph |
+| `MOTION.chrome.pageExit` | `0.28` s | Site ↔ site content exit (opacity + slight y) before push |
+| `MOTION.chrome.pageEnter` | `0.4` s | Site ↔ site content entry after pathname settle |
 | `MOTION.ease` | `power2.out` | Default GSAP ease |
 | `MOTION.easeInOut` | `power2.inOut` | Symmetric GSAP ease |
 | `MOTION.chrome.ease` | `power2.inOut` | Chrome morph ease (mirrored) |
@@ -97,7 +99,7 @@ Single persistent client shell: `VoidChrome` in root `layout.tsx` (`html[data-vo
 | `home` (`/`) | Hero name (scramble once after boot) · centered ask + invite + reply · glyph rail/row (workshop · about · resume) |
 | `site` (all other routes) | Compact bar: smaller name · `home · workshop · about · resume` · mini ask top-right |
 
-**Morph (morph-first):** Chrome nav intercepts in-app clicks. Home ↔ site: measure→tween name/nav/ask (`MOTION.chrome.morph`), **then** `router.push`, then soft content fade. Site ↔ site: push + content fade only. See `docs/void-chrome-transitions.md` for why post-route opacity tricks were abandoned. Narrow/coarse: matched crossfade. `prefers-reduced-motion`: instant mode + push.
+**Morph (morph-first):** Chrome nav intercepts in-app clicks. Home ↔ site: measure→tween name/nav/ask (`MOTION.chrome.morph`), **then** `router.push`, then soft content fade. Site ↔ site: **exit → push → entry** shift on `.void-chrome-page` (`MOTION.chrome.pageExit` / `pageEnter`). See `docs/void-chrome-transitions.md`. Narrow/coarse: matched crossfade. `prefers-reduced-motion`: instant mode + push.
 
 **Mini ask:** Compact wireframe input; replies open in a non-layout-breaking panel (dropdown under the bar; fixed bottom sheet on small screens). Remounts cleanly on site navigations via `remountKey`.
 

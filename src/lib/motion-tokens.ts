@@ -31,6 +31,10 @@ export const MOTION = {
     content: 0.5,
     /** Narrow/coarse crossfade halves */
     crossfade: 0.45,
+    /** Site ↔ site page exit (opacity + slight y) before push */
+    pageExit: 0.28,
+    /** Site ↔ site page entry after pathname settle */
+    pageEnter: 0.4,
   },
 
   /**
