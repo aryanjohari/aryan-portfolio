@@ -30,5 +30,34 @@
     { "from": "pass", "to": "media" },
     { "from": "json", "to": "site" }
   ],
-  "tour": ["upload", "store", "shader", "pass", "json"]
+  "tour": ["upload", "store", "shader", "pass", "json"],
+  "captions": [
+    {
+      "id": "upload",
+      "title": "Inputs",
+      "body": "Three ways work enters the system.",
+      "items": ["Upload a hero or overlay image", "Pick a look or mood", "Tune intensity, motion, and grit"]
+    },
+    {
+      "id": "store",
+      "title": "Scene state",
+      "body": "Everything you chose lives in one shared store."
+    },
+    {
+      "id": "shader",
+      "title": "Shader program",
+      "body": "One GLSL fragment program turns that state into look."
+    },
+    {
+      "id": "pass",
+      "title": "GPU pass",
+      "body": "A single pass draws layers and text together."
+    },
+    {
+      "id": "json",
+      "title": "Exports",
+      "body": "The same pass fans out into things you can take away.",
+      "items": ["Preset JSON", "WebM loop or PNG still", "Embed behind your site"]
+    }
+  ]
 }

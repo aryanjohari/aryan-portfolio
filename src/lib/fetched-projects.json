@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-26T10:39:28.246Z",
+  "fetchedAt": "2026-07-26T21:29:17.263Z",
   "results": [
     {
       "slug": "background-studio",
@@ -28,11 +28,132 @@
         "slug": "background-studio",
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T10:39:23.812Z",
+      "fetchedAt": "2026-07-26T21:29:09.820Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
-        "mermaid": "flowchart TB\n  subgraph inputs [Inputs]\n    Upload[Hero and overlay upload]\n    Looks[14 looks + mood text]\n    Tune[Intensity / Motion / Grit]\n  end\n\n  Store[Zustand scene state]\n  Material[SynthMaterial uniforms]\n  Shader[One GLSL fragment program]\n\n  subgraph pass [Single GPU pass]\n    L0[Hero layer L0]\n    L1[Overlay layer L1]\n    Text[Preview text T0–T3]\n  end\n\n  JSON[Preset JSON]\n  Media[WebM loop / PNG still]\n  Site[Embed behind HTML on your site]\n\n  Upload --> Store\n  Looks --> Store\n  Tune --> Store\n  Store --> Material\n  Material --> Shader\n  Shader --> L0 --> L1 --> Text\n  Text --> JSON\n  Text --> Media\n  JSON --> Site"
+        "mermaid": "flowchart TB\n  subgraph inputs [Inputs]\n    Upload[Hero and overlay upload]\n    Looks[14 looks + mood text]\n    Tune[Intensity / Motion / Grit]\n  end\n\n  Store[Zustand scene state]\n  Material[SynthMaterial uniforms]\n  Shader[One GLSL fragment program]\n\n  subgraph pass [Single GPU pass]\n    L0[Hero layer L0]\n    L1[Overlay layer L1]\n    Text[Preview text T0–T3]\n  end\n\n  JSON[Preset JSON]\n  Media[WebM loop / PNG still]\n  Site[Embed behind HTML on your site]\n\n  Upload --> Store\n  Looks --> Store\n  Tune --> Store\n  Store --> Material\n  Material --> Shader\n  Shader --> L0 --> L1 --> Text\n  Text --> JSON\n  Text --> Media\n  JSON --> Site",
+        "graph": {
+          "version": 1,
+          "nodes": [
+            {
+              "id": "upload",
+              "label": "Hero & overlay upload",
+              "kind": "input",
+              "groupId": "inputs"
+            },
+            {
+              "id": "looks",
+              "label": "14 looks + mood text",
+              "kind": "input",
+              "groupId": "inputs"
+            },
+            {
+              "id": "tune",
+              "label": "Intensity / Motion / Grit",
+              "kind": "input",
+              "groupId": "inputs"
+            },
+            {
+              "id": "store",
+              "label": "Zustand scene state",
+              "kind": "store"
+            },
+            {
+              "id": "material",
+              "label": "SynthMaterial uniforms",
+              "kind": "process"
+            },
+            {
+              "id": "shader",
+              "label": "One GLSL fragment program",
+              "kind": "process"
+            },
+            {
+              "id": "pass",
+              "label": "Single GPU pass (layers + text)",
+              "kind": "process"
+            },
+            {
+              "id": "json",
+              "label": "Preset JSON",
+              "kind": "output",
+              "groupId": "exports"
+            },
+            {
+              "id": "media",
+              "label": "WebM loop / PNG still",
+              "kind": "output",
+              "groupId": "exports"
+            },
+            {
+              "id": "site",
+              "label": "Embed behind HTML on your site",
+              "kind": "output",
+              "groupId": "exports"
+            }
+          ],
+          "edges": [
+            {
+              "from": "upload",
+              "to": "store"
+            },
+            {
+              "from": "looks",
+              "to": "store"
+            },
+            {
+              "from": "tune",
+              "to": "store"
+            },
+            {
+              "from": "store",
+              "to": "material"
+            },
+            {
+              "from": "material",
+              "to": "shader"
+            },
+            {
+              "from": "shader",
+              "to": "pass"
+            },
+            {
+              "from": "pass",
+              "to": "json"
+            },
+            {
+              "from": "pass",
+              "to": "media"
+            },
+            {
+              "from": "json",
+              "to": "site"
+            }
+          ],
+          "tour": [
+            "upload",
+            "store",
+            "shader",
+            "pass",
+            "json"
+          ],
+          "title": "Background Studio",
+          "summary": "Uploads and looks land in scene state, drive one GLSL pass, then fan out to preset JSON and media exports.",
+          "notes": "Collapsed L0 / L1 / preview-text into a single GPU-pass node; Mermaid keeps the layered detail.",
+          "groups": [
+            {
+              "id": "inputs",
+              "label": "Inputs"
+            },
+            {
+              "id": "exports",
+              "label": "Exports"
+            }
+          ]
+        },
+        "graphSource": "local",
+        "graphPath": "src/data/architecture-graphs/background-studio.graph.json"
       }
     },
     {
@@ -58,11 +179,167 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T10:39:25.140Z",
+      "fetchedAt": "2026-07-26T21:29:11.685Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
-        "mermaid": "flowchart TD\n  MIC[\"Microphone\"] --> ENGINE\n  FILE[\"Your own audio file\"] --> ENGINE\n  DEMO[\"Built-in demo track\"] --> ENGINE\n\n  ENGINE[\"Audio engine<br/>loudness, bass / mid / treble,<br/>and how fast the sound is changing\"]\n  ENGINE --> SNAP[\"Latest audio snapshot<br/>read once per drawn frame\"]\n\n  SNAP --> ENERGY[\"Energy tracker<br/>calm to full-intensity blend\"]\n  SNAP --> MOOD[\"Mood reader<br/>calm / groove / intense\"]\n  SNAP --> BEAT[\"Beat tracker<br/>tempo guess, beat clock,<br/>and how sure it is\"]\n\n  ENERGY --> STATE\n  MOOD --> STATE\n  BEAT --> STATE\n  STATE[\"Scene state for this frame\"]\n\n  CAM[\"Webcam<br/>only for Live and Acid\"] --> VIDEO[\"Live video texture\"]\n\n  STATE --> ROUTER{\"Which visual mode?\"}\n  VIDEO --> ROUTER\n\n  ROUTER -->|Cinematic| SCENE[\"3D scene<br/>fluid sky, particle knot,<br/>reactive lights, roaming camera\"]\n  ROUTER -->|Live| LIVE[\"Webcam shader<br/>zoom, melt, colour split, glitch\"]\n  ROUTER -->|Acid| ACID[\"Acid shader<br/>kaleidoscope, hue drift, glitch\"]\n\n  SCENE --> POST[\"Colour-split post effect\"]\n  ACID <--> FB[\"Feedback buffers<br/>last frame folded back in<br/>to grow trails\"]\n\n  POST --> CANVAS[\"Full-screen canvas\"]\n  LIVE --> CANVAS\n  ACID --> CANVAS"
+        "mermaid": "flowchart TD\n  MIC[\"Microphone\"] --> ENGINE\n  FILE[\"Your own audio file\"] --> ENGINE\n  DEMO[\"Built-in demo track\"] --> ENGINE\n\n  ENGINE[\"Audio engine<br/>loudness, bass / mid / treble,<br/>and how fast the sound is changing\"]\n  ENGINE --> SNAP[\"Latest audio snapshot<br/>read once per drawn frame\"]\n\n  SNAP --> ENERGY[\"Energy tracker<br/>calm to full-intensity blend\"]\n  SNAP --> MOOD[\"Mood reader<br/>calm / groove / intense\"]\n  SNAP --> BEAT[\"Beat tracker<br/>tempo guess, beat clock,<br/>and how sure it is\"]\n\n  ENERGY --> STATE\n  MOOD --> STATE\n  BEAT --> STATE\n  STATE[\"Scene state for this frame\"]\n\n  CAM[\"Webcam<br/>only for Live and Acid\"] --> VIDEO[\"Live video texture\"]\n\n  STATE --> ROUTER{\"Which visual mode?\"}\n  VIDEO --> ROUTER\n\n  ROUTER -->|Cinematic| SCENE[\"3D scene<br/>fluid sky, particle knot,<br/>reactive lights, roaming camera\"]\n  ROUTER -->|Live| LIVE[\"Webcam shader<br/>zoom, melt, colour split, glitch\"]\n  ROUTER -->|Acid| ACID[\"Acid shader<br/>kaleidoscope, hue drift, glitch\"]\n\n  SCENE --> POST[\"Colour-split post effect\"]\n  ACID <--> FB[\"Feedback buffers<br/>last frame folded back in<br/>to grow trails\"]\n\n  POST --> CANVAS[\"Full-screen canvas\"]\n  LIVE --> CANVAS\n  ACID --> CANVAS",
+        "graph": {
+          "version": 1,
+          "nodes": [
+            {
+              "id": "mic",
+              "label": "Microphone",
+              "kind": "input",
+              "groupId": "audio-in"
+            },
+            {
+              "id": "file",
+              "label": "Your own audio file",
+              "kind": "input",
+              "groupId": "audio-in"
+            },
+            {
+              "id": "demo",
+              "label": "Built-in demo track",
+              "kind": "input",
+              "groupId": "audio-in"
+            },
+            {
+              "id": "engine",
+              "label": "Audio engine + frame snapshot",
+              "kind": "process"
+            },
+            {
+              "id": "analyzers",
+              "label": "Energy · mood · beat trackers",
+              "kind": "process"
+            },
+            {
+              "id": "state",
+              "label": "Scene state for this frame",
+              "kind": "store"
+            },
+            {
+              "id": "webcam",
+              "label": "Webcam texture (Live & Acid)",
+              "kind": "input"
+            },
+            {
+              "id": "router",
+              "label": "Which visual mode?",
+              "kind": "decision",
+              "shape": "diamond"
+            },
+            {
+              "id": "cinematic",
+              "label": "Cinematic 3D scene",
+              "kind": "process",
+              "groupId": "modes"
+            },
+            {
+              "id": "live",
+              "label": "Webcam shader",
+              "kind": "process",
+              "groupId": "modes"
+            },
+            {
+              "id": "acid",
+              "label": "Acid shader (+ frame feedback)",
+              "kind": "process",
+              "groupId": "modes"
+            },
+            {
+              "id": "canvas",
+              "label": "Full-screen canvas",
+              "kind": "output"
+            }
+          ],
+          "edges": [
+            {
+              "from": "mic",
+              "to": "engine"
+            },
+            {
+              "from": "file",
+              "to": "engine"
+            },
+            {
+              "from": "demo",
+              "to": "engine"
+            },
+            {
+              "from": "engine",
+              "to": "analyzers"
+            },
+            {
+              "from": "analyzers",
+              "to": "state"
+            },
+            {
+              "from": "state",
+              "to": "router"
+            },
+            {
+              "from": "webcam",
+              "to": "router",
+              "style": "dashed"
+            },
+            {
+              "from": "router",
+              "to": "cinematic",
+              "id": "e-cinematic",
+              "label": "Cinematic"
+            },
+            {
+              "from": "router",
+              "to": "live",
+              "id": "e-live",
+              "label": "Live"
+            },
+            {
+              "from": "router",
+              "to": "acid",
+              "id": "e-acid",
+              "label": "Acid"
+            },
+            {
+              "from": "cinematic",
+              "to": "canvas"
+            },
+            {
+              "from": "live",
+              "to": "canvas"
+            },
+            {
+              "from": "acid",
+              "to": "canvas"
+            }
+          ],
+          "tour": [
+            "mic",
+            "engine",
+            "state",
+            "router",
+            "cinematic",
+            "canvas"
+          ],
+          "title": "Sound Visualiser",
+          "summary": "Audio sources feed analyzers into scene state; a mode router picks the look and paints the full-screen canvas.",
+          "notes": "Collapsed loudness / mood / beat into one analyzers node and folded the per-frame snapshot into the engine step. Acid feedback is noted on the acid node label (no separate buffer). Webcam is a dashed secondary input into the router.",
+          "groups": [
+            {
+              "id": "audio-in",
+              "label": "Audio in"
+            },
+            {
+              "id": "modes",
+              "label": "Visual modes"
+            }
+          ]
+        },
+        "graphSource": "local",
+        "graphPath": "src/data/architecture-graphs/sound-visualiser.graph.json"
       }
     },
     {
@@ -86,11 +363,148 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T10:39:26.280Z",
+      "fetchedAt": "2026-07-26T21:29:13.321Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
-        "mermaid": "%% PII Gateway — portfolio / How it works diagram\n%% Canonical Mermaid source. Keep in sync with any embedded copy in docs.\n%% View: https://mermaid.live  |  local: open docs/view-architecture.html\n\nflowchart TB\n  subgraph callers[\"Callers\"]\n    APP[Apps / workers / scripts]\n    AUTO[Cron or internal automation]\n  end\n\n  subgraph gw[\"PII Gateway — single FastAPI container\"]\n    SAN[POST /v1/sanitize]\n    JOBS[POST /internal/jobs/*]\n    HZ[GET /healthz]\n    AUTH[API-key auth + correlation ID]\n    POL[Mounted policy YAML/JSON]\n    PIPE[Sanitize pipeline]\n    PR[Presidio engines — lifespan singleton]\n    SCH[Optional APScheduler]\n\n    SAN --> AUTH\n    JOBS --> AUTH\n    AUTH --> PIPE\n    POL --> PIPE\n    PIPE --> PR\n    SCH -.-> JOBS\n  end\n\n  subgraph inbound[\"Batch / file sources\"]\n    PG[(PostgreSQL read-only exports)]\n    LOC[Local CSV / JSON inbox]\n    S3IN[S3-compatible inbox]\n  end\n\n  subgraph out[\"Artifact storage\"]\n    DISK[Local volume]\n    S3OUT[S3-compatible bucket]\n  end\n\n  APP -->|JSON + X-API-Key| SAN\n  AUTO -->|internal key| JOBS\n  PG --> PIPE\n  LOC --> PIPE\n  S3IN --> PIPE\n  PIPE -->|optional raw / cleaned| DISK\n  PIPE -->|optional raw / cleaned| S3OUT\n  HZ -.-> gw"
+        "mermaid": "%% PII Gateway — portfolio / How it works diagram\n%% Canonical Mermaid source. Keep in sync with any embedded copy in docs.\n%% View: https://mermaid.live  |  local: open docs/view-architecture.html\n\nflowchart TB\n  subgraph callers[\"Callers\"]\n    APP[Apps / workers / scripts]\n    AUTO[Cron or internal automation]\n  end\n\n  subgraph gw[\"PII Gateway — single FastAPI container\"]\n    SAN[POST /v1/sanitize]\n    JOBS[POST /internal/jobs/*]\n    HZ[GET /healthz]\n    AUTH[API-key auth + correlation ID]\n    POL[Mounted policy YAML/JSON]\n    PIPE[Sanitize pipeline]\n    PR[Presidio engines — lifespan singleton]\n    SCH[Optional APScheduler]\n\n    SAN --> AUTH\n    JOBS --> AUTH\n    AUTH --> PIPE\n    POL --> PIPE\n    PIPE --> PR\n    SCH -.-> JOBS\n  end\n\n  subgraph inbound[\"Batch / file sources\"]\n    PG[(PostgreSQL read-only exports)]\n    LOC[Local CSV / JSON inbox]\n    S3IN[S3-compatible inbox]\n  end\n\n  subgraph out[\"Artifact storage\"]\n    DISK[Local volume]\n    S3OUT[S3-compatible bucket]\n  end\n\n  APP -->|JSON + X-API-Key| SAN\n  AUTO -->|internal key| JOBS\n  PG --> PIPE\n  LOC --> PIPE\n  S3IN --> PIPE\n  PIPE -->|optional raw / cleaned| DISK\n  PIPE -->|optional raw / cleaned| S3OUT\n  HZ -.-> gw",
+        "graph": {
+          "version": 1,
+          "nodes": [
+            {
+              "id": "apps",
+              "label": "Apps / workers / scripts",
+              "kind": "input",
+              "groupId": "callers"
+            },
+            {
+              "id": "auto",
+              "label": "Cron or internal automation",
+              "kind": "input",
+              "groupId": "callers"
+            },
+            {
+              "id": "sanitize",
+              "label": "POST /v1/sanitize",
+              "kind": "process",
+              "groupId": "gateway"
+            },
+            {
+              "id": "auth",
+              "label": "API-key auth + correlation ID",
+              "kind": "process",
+              "groupId": "gateway"
+            },
+            {
+              "id": "policy",
+              "label": "Mounted policy YAML/JSON",
+              "kind": "store",
+              "shape": "cylinder",
+              "groupId": "gateway"
+            },
+            {
+              "id": "pipeline",
+              "label": "Sanitize pipeline",
+              "kind": "process",
+              "groupId": "gateway"
+            },
+            {
+              "id": "presidio",
+              "label": "Presidio engines",
+              "kind": "process",
+              "groupId": "gateway"
+            },
+            {
+              "id": "postgres",
+              "label": "PostgreSQL exports",
+              "kind": "input",
+              "shape": "cylinder",
+              "groupId": "batch"
+            },
+            {
+              "id": "inbox",
+              "label": "CSV / JSON / S3 inbox",
+              "kind": "input",
+              "groupId": "batch"
+            },
+            {
+              "id": "artifacts",
+              "label": "Artifact storage (disk / S3)",
+              "kind": "store",
+              "shape": "cylinder"
+            }
+          ],
+          "edges": [
+            {
+              "from": "apps",
+              "to": "sanitize",
+              "label": "JSON + API key"
+            },
+            {
+              "from": "auto",
+              "to": "sanitize",
+              "label": "internal key",
+              "style": "dashed"
+            },
+            {
+              "from": "sanitize",
+              "to": "auth"
+            },
+            {
+              "from": "auth",
+              "to": "pipeline"
+            },
+            {
+              "from": "policy",
+              "to": "pipeline"
+            },
+            {
+              "from": "pipeline",
+              "to": "presidio"
+            },
+            {
+              "from": "postgres",
+              "to": "pipeline",
+              "style": "dashed"
+            },
+            {
+              "from": "inbox",
+              "to": "pipeline",
+              "style": "dashed"
+            },
+            {
+              "from": "pipeline",
+              "to": "artifacts",
+              "label": "optional raw / cleaned"
+            }
+          ],
+          "tour": [
+            "apps",
+            "auth",
+            "pipeline",
+            "presidio",
+            "artifacts"
+          ],
+          "title": "PII Gateway",
+          "summary": "Callers hit the sanitize API through API-key auth; a shared pipeline runs Presidio and optionally writes cleaned artifacts.",
+          "notes": "Portfolio map collapses nested FastAPI internals (jobs routes, healthz, scheduler). Batch inboxes stay as dashed secondary inputs. Artifact targets collapsed to one store.",
+          "groups": [
+            {
+              "id": "callers",
+              "label": "Callers"
+            },
+            {
+              "id": "gateway",
+              "label": "PII Gateway"
+            },
+            {
+              "id": "batch",
+              "label": "Batch sources"
+            }
+          ]
+        },
+        "graphSource": "local",
+        "graphPath": "src/data/architecture-graphs/pii-gateway.graph.json"
       }
     },
     {
@@ -119,11 +533,144 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T10:39:26.834Z",
+      "fetchedAt": "2026-07-26T21:29:14.546Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
-        "mermaid": "flowchart TB\n  subgraph ingress [Operator surfaces]\n    Chat[\"ada chat\\nEntity / Agent / Plan\"]\n    Cron[\"cron / systemd\"]\n    HUD[\"ada hud\\nStreamlit read-only\"]\n  end\n\n  subgraph core [Agent core]\n    Orch[\"Orchestrator\\nmanual Gemini tools\"]\n    Tools[\"Tool executor\\nallowlist + skills\"]\n    Daemon[\"ada daemon\\ngoals + workflows\"]\n  end\n\n  subgraph truth [Local truth]\n    DB[\"state.db\\nSQLite WAL + FTS5\"]\n    Mem[\"memory/*.md\\nsoul + master\"]\n  end\n\n  subgraph data [Offline data plane]\n    Ingest[\"Ingest CLIs\\nRSS / GSC / brand\"]\n    Graph[\"Graph-lite\\ntriage + edges\"]\n    Wf[\"Publish workflows\\nENRICH → GATE? → DRAFT → DEPLOY\"]\n  end\n\n  Out[\"S3 page.json + manifest\\nISR consumer out of repo\"]\n\n  Chat --> Orch\n  Orch --> Tools\n  Tools --> DB\n  Orch --> Mem\n  Cron --> Ingest --> DB\n  Cron --> Graph --> DB\n  Cron --> Daemon\n  Daemon --> Orch\n  Daemon --> Wf --> Out\n  HUD --> DB"
+        "mermaid": "flowchart TB\n  subgraph ingress [Operator surfaces]\n    Chat[\"ada chat\\nEntity / Agent / Plan\"]\n    Cron[\"cron / systemd\"]\n    HUD[\"ada hud\\nStreamlit read-only\"]\n  end\n\n  subgraph core [Agent core]\n    Orch[\"Orchestrator\\nmanual Gemini tools\"]\n    Tools[\"Tool executor\\nallowlist + skills\"]\n    Daemon[\"ada daemon\\ngoals + workflows\"]\n  end\n\n  subgraph truth [Local truth]\n    DB[\"state.db\\nSQLite WAL + FTS5\"]\n    Mem[\"memory/*.md\\nsoul + master\"]\n  end\n\n  subgraph data [Offline data plane]\n    Ingest[\"Ingest CLIs\\nRSS / GSC / brand\"]\n    Graph[\"Graph-lite\\ntriage + edges\"]\n    Wf[\"Publish workflows\\nENRICH → GATE? → DRAFT → DEPLOY\"]\n  end\n\n  Out[\"S3 page.json + manifest\\nISR consumer out of repo\"]\n\n  Chat --> Orch\n  Orch --> Tools\n  Tools --> DB\n  Orch --> Mem\n  Cron --> Ingest --> DB\n  Cron --> Graph --> DB\n  Cron --> Daemon\n  Daemon --> Orch\n  Daemon --> Wf --> Out\n  HUD --> DB",
+        "graph": {
+          "version": 1,
+          "nodes": [
+            {
+              "id": "chat",
+              "label": "ada chat (Entity / Agent / Plan)",
+              "kind": "input",
+              "groupId": "ingress"
+            },
+            {
+              "id": "cron",
+              "label": "cron / systemd",
+              "kind": "input",
+              "groupId": "ingress"
+            },
+            {
+              "id": "hud",
+              "label": "ada hud (read-only)",
+              "kind": "input",
+              "groupId": "ingress"
+            },
+            {
+              "id": "orch",
+              "label": "Orchestrator (Gemini tools)",
+              "kind": "process",
+              "groupId": "core"
+            },
+            {
+              "id": "tools",
+              "label": "Tool executor (allowlist)",
+              "kind": "process",
+              "groupId": "core"
+            },
+            {
+              "id": "daemon",
+              "label": "ada daemon (goals + workflows)",
+              "kind": "process",
+              "groupId": "core"
+            },
+            {
+              "id": "db",
+              "label": "state.db (SQLite)",
+              "kind": "store",
+              "shape": "cylinder",
+              "groupId": "truth"
+            },
+            {
+              "id": "mem",
+              "label": "memory/*.md",
+              "kind": "store",
+              "groupId": "truth"
+            },
+            {
+              "id": "workflow",
+              "label": "Publish workflows → S3",
+              "kind": "process"
+            },
+            {
+              "id": "out",
+              "label": "S3 page.json + manifest",
+              "kind": "output"
+            }
+          ],
+          "edges": [
+            {
+              "from": "chat",
+              "to": "orch"
+            },
+            {
+              "from": "orch",
+              "to": "tools"
+            },
+            {
+              "from": "tools",
+              "to": "db"
+            },
+            {
+              "from": "orch",
+              "to": "mem"
+            },
+            {
+              "from": "cron",
+              "to": "daemon",
+              "style": "dashed"
+            },
+            {
+              "from": "daemon",
+              "to": "orch",
+              "style": "dashed"
+            },
+            {
+              "from": "daemon",
+              "to": "workflow",
+              "style": "dashed"
+            },
+            {
+              "from": "workflow",
+              "to": "out",
+              "style": "dashed"
+            },
+            {
+              "from": "hud",
+              "to": "db",
+              "style": "dashed"
+            }
+          ],
+          "tour": [
+            "chat",
+            "orch",
+            "tools",
+            "db",
+            "mem"
+          ],
+          "title": "ADA",
+          "summary": "Primary path: chat → orchestrator → allowlisted tools → SQLite. Cron publish and HUD read paths exist but are secondary on this map.",
+          "notes": "Chose chat as the portfolio happy path. Cron ingest / graph-lite / daemon→workflow→S3 and HUD→DB are kept as dashed alternate edges so the map stays honest without touring every path.",
+          "groups": [
+            {
+              "id": "ingress",
+              "label": "Operator surfaces"
+            },
+            {
+              "id": "core",
+              "label": "Agent core"
+            },
+            {
+              "id": "truth",
+              "label": "Local truth"
+            }
+          ]
+        },
+        "graphSource": "local",
+        "graphPath": "src/data/architecture-graphs/ada.graph.json"
       }
     },
     {
@@ -152,11 +699,136 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T10:39:27.693Z",
+      "fetchedAt": "2026-07-26T21:29:16.140Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
-        "mermaid": "flowchart TB\n  videos[\"Raw videos<br/>FF++ / DFDM\"] --> preprocess[\"Preprocess frames<br/>main.py preprocess\"]\n  preprocess --> clips[\"Frame folders<br/>class / video / frame_*.jpg\"]\n  clips --> datasets[\"Dataset loaders<br/>FF++ · DFDM · joint\"]\n  yaml[\"YAML configs<br/>base + phase overrides\"] --> cli[\"main.py CLI\"]\n  cli --> train[\"Train\"]\n  cli --> fisher[\"Compute Fisher\"]\n  cli --> eval[\"Evaluate\"]\n  cli --> xai[\"Grad-CAM / UMAP\"]\n  datasets --> train\n  yaml --> train\n  train --> p1[\"Phase 1: R(2+1)D or CNN-LSTM<br/>cross-entropy backbone\"]\n  p1 --> p2[\"Phase 2: freeze trunk<br/>train ArcFace head\"]\n  p2 --> fisher\n  fisher --> p3[\"Phase 3: DFDM adapt<br/>EWC ± replay ± KD\"]\n  p2 --> joint[\"Optional: joint 6-class<br/>FF++ ∪ DFDM\"]\n  p2 --> ckpt[\"Checkpoints + logs<br/>experiments/gstf/\"]\n  p3 --> ckpt\n  joint --> ckpt\n  ckpt --> eval\n  ckpt --> xai"
+        "mermaid": "flowchart TB\n  videos[\"Raw videos<br/>FF++ / DFDM\"] --> preprocess[\"Preprocess frames<br/>main.py preprocess\"]\n  preprocess --> clips[\"Frame folders<br/>class / video / frame_*.jpg\"]\n  clips --> datasets[\"Dataset loaders<br/>FF++ · DFDM · joint\"]\n  yaml[\"YAML configs<br/>base + phase overrides\"] --> cli[\"main.py CLI\"]\n  cli --> train[\"Train\"]\n  cli --> fisher[\"Compute Fisher\"]\n  cli --> eval[\"Evaluate\"]\n  cli --> xai[\"Grad-CAM / UMAP\"]\n  datasets --> train\n  yaml --> train\n  train --> p1[\"Phase 1: R(2+1)D or CNN-LSTM<br/>cross-entropy backbone\"]\n  p1 --> p2[\"Phase 2: freeze trunk<br/>train ArcFace head\"]\n  p2 --> fisher\n  fisher --> p3[\"Phase 3: DFDM adapt<br/>EWC ± replay ± KD\"]\n  p2 --> joint[\"Optional: joint 6-class<br/>FF++ ∪ DFDM\"]\n  p2 --> ckpt[\"Checkpoints + logs<br/>experiments/gstf/\"]\n  p3 --> ckpt\n  joint --> ckpt\n  ckpt --> eval\n  ckpt --> xai",
+        "graph": {
+          "version": 1,
+          "nodes": [
+            {
+              "id": "videos",
+              "label": "Raw videos (FF++ / DFDM)",
+              "kind": "input"
+            },
+            {
+              "id": "preprocess",
+              "label": "Preprocess frames",
+              "kind": "process"
+            },
+            {
+              "id": "datasets",
+              "label": "Dataset loaders",
+              "kind": "store"
+            },
+            {
+              "id": "config",
+              "label": "YAML configs",
+              "kind": "input"
+            },
+            {
+              "id": "cli",
+              "label": "main.py CLI",
+              "kind": "process"
+            },
+            {
+              "id": "p1",
+              "label": "Phase 1: backbone (R(2+1)D / CNN-LSTM)",
+              "kind": "process"
+            },
+            {
+              "id": "p2",
+              "label": "Phase 2: ArcFace head",
+              "kind": "process"
+            },
+            {
+              "id": "p3",
+              "label": "Phase 3: DFDM adapt (EWC)",
+              "kind": "process"
+            },
+            {
+              "id": "ckpt",
+              "label": "Checkpoints + logs",
+              "kind": "store",
+              "shape": "cylinder"
+            },
+            {
+              "id": "eval",
+              "label": "Evaluate",
+              "kind": "output"
+            },
+            {
+              "id": "xai",
+              "label": "Grad-CAM / UMAP",
+              "kind": "output"
+            }
+          ],
+          "edges": [
+            {
+              "from": "videos",
+              "to": "preprocess"
+            },
+            {
+              "from": "preprocess",
+              "to": "datasets"
+            },
+            {
+              "from": "config",
+              "to": "cli"
+            },
+            {
+              "from": "cli",
+              "to": "p1"
+            },
+            {
+              "from": "datasets",
+              "to": "p1"
+            },
+            {
+              "from": "config",
+              "to": "p1",
+              "style": "dashed"
+            },
+            {
+              "from": "p1",
+              "to": "p2"
+            },
+            {
+              "from": "p2",
+              "to": "p3"
+            },
+            {
+              "from": "p2",
+              "to": "ckpt"
+            },
+            {
+              "from": "p3",
+              "to": "ckpt"
+            },
+            {
+              "from": "ckpt",
+              "to": "eval"
+            },
+            {
+              "from": "ckpt",
+              "to": "xai"
+            }
+          ],
+          "tour": [
+            "videos",
+            "datasets",
+            "p1",
+            "p2",
+            "ckpt",
+            "eval"
+          ],
+          "title": "GSTF",
+          "summary": "Videos become frame datasets; training phases write checkpoints that evaluation and Grad-CAM / UMAP read back.",
+          "notes": "Collapsed FF++/DFDM loader detail and optional joint 6-class branch. Fisher → Phase 3 kept as one adapt step. CLI fan-out shown without separate Fisher tour stop."
+        },
+        "graphSource": "local",
+        "graphPath": "src/data/architecture-graphs/gstf.graph.json"
       }
     }
   ]

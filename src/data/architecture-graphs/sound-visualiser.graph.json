@@ -64,5 +64,39 @@
     { "from": "live", "to": "canvas" },
     { "from": "acid", "to": "canvas" }
   ],
-  "tour": ["mic", "engine", "state", "router", "cinematic", "canvas"]
+  "tour": ["mic", "engine", "state", "router", "cinematic", "canvas"],
+  "captions": [
+    {
+      "id": "mic",
+      "title": "Audio in",
+      "body": "Three ways sound enters the visualiser.",
+      "items": ["Microphone", "Your own audio file", "Built-in demo track"]
+    },
+    {
+      "id": "engine",
+      "title": "Audio engine",
+      "body": "Each frame becomes a small snapshot of the sound."
+    },
+    {
+      "id": "state",
+      "title": "Scene state",
+      "body": "Energy, mood, and beat feed what you see this frame."
+    },
+    {
+      "id": "router",
+      "title": "Pick a mode",
+      "body": "A router chooses which visual look runs."
+    },
+    {
+      "id": "cinematic",
+      "title": "Visual modes",
+      "body": "Three looks share the same canvas.",
+      "items": ["Cinematic 3D", "Webcam shader", "Acid shader"]
+    },
+    {
+      "id": "canvas",
+      "title": "Canvas",
+      "body": "The chosen mode paints full-screen."
+    }
+  ]
 }

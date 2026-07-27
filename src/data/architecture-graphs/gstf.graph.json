@@ -47,5 +47,38 @@
     { "from": "ckpt", "to": "eval" },
     { "from": "ckpt", "to": "xai" }
   ],
-  "tour": ["videos", "datasets", "p1", "p2", "ckpt", "eval"]
+  "tour": ["videos", "datasets", "p1", "p2", "ckpt", "eval"],
+  "captions": [
+    {
+      "id": "videos",
+      "title": "Raw videos",
+      "body": "Training starts from real and deepfake video sets."
+    },
+    {
+      "id": "datasets",
+      "title": "Datasets",
+      "body": "Frames are loaded into training datasets."
+    },
+    {
+      "id": "p1",
+      "title": "Phase 1",
+      "body": "Train a video backbone that understands motion."
+    },
+    {
+      "id": "p2",
+      "title": "Phase 2",
+      "body": "Add an ArcFace head for clearer class separation."
+    },
+    {
+      "id": "ckpt",
+      "title": "Checkpoints",
+      "body": "Weights and logs are saved as training continues."
+    },
+    {
+      "id": "eval",
+      "title": "Evaluate",
+      "body": "Checkpoints feed evaluation and explanation tools.",
+      "items": ["Evaluate accuracy", "Grad-CAM / UMAP views"]
+    }
+  ]
 }

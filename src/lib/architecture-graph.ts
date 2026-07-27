@@ -47,6 +47,24 @@ export type ArchitectureGraphGroup = {
  */
 export type ArchitectureGraphTourStop = string;
 
+/**
+ * Visitor caption for one `tour` stop.
+ * Prefer authoring these on fixtures; the journey UI always shows title + body.
+ * Use `items` when the stop represents a fan-in/out cluster (group of siblings).
+ *
+ * @see docs/architecture-graph.md — “Tour captions”
+ */
+export type ArchitectureTourCaption = {
+  /** Must match a `tour[]` entry (node or edge id). */
+  id: string;
+  /** Short void-friendly title (may rename a representative node to a cluster label). */
+  title: string;
+  /** One plain-English sentence — what this stop is. */
+  body: string;
+  /** Optional child pieces when the stop stands for a set (e.g. three inputs). */
+  items?: string[];
+};
+
 export type ArchitectureGraph = {
   version: typeof ARCHITECTURE_GRAPH_VERSION;
   /** Optional display title (defaults to project title at render time). */
@@ -63,6 +81,11 @@ export type ArchitectureGraph = {
   groups?: ArchitectureGraphGroup[];
   /** Required for portfolio consumption. */
   tour: ArchitectureGraphTourStop[];
+  /**
+   * Optional per-stop captions (title / body / items).
+   * When present, every `tour` id should have a matching caption.
+   */
+  captions?: ArchitectureTourCaption[];
 };
 
 export type ArchitectureGraphValidationIssue = {
@@ -360,12 +383,98 @@ export function validateArchitectureGraph(
     tour.push(id);
   });
 
+  const captions: ArchitectureTourCaption[] = [];
+  const captionIds = new Set<string>();
+
+  if (data.captions !== undefined) {
+    if (!Array.isArray(data.captions)) {
+      issues.push({ path: "captions", message: "captions must be an array when provided" });
+    } else {
+      data.captions.forEach((raw, i) => {
+        if (!isPlainObject(raw)) {
+          issues.push({ path: `captions[${i}]`, message: "caption must be an object" });
+          return;
+        }
+        if (!isNonEmptyString(raw.id)) {
+          issues.push({ path: `captions[${i}].id`, message: "caption id is required" });
+          return;
+        }
+        if (!isNonEmptyString(raw.title)) {
+          issues.push({ path: `captions[${i}].title`, message: "caption title is required" });
+          return;
+        }
+        if (!isNonEmptyString(raw.body)) {
+          issues.push({ path: `captions[${i}].body`, message: "caption body is required" });
+          return;
+        }
+
+        const id = raw.id.trim();
+        if (captionIds.has(id)) {
+          issues.push({
+            path: `captions[${i}].id`,
+            message: `duplicate caption id "${id}"`,
+          });
+          return;
+        }
+        if (!tourSeen.has(id)) {
+          issues.push({
+            path: `captions[${i}].id`,
+            message: `caption id "${id}" is not in tour`,
+          });
+          return;
+        }
+
+        const caption: ArchitectureTourCaption = {
+          id,
+          title: raw.title.trim(),
+          body: raw.body.trim(),
+        };
+
+        if (raw.items !== undefined) {
+          if (!Array.isArray(raw.items) || raw.items.length === 0) {
+            issues.push({
+              path: `captions[${i}].items`,
+              message: "items must be a non-empty string array when provided",
+            });
+          } else {
+            const items: string[] = [];
+            let itemsOk = true;
+            raw.items.forEach((item, j) => {
+              if (!isNonEmptyString(item)) {
+                itemsOk = false;
+                issues.push({
+                  path: `captions[${i}].items[${j}]`,
+                  message: "item must be a non-empty string",
+                });
+                return;
+              }
+              items.push(item.trim());
+            });
+            if (itemsOk) caption.items = items;
+          }
+        }
+
+        captionIds.add(id);
+        captions.push(caption);
+      });
+    }
+  }
+
   const warnings: ArchitectureGraphValidationIssue[] = [];
   if (nodes.length > NODE_BUDGET_SOFT) {
     warnings.push({
       path: "nodes",
       message: `soft budget exceeded: ${nodes.length} nodes (aim ≤${NODE_BUDGET_SOFT} for portfolio; collapse internals)`,
     });
+  }
+
+  for (const stopId of tour) {
+    if (captions.length > 0 && !captionIds.has(stopId)) {
+      warnings.push({
+        path: "captions",
+        message: `tour stop "${stopId}" has no caption (title + body recommended)`,
+      });
+    }
   }
 
   if (issues.length > 0) {
@@ -383,6 +492,7 @@ export function validateArchitectureGraph(
   if (isNonEmptyString(data.summary)) graph.summary = data.summary.trim();
   if (isNonEmptyString(data.notes)) graph.notes = data.notes.trim();
   if (groups.length > 0) graph.groups = groups;
+  if (captions.length > 0) graph.captions = captions;
 
   return { ok: true, graph, warnings };
 }

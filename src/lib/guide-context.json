@@ -1,5 +1,5 @@
 {
-  "builtAt": "2026-07-26T05:35:09.094Z",
+  "builtAt": "2026-07-26T21:29:18.928Z",
   "identity": "# Guide context\n\nUser-editable source for the Portfolio Guide. Aggregated at build time into `src/lib/guide-context.json`.\n\n## Identity\n\n- **Who:** Aryan Johari — graduate software engineer, Auckland, New Zealand\n- **Availability:** Seeking a graduate software engineering role in Auckland from September 2026\n- **Site:** Curated workshop portfolio — selected projects with narrative and live demos\n- **Work history:** Detailed employment history is ingested from `public/resume.pdf` at build time (not duplicated here)\n\n## Philosophy\n\nI build software that solves real problems — from visual tools to edge systems. I own the full stack: architecture, APIs, and deployment. AI accelerates delivery, but the design and architecture are mine. This portfolio is a workshop index, not a README dump.\n\n## Quick facts\n\n- **Education:** Master of Technology — Computing, Unitec, Auckland (July 2026); BSc Computer Science, University of Mumbai (March 2024)\n- **Work eligibility:** Eligible to work in New Zealand\n- **Focus areas:** Visual systems, APIs, edge hardware, full-stack delivery",
   "resumeText": "Aryan Johari\nGraduate Software Engineer\nAuckland, New Zealand | +64 20 435 5340 | johari.aryan16@gmail.com | LinkedIn | GitHub\nSummary\nMaster’s computing graduate (Unitec) who builds end-to-end software in Python and TypeScript, from ML research\npipelines to privacy-aware APIs and WebGL front ends. Eligible to work in NZ (Post Study Work Visa; no sponsorship\nrequired). Seeking a graduate or junior software engineering role in Auckland; available from September 2026.\nSkills\nLanguages: Python, TypeScript/JavaScript, SQL\nML / CV: PyTorch, computer vision, OpenCV, NLP (Presidio)\nWeb / Graphics: React, WebGL, Three.js, GLSL, Web Audio API\nBackend: FastAPI, asyncio, REST APIs, Pydantic\nTools: Git, Docker, pytest, Vitest, Vite, Linux\nCloud / Data: AWS S3, PostgreSQL, Google Gemini API, Google Search Console\nEducation\nMaster of Applied Technology – Computing Feb 2025 – June 2026\nUnitec Institute of Technology Auckland, New Zealand\n• Thesis: video-level deepfake generator attribution (GSTF) using R(2+1)D, ArcFace metric learning, and continual\nlearning under domain shift\nBachelor of Science in Computer Science Sep 2021 – Apr 2024\nThakur College of Science and Commerce Mumbai, India\n• CGPA: 8.49\nProjects\nADA Apr 2026 – May 2026\nPython, asyncio, SQLite, Gemini API, AWS S3\n• Built a local asyncio AI agent harness with Gemini tool calling, SQLite persistence, and background workers for\nconstrained edge hardware\n• Designed deterministic ingest-to-publish workflows with quality gates and AWS S3 deployment; 531 pytest tests\nwith GitHub Actions CI on Python 3.11/3.12\nGSTF — Deepfake Video Attribution (Master’s Thesis) Feb 2026 – May 2026\nPython, PyTorch, Docker\n• Implemented Master’s thesis PyTorch pipeline for video-level deepfake generator attribution using R(2+1)D,\nArcFace metric learning, and EWC continual learning\n• Achieved 86.67% held-out accuracy on FaceForensics++ with ArcFace; YAML-driven experiment runner with\nGrad-CAM attribution and Dockerised training\nPII Gateway Mar 2026 – May 2026\nPython, FastAPI, Presidio, Docker, PostgreSQL\n• Built Docker-first FastAPI gateway for PII redaction with Microsoft Presidio, policy-driven structured JSON field\nrules, and API-key authenticated sanitize endpoint\n• Implemented batch ingest from PostgreSQL, CSV/JSON files, and S3-compatible storage with APScheduler jobs;\n33 pytest tests and CI on Python 3.11/3.12\nBackground Studio Apr 2026 – Jun 2026\nReact, TypeScript, Three.js, WebGL, Vite\n• Built browser-based WebGL studio for designing animated hero backgrounds with real-time GPU compositing and\nversioned preset JSON export for site embeds\n• Authored single-pass GLSL fragment shader with per-layer effect bundles; 82 Vitest tests for preset validation and\noptional Vercel serverless mood API\nSound Visualiser Mar 2026 – Jul 2026\n\n-- 1 of 2 --\n\nTypeScript, Three.js, Web Audio API, GLSL\n• Built real-time audio-reactive WebGL visualiser mapping Meyda spectral features to cinematic 3D, live webcam,\nand acid feedback modes\n• Implemented beat-sync PLL, ping-pong FBO temporal feedback, and frame-rate-independent audio smoothing\nacross three visual modes\nExperience\nSEO Specialist Jul 2025 – Present\nSpecialist Support Services Auckland, New Zealand\n• Scaled monthly organic impressions 414% (1,080 to 5,555) over 11-month GSC window; 2,595 clicks, 6.81% CTR,\nand 8.31 average position across three sites\n• Engineered GSC infrastructure, indexing workflows, mobile-first layouts (1,608 mobile clicks), and pSEO page\ntemplates; position 1.63 for “em bail accommodation”\nJunior Website Developer May 2024 – Oct 2024\nKRIL Digital Mumbai, India\n• Built and maintained approximately 20 client websites (WordPress, React, Shopify) across industrial, education,\nand events sectors\n• Improved average site performance via daily updates and SEO best practices: 70% faster load times, 45% visibility\nuplift, and 30% higher CTR\n\n-- 2 of 2 --",
   "experience": [
@@ -72,14 +72,14 @@
       "background-studio",
       "sound-visualiser"
     ],
-    "contextCharCount": 11173
+    "contextCharCount": 11169
   },
   "projects": [
     {
       "slug": "background-studio",
       "title": "Background Studio",
-      "summary": "A browser tool for creating animated full-screen hero backgrounds and exporting looks as JSON for your own site.",
-      "description": "Upload a hero image and adjust motion, color, and texture effects while the background animates live in the browser. Choose from 14 preset looks or describe a mood to restyle the scene. Export preset JSON to reuse the same look on a portfolio or landing page, or save a WebM loop or PNG still for sharing. Everything renders on one WebGL canvas that composites the hero image, optional overlay, and…",
+      "summary": "Design animated full-screen hero backgrounds in the browser and export the look as reusable JSON.",
+      "description": "Background Studio is a live WebGL tool for portfolio and landing-page heroes. Upload an image, pick one of fourteen looks or describe a mood, then tune motion and texture while the scene animates on a single canvas. Export preset JSON to reuse the same coefficients on your own site, or save a WebM loop or PNG still. Optional AI mood (when enabled) suggests a look and a small parameter patch; keyw…",
       "stack": [
         "TypeScript",
         "React",
@@ -96,16 +96,16 @@
     {
       "slug": "sound-visualiser",
       "title": "Sound Visualiser",
-      "summary": "WebGL music visualizer that maps live audio to 3D shaders, camera motion, and particle effects in real time.",
-      "description": "A browser-based audio visualizer that turns music into moving 3D graphics. Load a track, use your microphone, or try the built-in demos — the app reads loudness and frequency bands and drives camera moves, a fluid background, particle knots, lighting, and color shifts in sync with the beat. Peaks are smoothed and self-calibrate to each track so the motion feels musical rather than jittery. Built…",
+      "summary": "Turns music, your microphone, or your webcam into live 3D visuals that follow the beat in the browser.",
+      "description": "Sound Visualiser is a browser-based VJ rig. Play a track, talk into your microphone, or point your webcam at the room, and the whole screen becomes a reactive light show. Rather than just bouncing bars to the volume, it works out whether the music feels calm, groovy or intense, and tries to lock onto the tempo — when it is confident it has found the beat, the visuals step and pulse in time instea…",
       "stack": [
         "TypeScript",
         "Vite",
         "Three.js",
         "GLSL",
+        "Web Audio API",
         "Meyda",
-        "GSAP",
-        "postprocessing"
+        "GSAP"
       ],
       "demo": true
     },
@@ -113,7 +113,7 @@
       "slug": "pii-gateway",
       "title": "PII Gateway",
       "summary": "Self-hosted API that redacts personal data from JSON, text, and batch files before downstream use.",
-      "description": "PII Gateway helps engineering teams keep sensitive data out of analytics, logs, and third-party tools by centralizing redaction behind one API and one policy file. Call it over HTTP for live sanitization, or let it poll PostgreSQL exports and CSV or JSON inbox files on a schedule. Microsoft Presidio detects entities like emails and names in free text; structured JSON fields follow per-field rules…",
+      "description": "PII Gateway is a Docker-first service for teams that want one place to scrub emails, names, and other personal data before it reaches analytics, logs, or third-party tools. Call POST /v1/sanitize for live JSON and free text, or let optional jobs pull PostgreSQL exports and CSV or JSON inbox files on a schedule. A mounted policy file sets entity types and per-field rules; secrets stay in environme…",
       "stack": [
         "Python",
         "FastAPI",
@@ -143,20 +143,20 @@
     },
     {
       "slug": "gstf",
-      "title": "GSTF",
-      "summary": "Video forensics pipeline that detects deepfakes and attributes clips to the generator that produced them.",
-      "description": "GSTF (Generalized Spatio-Temporal Fingerprinting) is a four-phase research pipeline for deepfake forensics. It reads short face video clips, extracts motion patterns with an R(2+1)D backbone, and uses ArcFace metric learning to separate clips by generator on datasets like FaceForensics++ and DFDM. A continual-learning stage with Elastic Weight Consolidation lets the model adapt to new generators…",
+      "title": "GSTF — Generator-Specific Temporal Forensics",
+      "summary": "Video deepfake research that attributes face-swap clips to specific generators, not just real vs fake.",
+      "description": "GSTF is a research codebase that classifies face-manipulation videos by which synthesis pipeline produced them (for example Real, Deepfakes, or Face2Face on FaceForensics++), rather than only labeling clips real or fake. It trains an R(2+1)D video backbone, then freezes it and learns an ArcFace metric head for sharper generator separation. A second stage studies transfer to the DFDM dataset with…",
       "stack": [
         "Python",
         "PyTorch",
-        "R(2+1)D",
-        "ArcFace",
-        "Elastic Weight Consolidation",
+        "torchvision",
         "OpenCV",
+        "YAML",
         "Grad-CAM",
         "scikit-learn",
         "UMAP",
-        "PyYAML"
+        "Docker",
+        "pytest"
       ]
     }
   ],

@@ -80,5 +80,32 @@
     { "from": "workflow", "to": "out", "style": "dashed" },
     { "from": "hud", "to": "db", "style": "dashed" }
   ],
-  "tour": ["chat", "orch", "tools", "db", "mem"]
+  "tour": ["chat", "orch", "tools", "db", "mem"],
+  "captions": [
+    {
+      "id": "chat",
+      "title": "Chat",
+      "body": "You talk to ADA through the chat surface."
+    },
+    {
+      "id": "orch",
+      "title": "Orchestrator",
+      "body": "Gemini picks tools and plans the next step."
+    },
+    {
+      "id": "tools",
+      "title": "Tools",
+      "body": "Only allowlisted tools are allowed to run."
+    },
+    {
+      "id": "db",
+      "title": "Local state",
+      "body": "Results land in a local SQLite database."
+    },
+    {
+      "id": "mem",
+      "title": "Memory files",
+      "body": "Longer notes live in plain markdown files."
+    }
+  ]
 }

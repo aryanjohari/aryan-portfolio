@@ -63,7 +63,7 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
     <ProjectExhibitMotion>
       <article className="project-exhibit">
         {/* Act 1 — Hero (asymmetric mini-homepage) */}
-        <header className="project-exhibit-hero" data-exhibit-act="hero">
+        <header className="project-exhibit-hero project-exhibit-rail" data-exhibit-act="hero">
           <p className="project-exhibit-badge" data-exhibit-hero-badge>
             {badge}
           </p>
@@ -112,13 +112,14 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
           </p>
         </header>
 
-        {/* Brief empty void after hero exit */}
+        {/* Act 2 — brief empty void; Atmosphere reads through transparent main */}
         <div className="project-exhibit-void" data-exhibit-void aria-hidden="true" />
 
-        {/* Act — Architecture path (immediately after void) */}
+        {/* Act 3 — architecture void dive (full-bleed when owned IR) */}
         <ProjectDiagram title={project.title} diagram={project.diagram} />
 
-        <div className="project-exhibit-rest" data-exhibit-rest>
+        {/* Act 4 — quiet rest after unpin */}
+        <div className="project-exhibit-rest project-exhibit-rail" data-exhibit-rest>
           {/* Optional exhibit — after architecture so it doesn't steal the path beat */}
           {showExhibitStage && (
             <section className="project-exhibit-stage" aria-label="Exhibit" data-exhibit-act="stage">
@@ -126,7 +127,7 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
             </section>
           )}
 
-          {/* Skills / coda — present and harmless; dormant on motion path this pass */}
+          {/* Skills / coda — quiet after the dive */}
           <section
             className="project-exhibit-skills"
             aria-labelledby="project-skills-heading"

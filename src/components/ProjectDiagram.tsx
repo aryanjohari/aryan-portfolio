@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
+import { ArchitectureJourney } from "@/components/ArchitectureJourney";
 import { buildBaseDiagramSvg } from "@/data/base-diagram";
 import {
   findHighlightElements,
@@ -18,33 +19,25 @@ type ProjectDiagramProps = {
   diagram: ProjectDiagramData;
 };
 
-type GsapLike = typeof import("gsap").default;
-
 type MatchMediaHandle = {
   add: (query: string, handler: () => void) => unknown;
   revert: () => void;
 };
 
-type CameraPose = { x: number; y: number; scale: number };
-
-/** Tunables — short pin, mild focus, reversible scrub. */
+/**
+ * Base-diagram walk tunables (Input→Core→Output fallback only).
+ * Owned IR uses ArchitectureJourney camera path instead.
+ */
 const WALK = {
-  pinVh: 1.15,
+  pinVh: 1.1,
   scrub: 0.55,
   pinStart: "top top+=72",
-  scaleMin: 1,
-  scaleFocus: 1.28,
-  scaleFocusMax: 1.42,
-  nodeDim: 0.28,
+  nodeDim: 0.12,
   nodeFull: 1,
-  edgeDim: 0.22,
-  edgeFull: 0.85,
-  depthRestY: 8,
-  depthLiftY: 0,
-  depthRestShadow: "0 2px 8px rgba(0,0,0,0.18)",
-  depthLiftShadow: "0 16px 36px rgba(0,0,0,0.42), 0 1px 0 rgba(242,240,235,0.05)",
-  chromeRestOpacity: 0.4,
-  chromeFullOpacity: 1,
+  edgeDim: 0.08,
+  edgeFull: 0.92,
+  stageRestY: 6,
+  stageLiftY: 0,
   snapDuration: 0.28,
 } as const;
 
@@ -87,47 +80,16 @@ function collectEdges(root: HTMLElement): SVGElement[] {
   ).filter((el) => !el.closest("defs") && !el.closest("marker"));
 }
 
-function nodeCenterInCamera(node: Element, camera: HTMLElement): { x: number; y: number } {
-  const camRect = camera.getBoundingClientRect();
-  const nodeRect = node.getBoundingClientRect();
-  return {
-    x: nodeRect.left + nodeRect.width / 2 - camRect.left,
-    y: nodeRect.top + nodeRect.height / 2 - camRect.top,
-  };
+function mountSvg(host: HTMLElement, markup: string, extraClass?: string) {
+  host.innerHTML = markup;
+  const svg = host.querySelector("svg");
+  if (!svg) return null;
+  svg.classList.add("project-diagram-svg");
+  if (extraClass) svg.classList.add(extraClass);
+  return svg;
 }
 
-function poseForPoint(
-  viewport: HTMLElement,
-  focusX: number,
-  focusY: number,
-  scale: number,
-): CameraPose {
-  const vw = viewport.clientWidth;
-  const vh = viewport.clientHeight;
-  return {
-    scale,
-    x: vw / 2 - focusX * scale,
-    y: vh / 2 - focusY * scale,
-  };
-}
-
-function buildPoses(
-  viewport: HTMLElement,
-  camera: HTMLElement,
-  steps: WalkthroughStep[],
-  gsap: GsapLike,
-): CameraPose[] {
-  gsap.set(camera, { x: 0, y: 0, scale: 1, transformOrigin: "0 0" });
-  return steps.map((step, i) => {
-    const focus = pickFocusNode(camera, step, i, steps.length);
-    if (!focus) return { x: 0, y: 0, scale: WALK.scaleMin };
-    const scale = i === Math.floor(steps.length / 2) ? WALK.scaleFocusMax : WALK.scaleFocus;
-    const { x, y } = nodeCenterInCamera(focus, camera);
-    return poseForPoint(viewport, x, y, scale);
-  });
-}
-
-function applySpotlight(
+function applyLegacySpotlight(
   camera: HTMLElement,
   nodes: SVGElement[],
   edges: SVGElement[],
@@ -161,21 +123,6 @@ function applySpotlight(
   }
 }
 
-function syncMinimap(minimap: HTMLElement | null, steps: WalkthroughStep[], stepIndex: number) {
-  if (!minimap) return;
-  const nodes = collectOpacityTargets(minimap);
-  const step = steps[stepIndex];
-  if (!step) return;
-  const bright = findHighlightElements(minimap, step);
-  const focus = bright[0] || pickFocusNode(minimap, step, stepIndex, steps.length);
-
-  for (const node of nodes) {
-    const on = focus ? node === focus || bright.includes(node) : false;
-    node.classList.toggle("is-walk-active", on);
-    node.style.opacity = String(on ? 1 : 0.35);
-  }
-}
-
 function setCaption(
   els: {
     index: HTMLElement | null;
@@ -193,24 +140,51 @@ function setCaption(
   if (els.body) els.body.textContent = step.body;
 }
 
-function mountSvg(host: HTMLElement, markup: string, extraClass?: string) {
-  host.innerHTML = markup;
-  const svg = host.querySelector("svg");
-  if (!svg) return null;
-  svg.classList.add("project-diagram-svg");
-  if (extraClass) svg.classList.add(extraClass);
-  return svg;
+function sourceCopy(diagram: ProjectDiagramData): string {
+  if (diagram.graph) {
+    if (diagram.graphSource === "github" && diagram.graphPath) {
+      return `Owned architecture map from ${diagram.graphPath}`;
+    }
+    if (diagram.graphPath) {
+      return `Owned architecture map (${diagram.graphPath})`;
+    }
+    return "Owned architecture map";
+  }
+  if (diagram.source === "github" && diagram.path) {
+    return `Generic system path — full Mermaid available via “View full architecture” (${diagram.path})`;
+  }
+  return "Generic system path — replace with repo architecture graph when available";
 }
 
 type WalkApi = {
   goTo: (index: number, animate?: boolean) => void;
 };
 
+/**
+ * Fallback order for the main stage:
+ * 1. Owned IR (`diagram.graph`) → ArchitectureJourney (camera path)
+ * 2. Base Input→Core→Output SVG
+ * Mermaid is escape-hatch only (overlay), not the default scroll view.
+ */
 export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
+  const ownedGraph = diagram.graph;
+  if (ownedGraph) {
+    return (
+      <ArchitectureJourney
+        title={title}
+        graph={ownedGraph}
+        sourceNote={sourceCopy(diagram)}
+      />
+    );
+  }
+
+  return <BaseDiagramFallback title={title} diagram={diagram} />;
+}
+
+function BaseDiagramFallback({ title, diagram }: ProjectDiagramProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<HTMLDivElement>(null);
-  const minimapRef = useRef<HTMLDivElement>(null);
   const overlayMountRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const indexRef = useRef<HTMLSpanElement>(null);
@@ -233,69 +207,59 @@ export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
     const camera = cameraRef.current;
     if (!section || !viewport || !camera) return;
 
+    const stage = camera;
+
     let ctx: { revert: () => void } | null = null;
     let mm: MatchMediaHandle | null = null;
     let cancelled = false;
 
     async function mount() {
+      const authored = normalizeAuthoredSteps(diagram.walkthrough);
       const baseSvg = buildBaseDiagramSvg(title);
-      let svgMarkup = baseSvg;
-
-      if (diagram.source === "github" && diagram.mermaid) {
-        const rendered = await renderMermaidToSvg(
-          diagram.mermaid,
-          title.replace(/\W+/g, "-").toLowerCase(),
-        );
-        if (rendered) svgMarkup = rendered;
-      }
-
-      if (cancelled || !mountedRef.current || !camera) return;
-
-      const mainSvg = mountSvg(camera, svgMarkup);
-      if (mainSvg) {
-        mainSvg.setAttribute("role", "img");
-        if (!mainSvg.getAttribute("aria-label")) {
-          mainSvg.setAttribute("aria-label", `How ${title} works`);
-        }
-      }
-
-      if (minimapRef.current) {
-        const mini = mountSvg(minimapRef.current, svgMarkup, "project-diagram-svg--minimap");
-        mini?.setAttribute("aria-hidden", "true");
-      }
+      mountSvg(stage, baseSvg);
 
       if (overlayMountRef.current) {
-        mountSvg(overlayMountRef.current, svgMarkup, "project-diagram-svg--overlay");
+        let overlayMarkup = baseSvg;
+        if (diagram.mermaid) {
+          const rendered = await renderMermaidToSvg(
+            diagram.mermaid,
+            title.replace(/\W+/g, "-").toLowerCase(),
+          );
+          if (rendered) overlayMarkup = rendered;
+        }
+        if (cancelled || !mountedRef.current) return;
+        mountSvg(overlayMountRef.current, overlayMarkup, "project-diagram-svg--overlay");
       }
 
-      const authored = normalizeAuthoredSteps(diagram.walkthrough);
+      if (cancelled || !mountedRef.current) return;
+
       const resolved = resolveWalkthroughSteps({
         authored,
-        mermaid: diagram.mermaid,
-        svgRoot: camera,
+        mermaid: undefined,
+        svgRoot: stage,
       });
       stepsRef.current = resolved;
       setSteps(resolved);
       stepIndexRef.current = 0;
       setActiveIndex(0);
 
-      const nodes = collectOpacityTargets(camera);
-      const edges = collectEdges(camera);
       const captionEls = {
         index: indexRef.current,
         title: titleRef.current,
         body: bodyRef.current,
       };
 
-      const paintChrome = (index: number) => {
+      const legacyNodes = collectOpacityTargets(stage);
+      const legacyEdges = collectEdges(stage);
+
+      const paintCaption = (index: number) => {
         const list = stepsRef.current;
         const clamped = Math.max(0, Math.min(list.length - 1, index));
         stepIndexRef.current = clamped;
         setActiveIndex(clamped);
         const step = list[clamped];
         if (step) setCaption(captionEls, step, clamped, list.length);
-        applySpotlight(camera, nodes, edges, list, clamped);
-        syncMinimap(minimapRef.current, list, clamped);
+
         const dots = dotsRef.current?.querySelectorAll<HTMLElement>("[data-walk-dot]");
         dots?.forEach((dot, i) => {
           dot.classList.toggle("is-active", i === clamped);
@@ -304,11 +268,13 @@ export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
         });
       };
 
+      const paintChrome = (index: number) => {
+        paintCaption(index);
+        applyLegacySpotlight(stage, legacyNodes, legacyEdges, stepsRef.current, index);
+      };
+
       if (prefersReducedMotion()) {
         paintChrome(0);
-        camera.style.transform = "";
-        for (const node of nodes) node.style.opacity = "1";
-        for (const edge of edges) edge.style.opacity = "1";
         return;
       }
 
@@ -320,38 +286,22 @@ export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
       const { ScrollTrigger } = stMod;
       gsap.registerPlugin(ScrollTrigger);
 
-      let poses = buildPoses(viewport, camera, resolved, gsap);
-
-      const applyPose = (index: number) => {
-        const pose = poses[index] ?? { x: 0, y: 0, scale: 1 };
-        gsap.set(camera, {
-          x: pose.x,
-          y: pose.y,
-          scale: pose.scale,
-          transformOrigin: "0 0",
-        });
-      };
-
-      const paintStep = (index: number) => {
-        paintChrome(index);
-        applyPose(index);
-      };
-
       walkApiRef.current = {
         goTo: (index: number, animate = true) => {
           const list = stepsRef.current;
           const clamped = Math.max(0, Math.min(list.length - 1, index));
           const panel = section.querySelector<HTMLElement>("[data-diagram-panel]");
+          const paint = () => paintChrome(clamped);
           if (!animate || !panel) {
-            paintStep(clamped);
+            paint();
             return;
           }
           gsap.to(panel, {
-            autoAlpha: 0.75,
+            autoAlpha: 0.85,
             duration: MOTION.fast,
             ease: MOTION.ease,
             onComplete: () => {
-              paintStep(clamped);
+              paint();
               gsap.to(panel, { autoAlpha: 1, duration: MOTION.fast, ease: MOTION.ease });
             },
           });
@@ -361,42 +311,24 @@ export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
       ctx = gsap.context(() => {
         mm = gsap.matchMedia();
         const panel = section.querySelector<HTMLElement>("[data-diagram-panel]");
-        const chrome = section.querySelector<HTMLElement>("[data-diagram-chrome]");
+        const stageInner = section.querySelector<HTMLElement>("[data-diagram-stage]");
 
         mm.add("(prefers-reduced-motion: reduce)", () => {
           paintChrome(0);
-          gsap.set(camera, { clearProps: "transform" });
-          for (const node of nodes) node.style.opacity = "1";
-          for (const edge of edges) edge.style.opacity = "1";
         });
 
         mm.add(
           "(prefers-reduced-motion: no-preference) and ((max-width: 1023px) or (pointer: coarse))",
           () => {
-            gsap.set(camera, { clearProps: "transform" });
             paintChrome(0);
-            if (panel) {
-              gsap.set(panel, { y: 6, boxShadow: WALK.depthRestShadow });
-              gsap.to(panel, {
-                y: 0,
-                boxShadow: WALK.depthLiftShadow,
-                duration: MOTION.medium,
-                ease: MOTION.ease,
-                scrollTrigger: {
-                  trigger: section,
-                  start: "top 80%",
-                  toggleActions: "play reverse play reverse",
-                  refreshPriority: 3,
-                },
-              });
-            }
-            if (chrome) {
+            if (stageInner) {
               gsap.fromTo(
-                chrome,
-                { autoAlpha: WALK.chromeRestOpacity },
+                stageInner,
+                { y: 4, autoAlpha: 0.85 },
                 {
-                  autoAlpha: WALK.chromeFullOpacity,
-                  duration: MOTION.fast,
+                  y: 0,
+                  autoAlpha: 1,
+                  duration: MOTION.medium,
                   ease: MOTION.ease,
                   scrollTrigger: {
                     trigger: section,
@@ -413,18 +345,12 @@ export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
         mm.add(
           "(prefers-reduced-motion: no-preference) and (min-width: 1024px) and (pointer: fine)",
           () => {
-            poses = buildPoses(viewport, camera, stepsRef.current, gsap);
             const n = Math.max(stepsRef.current.length, 1);
+            paintCaption(0);
 
-            paintStep(0);
-
-            if (panel) {
-              gsap.set(panel, {
-                y: WALK.depthRestY,
-                boxShadow: WALK.depthRestShadow,
-              });
+            if (stageInner) {
+              gsap.set(stageInner, { y: WALK.stageRestY });
             }
-            if (chrome) gsap.set(chrome, { autoAlpha: WALK.chromeRestOpacity });
 
             const tl = gsap.timeline({
               defaults: { ease: "none" },
@@ -449,39 +375,28 @@ export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
                   : {}),
                 onUpdate: (self) => {
                   const idx = n <= 1 ? 0 : Math.round(self.progress * (n - 1));
-                  if (idx !== stepIndexRef.current) {
-                    paintStep(idx);
-                  }
-                },
-                onRefresh: () => {
-                  poses = buildPoses(viewport, camera, stepsRef.current, gsap);
-                  paintStep(stepIndexRef.current);
+                  if (idx !== stepIndexRef.current) paintChrome(idx);
                 },
               },
             });
 
-            if (panel) {
-              tl.to(
-                panel,
-                {
-                  y: WALK.depthLiftY,
-                  boxShadow: WALK.depthLiftShadow,
-                  duration: 0.2,
-                },
-                0,
-              );
-            }
-            if (chrome) {
-              tl.to(chrome, { autoAlpha: WALK.chromeFullOpacity, duration: 0.15 }, 0);
+            if (stageInner) {
+              tl.to(stageInner, { y: WALK.stageLiftY, duration: 0.18 }, 0);
             }
 
-            // Scrub length for step stops (UI updates via onUpdate)
+            paintChrome(0);
             tl.to({}, { duration: 1 }, 0);
+            if (panel) {
+              gsap.set(panel, { y: WALK.stageRestY });
+              tl.to(panel, { y: WALK.stageLiftY, duration: 0.2 }, 0);
+            }
           },
         );
       }, section);
 
-      ScrollTrigger.refresh();
+      requestAnimationFrame(() => {
+        ScrollTrigger.refresh();
+      });
     }
 
     void mount();
@@ -527,16 +442,13 @@ export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
       aria-labelledby={headingId}
       data-exhibit-act="diagram"
       data-walkthrough="1"
+      data-diagram-mode="base"
     >
       <div className="project-walk-header">
         <h2 id={headingId} className="project-exhibit-section-title">
           How it works
         </h2>
-        <p className="project-diagram-source">
-          {diagram.source === "github" && diagram.path
-            ? `Path through architecture from ${diagram.path}`
-            : "Generic system path — replace with repo architecture docs when available"}
-        </p>
+        <p className="project-diagram-source">{sourceCopy(diagram)}</p>
       </div>
 
       <div className="project-walk" data-walk-stage>
@@ -554,24 +466,21 @@ export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
           </p>
         </div>
 
-        <div ref={viewportRef} className="project-diagram project-walk-stage" data-diagram-panel>
+        <div
+          ref={viewportRef}
+          className="project-diagram project-walk-stage"
+          data-diagram-panel
+        >
           <div className="project-diagram-chrome" data-diagram-chrome aria-hidden="true">
             <span className="project-diagram-chrome-dot" />
             <span className="project-diagram-chrome-dot" />
             <span className="project-diagram-chrome-dot" />
             <span className="project-diagram-chrome-bar" />
           </div>
-          <div ref={cameraRef} className="project-diagram-camera" />
+          <div ref={cameraRef} className="project-diagram-camera" data-diagram-stage />
         </div>
 
         <div className="project-walk-aside">
-          <div
-            ref={minimapRef}
-            className="project-walk-minimap"
-            aria-hidden="true"
-            data-walk-minimap
-          />
-
           <div
             ref={dotsRef}
             className="project-walk-dots"

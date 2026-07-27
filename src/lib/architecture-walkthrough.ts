@@ -1,15 +1,21 @@
 /**
  * Architecture chapter walkthrough steps.
- * Prefer authored yaml → Mermaid structure → SVG labels → generic 3-step path.
- * Captions stay honest: node/subgraph labels or clearly generic copy.
+ * Prefer owned graph `tour` → authored yaml → Mermaid → SVG labels → generic path.
+ * Captions stay honest: IR labels / node labels or clearly generic copy.
  */
+
+import type { ArchitectureGraph } from "@/lib/architecture-graph";
 
 export type WalkthroughStep = {
   id: string;
   title: string;
   body: string;
+  /** Cluster children in plain English (fan-in/out stops). */
+  items?: string[];
   /** Label / node id used to spotlight in the rendered SVG */
   highlight?: string;
+  /** When from owned IR: node vs edge vs cluster stop */
+  targetKind?: "node" | "edge" | "cluster";
 };
 
 export const GENERIC_PATH_STEPS: WalkthroughStep[] = [
@@ -300,12 +306,88 @@ export type ResolveWalkthroughInput = {
   authored?: WalkthroughStep[];
   mermaid?: string;
   svgRoot?: HTMLElement | null;
+  /** Owned architecture graph IR — preferred when present. */
+  graph?: ArchitectureGraph;
 };
 
 /**
- * Resolve 3–5 walkthrough steps with honest labels and a hard generic fallback.
+ * Build walkthrough captions from owned IR `tour` stops.
+ * Prefer authored `graph.captions` (title + body + optional items).
+ * Fallback: node/edge labels + summary / honest generic path copy —
+ * never invented architecture claims.
+ */
+export function resolveTourStepsFromGraph(graph: ArchitectureGraph): WalkthroughStep[] {
+  const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
+  const edgeById = new Map(
+    graph.edges.filter((e) => e.id).map((e) => [e.id as string, e]),
+  );
+  const captionsById = new Map((graph.captions ?? []).map((c) => [c.id, c]));
+
+  return graph.tour.map((stopId, i) => {
+    const authored = captionsById.get(stopId);
+    const node = nodeById.get(stopId);
+
+    if (authored) {
+      const isCluster = Boolean(authored.items && authored.items.length >= 2);
+      return {
+        id: stopId,
+        title: shortTitle(authored.title),
+        body: authored.body,
+        items: authored.items,
+        highlight: stopId,
+        targetKind: isCluster ? ("cluster" as const) : node ? ("node" as const) : ("edge" as const),
+      };
+    }
+
+    if (node) {
+      return {
+        id: node.id,
+        title: shortTitle(node.label),
+        body:
+          i === 0 && graph.summary
+            ? graph.summary
+            : positionBody(i, graph.tour.length),
+        highlight: node.id,
+        targetKind: "node" as const,
+      };
+    }
+
+    const edge = edgeById.get(stopId);
+    if (edge) {
+      const fromLabel = nodeById.get(edge.from)?.label ?? edge.from;
+      const toLabel = nodeById.get(edge.to)?.label ?? edge.to;
+      const title = edge.label
+        ? shortTitle(edge.label)
+        : shortTitle(`${fromLabel} → ${toLabel}`);
+      return {
+        id: edge.id ?? stopId,
+        title,
+        body: positionBody(i, graph.tour.length),
+        highlight: edge.id ?? stopId,
+        targetKind: "edge" as const,
+      };
+    }
+
+    // Should not happen after validation — keep a readable stub.
+    return {
+      id: stopId,
+      title: shortTitle(stopId),
+      body: positionBody(i, graph.tour.length),
+      highlight: stopId,
+      targetKind: "node" as const,
+    };
+  });
+}
+
+/**
+ * Resolve walkthrough steps with honest labels and a hard generic fallback.
+ * Owned IR `tour` wins when present (including over authored yaml for highlights).
  */
 export function resolveWalkthroughSteps(input: ResolveWalkthroughInput): WalkthroughStep[] {
+  if (input.graph?.tour?.length) {
+    return resolveTourStepsFromGraph(input.graph);
+  }
+
   if (input.authored && input.authored.length >= MIN_STEPS) {
     return input.authored.slice(0, MAX_STEPS).map((step, i, arr) => ({
       ...step,
@@ -324,6 +406,42 @@ export function resolveWalkthroughSteps(input: ResolveWalkthroughInput): Walkthr
   }
 
   return GENERIC_PATH_STEPS;
+}
+
+/** Ids revealed after completing tour stops up to `stepIndex` (inclusive). */
+export function tourRevealedIds(
+  graph: ArchitectureGraph,
+  stepIndex: number,
+): { nodes: Set<string>; edges: Set<string> } {
+  const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
+  const edgeById = new Map(
+    graph.edges.filter((e) => e.id).map((e) => [e.id as string, e]),
+  );
+  const nodes = new Set<string>();
+  const edges = new Set<string>();
+  const end = Math.max(0, Math.min(graph.tour.length - 1, stepIndex));
+
+  for (let i = 0; i <= end; i++) {
+    const id = graph.tour[i];
+    if (nodeById.has(id)) {
+      nodes.add(id);
+    } else if (edgeById.has(id)) {
+      const e = edgeById.get(id)!;
+      edges.add(id);
+      nodes.add(e.from);
+      nodes.add(e.to);
+    }
+  }
+
+  // Also reveal solid edges between already-revealed nodes (progressive path).
+  graph.edges.forEach((e, i) => {
+    const eid = e.id ?? `e:${e.from}->${e.to}#${i}`;
+    if (nodes.has(e.from) && nodes.has(e.to)) {
+      edges.add(eid);
+    }
+  });
+
+  return { nodes, edges };
 }
 
 /**

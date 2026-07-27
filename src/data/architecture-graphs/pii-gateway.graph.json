@@ -87,5 +87,33 @@
       "label": "optional raw / cleaned"
     }
   ],
-  "tour": ["apps", "auth", "pipeline", "presidio", "artifacts"]
+  "tour": ["apps", "auth", "pipeline", "presidio", "artifacts"],
+  "captions": [
+    {
+      "id": "apps",
+      "title": "Callers",
+      "body": "Apps and workers send text to sanitize.",
+      "items": ["Apps / workers / scripts", "Cron or internal automation"]
+    },
+    {
+      "id": "auth",
+      "title": "Auth gate",
+      "body": "An API key and correlation ID check who is calling."
+    },
+    {
+      "id": "pipeline",
+      "title": "Sanitize pipeline",
+      "body": "Shared steps prepare text before detection."
+    },
+    {
+      "id": "presidio",
+      "title": "Presidio",
+      "body": "Engines find and redact personal data."
+    },
+    {
+      "id": "artifacts",
+      "title": "Artifacts",
+      "body": "Optionally write cleaned results to storage."
+    }
+  ]
 }

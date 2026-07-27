@@ -47,7 +47,15 @@ During rollout, fixtures in this repo are the source of truth until each project
   "edges": [
     { "id": "optional-edge-id", "from": "a", "to": "b", "label": "optional", "style": "solid" }
   ],
-  "tour": ["a", "b", "c", "d"]
+  "tour": ["a", "b", "c", "d"],
+  "captions": [
+    {
+      "id": "a",
+      "title": "Inputs",
+      "body": "Three ways work enters the system.",
+      "items": ["Upload image", "Pick a look", "Tune motion"]
+    }
+  ]
 }
 ```
 
@@ -59,6 +67,7 @@ During rollout, fixtures in this repo are the source of truth until each project
 | `nodes` | **yes** | Non-empty; unique `id`; non-empty `label` |
 | `edges` | **yes** | Array (may be empty only for trivial maps; normally not) |
 | `tour` | **yes** (portfolio) | 3–8 stops; each id is a **node** or **edge** id |
+| `captions` | optional* | *Recommended for portfolio: title + body per tour stop; `items` for clusters |
 | `groups` | optional | Lane bands when present |
 | `title` / `summary` / `notes` | optional | Visitor copy / honesty |
 | `nodes[].kind` | optional | `input \| process \| decision \| store \| output \| other` |
@@ -119,6 +128,30 @@ Use groups when the Mermaid has meaningful subgraphs (Inputs, Gateway, Modes). U
 - Do not tour every alternate path (ADA cron/S3, PII batch) — dashed edges + `notes` are enough.
 - Labels: plain English, visitor-friendly, no invented capabilities.
 
+### Tour captions
+
+Optional `captions[]` on the IR — one entry per `tour` stop — drives the void journey UI (`02 / 05`, title, body, optional bullets). Prefer authoring these on fixtures rather than inventing copy at render time.
+
+```json
+"captions": [
+  {
+    "id": "upload",
+    "title": "Inputs",
+    "body": "Three ways work enters the system.",
+    "items": ["Upload a hero or overlay image", "Pick a look or mood", "Tune intensity, motion, and grit"]
+  }
+]
+```
+
+| Field | Required? | Notes |
+|-------|-----------|--------|
+| `id` | **yes** | Must match a `tour[]` entry |
+| `title` | **yes** | Short; may rename a representative node to a cluster label (e.g. `upload` → “Inputs”) |
+| `body` | **yes** | One dumb-simple sentence |
+| `items` | optional | Plain-English children when the stop is a fan-in/out **cluster** |
+
+When `items` is present (≥2), the camera frames the cluster (group siblings or fan co-targets) instead of a single box. Schema: `ArchitectureTourCaption` in `src/lib/architecture-graph.ts`. Resolver: `resolveTourStepsFromGraph`.
+
 ### Node budget
 
 | Budget | Guidance |
@@ -173,6 +206,46 @@ Run `npm run validate:graphs` for live counts. Expected shape:
 ## Rollout steps (next pass)
 
 1. Push `docs/architecture.graph.json` (+ optional `graph:`) into each curated repo; remove reliance on fixtures over time.
-2. SVG/HTML renderer from `layoutArchitectureGraph` (static first).
-3. Scrub / GSAP tour driven by `tour` on the project slug page.
+2. ~~SVG/HTML renderer from `layoutArchitectureGraph` (static first).~~ → `ArchitectureGraphView` + `ProjectDiagram` (IR primary).
+3. ~~Scrub / GSAP tour driven by `tour` on the project slug page.~~ → **camera journey** (`ArchitectureJourney`): pin + scrub along edges; fan-in/out zoom; mobile stepped; reduced-motion static path.
 4. Deprecate Mermaid render on the site once IR coverage is solid; keep `.mmd` for GitHub.
+
+### Site render fallback
+
+1. **Owned IR** (`diagram.graph`) → `ArchitectureJourney` (layout SVG world + scroll camera) over a void-transparent stage.
+2. **Base** Input→Core→Output SVG when no IR.
+3. **Mermaid** only in the “View full architecture” overlay when no IR but `.mmd` was fetched — never the default scroll view.
+
+### Camera journey (desktop)
+
+Path journey, not map overview. Layout coordinates are the **world**; the viewport is a **camera** (`translate` + `scale` on `[data-journey-camera]`). Never transform the pinned section root.
+
+**Sequence:** hero exit → empty void spacer → stage fades in → opening **dive** → **hold** (read caption) → travel edge → **hold** → … → rest after unpin.
+
+**Targets from layout + `tour` (+ captions):**
+
+- Node stop → focus pose = node center framed at ~56% viewport width (`poseForNode`).
+- Cluster stop (`captions[].items`) → wide pose over group / fan siblings, then travel into the next hub.
+- Consecutive stops → connecting solid edge (if any); stroke-draw + quiet packet along the path.
+- Edge id in `tour` → travel that edge; arrive focused on `to`.
+
+**Pin / scrub / snap** (`JOURNEY` in `architecture-journey.ts`):
+
+| Knob | Default | Role |
+|------|---------|------|
+| `pinVhBase` / `pinVhPerHop` | 0.72 / 0.36 | Pin distance scales with tour hops; clamped ~1.0–2.2 vh |
+| `scrub` | 0.75 | Soft scroll catch-up |
+| `beatDur` | 1 | Hold + travel units per stop (`ease: "none"`) |
+| `holdFrac` / `travelFrac` | 0.42 / 0.58 | Readable hold vs edge travel within a beat |
+| `diveFrac` | 0.38 | Opening void → first-stop dive |
+| `focusNodeFrac` | 0.56 | How large the active node reads in-frame |
+| `nodeDim` / `edgeDim` | 0.035 / 0.02 | Hard dim so one focus owns the screen |
+| `snapProgress` | per hold end | ScrollTrigger snap targets (directional, ~0.12–0.32s) |
+
+- Animate the **camera / world children**, never the pinned section root.
+- Focus opacity + tour classes: **one** `applyStopFocus` owner per stop change (no competing opacity timelines).
+- Journey stage: full-bleed, transparent (no panel chrome / group boxes / “How it works” header).
+- 2.5D cues: focus drop-shadow + brighter stroke; dimmed nodes blurred/faint; caption slight parallax.
+- Mobile / coarse: no pin; Prev/Next steps the camera to each stop.
+- `prefers-reduced-motion`: static full graph + step list (same captions); no pin/scrub.
+- Captions: `captions[]` on IR → progress `i / n`, title, body, optional `items`.

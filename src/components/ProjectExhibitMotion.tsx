@@ -16,7 +16,7 @@ type MatchMediaHandle = {
 type GsapLike = typeof import("gsap").default;
 type SplitTextLike = typeof import("gsap/SplitText").SplitText;
 
-/** Tunables — hero entry + exit-to-void; architecture follows in document flow. */
+/** Tunables — hero entry + scrub-exit into void; journey owns the dive after. */
 const HERO = {
   titleStagger: 0.045,
   titleDuration: 0.55,
@@ -31,9 +31,9 @@ const HERO = {
   buttonsAt: 0.18,
   /** Delay (s) before lede lines after badge start */
   ledeAt: 0.32,
-  exitScrub: 0.45,
+  exitScrub: 0.4,
   /** Short pin distance for exit beat (~viewport fraction) */
-  exitPinEnd: "+=42%",
+  exitPinEnd: "+=32%",
   hoverX: 3,
   hoverDuration: MOTION.fast,
 } as const;
@@ -91,11 +91,11 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
         if (buttons.length) gsap.set(buttons, { autoAlpha: 1, x: 0, y: 0 });
       };
 
-      /** Reduced-motion / a11y: skills + coda readable in the document. */
-      const setRestVisible = () => {
+      /** Reduced-motion: skip void spacer; rest always in flow. */
+      const setReducedPath = () => {
         if (rest) {
           rest.hidden = false;
-          rest.classList.remove("project-exhibit-rest--dormant");
+          gsap.set(rest, { clearProps: "opacity,visibility,transform" });
         }
         if (voidEl) {
           voidEl.style.minHeight = "0";
@@ -103,15 +103,15 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
         }
       };
 
-      /** Motion path: hold skills/coda; architecture sits after void in the flow. */
-      const setRestDormant = () => {
-        if (rest) {
-          rest.hidden = true;
-          rest.classList.add("project-exhibit-rest--dormant");
-        }
+      /** Motion path: void spacer on; rest stays in flow after the dive (quiet fade-in). */
+      const setMotionPath = () => {
         if (voidEl) {
           voidEl.hidden = false;
           voidEl.style.minHeight = "";
+        }
+        if (rest) {
+          rest.hidden = false;
+          gsap.set(rest, { autoAlpha: 0.35, y: 18 });
         }
       };
 
@@ -120,19 +120,34 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
 
         mm.add("(prefers-reduced-motion: reduce)", () => {
           setHeroFinal();
-          setRestVisible();
+          setReducedPath();
         });
 
         mm.add(
           "(prefers-reduced-motion: no-preference) and (min-width: 1024px) and (pointer: fine)",
           () => {
-            setRestDormant();
+            setMotionPath();
 
             if (hero) {
               addHeroEntry(gsap, SplitText, { badge, title, lede, buttons });
               addHeroExit(gsap, hero, { badge, title, lede, actions }, { pin: true });
             } else {
               setHeroFinal();
+            }
+
+            if (rest) {
+              gsap.to(rest, {
+                autoAlpha: 1,
+                y: 0,
+                ease: "none",
+                scrollTrigger: {
+                  trigger: rest,
+                  start: "top 88%",
+                  end: "top 55%",
+                  scrub: 0.4,
+                  refreshPriority: 4,
+                },
+              });
             }
 
             const unbindHover = buttons.length > 0 ? bindButtonHovers(gsap, buttons) : null;
@@ -145,13 +160,28 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
         mm.add(
           "(prefers-reduced-motion: no-preference) and ((max-width: 1023px) or (pointer: coarse))",
           () => {
-            setRestDormant();
+            setMotionPath();
 
             if (hero) {
               addHeroEntry(gsap, SplitText, { badge, title, lede, buttons });
               addHeroExit(gsap, hero, { badge, title, lede, actions }, { pin: false });
             } else {
               setHeroFinal();
+            }
+
+            if (rest) {
+              gsap.to(rest, {
+                autoAlpha: 1,
+                y: 0,
+                ease: "none",
+                scrollTrigger: {
+                  trigger: rest,
+                  start: "top 92%",
+                  end: "top 70%",
+                  scrub: 0.35,
+                  refreshPriority: 4,
+                },
+              });
             }
 
             const unbindHover = buttons.length > 0 ? bindButtonHovers(gsap, buttons) : null;
