@@ -1,63 +1,126 @@
 {
   "version": 1,
   "title": "Background Studio",
-  "summary": "Uploads and looks land in scene state, drive one GLSL pass, then fan out to preset JSON and media exports.",
-  "notes": "Collapsed L0 / L1 / preview-text into a single GPU-pass node; Mermaid keeps the layered detail.",
+  "summary": "Upload, looks, and knobs pack into one look engine, render in a single GPU pass, then fan out into exports.",
+  "notes": "Portfolio map folds Mermaid Material + Shader into one look-engine node, and L0 / L1 / preview-text into one GPU-pass node.",
+  "journeyMode": "overview-story",
+  "skin": "studio",
   "groups": [
     { "id": "inputs", "label": "Inputs" },
+    { "id": "core", "label": "Core" },
     { "id": "exports", "label": "Exports" }
   ],
   "nodes": [
-    { "id": "upload", "label": "Hero & overlay upload", "kind": "input", "groupId": "inputs" },
-    { "id": "looks", "label": "14 looks + mood text", "kind": "input", "groupId": "inputs" },
-    { "id": "tune", "label": "Intensity / Motion / Grit", "kind": "input", "groupId": "inputs" },
-    { "id": "store", "label": "Zustand scene state", "kind": "store" },
-    { "id": "material", "label": "SynthMaterial uniforms", "kind": "process" },
-    { "id": "shader", "label": "One GLSL fragment program", "kind": "process" },
-    { "id": "pass", "label": "Single GPU pass (layers + text)", "kind": "process" },
-    { "id": "json", "label": "Preset JSON", "kind": "output", "groupId": "exports" },
-    { "id": "media", "label": "WebM loop / PNG still", "kind": "output", "groupId": "exports" },
-    { "id": "site", "label": "Embed behind HTML on your site", "kind": "output", "groupId": "exports" }
+    {
+      "id": "upload",
+      "label": "Hero & overlay",
+      "kind": "input",
+      "groupId": "inputs",
+      "layout": { "dx": -8 }
+    },
+    {
+      "id": "looks",
+      "label": "14 looks + mood",
+      "kind": "input",
+      "groupId": "inputs",
+      "layout": { "dx": 10 }
+    },
+    {
+      "id": "tune",
+      "label": "Intensity · Motion · Grit",
+      "kind": "input",
+      "groupId": "inputs",
+      "layout": { "dx": -4 }
+    },
+    {
+      "id": "store",
+      "label": "Scene state",
+      "kind": "store",
+      "shape": "cylinder",
+      "groupId": "core",
+      "layout": { "weight": "normal", "scale": 1.06 }
+    },
+    {
+      "id": "look",
+      "label": "Look engine",
+      "kind": "process",
+      "groupId": "core",
+      "layout": { "weight": "spine", "scale": 1.26 }
+    },
+    {
+      "id": "pass",
+      "label": "One GPU pass",
+      "kind": "process",
+      "groupId": "core",
+      "layout": { "weight": "spine", "scale": 1.2 }
+    },
+    {
+      "id": "json",
+      "label": "Preset JSON",
+      "kind": "output",
+      "groupId": "exports",
+      "layout": { "dx": 8 }
+    },
+    {
+      "id": "media",
+      "label": "WebM / PNG",
+      "kind": "output",
+      "groupId": "exports",
+      "layout": { "dx": -6 }
+    },
+    {
+      "id": "site",
+      "label": "Site embed",
+      "kind": "output",
+      "groupId": "exports",
+      "layout": { "dx": 12, "dy": 10 }
+    }
   ],
   "edges": [
     { "from": "upload", "to": "store" },
     { "from": "looks", "to": "store" },
     { "from": "tune", "to": "store" },
-    { "from": "store", "to": "material" },
-    { "from": "material", "to": "shader" },
-    { "from": "shader", "to": "pass" },
+    { "from": "store", "to": "look" },
+    { "from": "look", "to": "pass" },
     { "from": "pass", "to": "json" },
     { "from": "pass", "to": "media" },
     { "from": "json", "to": "site" }
   ],
-  "tour": ["upload", "store", "shader", "pass", "json"],
+  "tour": ["upload", "store", "pass", "json"],
   "captions": [
     {
       "id": "upload",
       "title": "Inputs",
-      "body": "Three ways work enters the system.",
-      "items": ["Upload a hero or overlay image", "Pick a look or mood", "Tune intensity, motion, and grit"]
+      "body": "Upload, looks, and knobs land in scene state.",
+      "items": [
+        "Upload a hero or overlay image",
+        "Pick a look or mood",
+        "Tune intensity, motion, and grit"
+      ],
+      "spotlightIds": ["upload", "looks", "tune", "store"]
     },
     {
       "id": "store",
-      "title": "Scene state",
-      "body": "Everything you chose lives in one shared store."
-    },
-    {
-      "id": "shader",
-      "title": "Shader program",
-      "body": "One GLSL fragment program turns that state into look."
+      "title": "Core",
+      "body": "Scene state packs into one look engine — uniforms and a GLSL program.",
+      "spotlightIds": ["store", "look"]
     },
     {
       "id": "pass",
       "title": "GPU pass",
-      "body": "A single pass draws layers and text together."
+      "body": "Layers and text compose together in a single pass.",
+      "spotlightIds": ["pass"]
     },
     {
       "id": "json",
       "title": "Exports",
-      "body": "The same pass fans out into things you can take away.",
-      "items": ["Preset JSON", "WebM loop or PNG still", "Embed behind your site"]
+      "body": "The same look fans out into things you can take away.",
+      "items": [
+        "Preset JSON",
+        "WebM loop or PNG still",
+        "Embed behind your site"
+      ],
+      "spotlightIds": ["pass", "json", "media", "site"]
     }
   ]
 }

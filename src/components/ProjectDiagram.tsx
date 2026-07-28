@@ -17,6 +17,7 @@ import type { ProjectDiagramData } from "@/lib/projects";
 type ProjectDiagramProps = {
   title: string;
   diagram: ProjectDiagramData;
+  slug?: string;
 };
 
 type MatchMediaHandle = {
@@ -26,19 +27,13 @@ type MatchMediaHandle = {
 
 /**
  * Base-diagram walk tunables (Input→Core→Output fallback only).
- * Owned IR uses ArchitectureJourney camera path instead.
+ * Owned IR uses ArchitectureJourney overview + optional dive.
  */
 const WALK = {
-  pinVh: 1.1,
-  scrub: 0.55,
-  pinStart: "top top+=72",
   nodeDim: 0.12,
   nodeFull: 1,
   edgeDim: 0.08,
   edgeFull: 0.92,
-  stageRestY: 6,
-  stageLiftY: 0,
-  snapDuration: 0.28,
 } as const;
 
 async function renderMermaidToSvg(mermaidSource: string, id: string): Promise<string | null> {
@@ -162,11 +157,11 @@ type WalkApi = {
 
 /**
  * Fallback order for the main stage:
- * 1. Owned IR (`diagram.graph`) → ArchitectureJourney (camera path)
- * 2. Base Input→Core→Output SVG
- * Mermaid is escape-hatch only (overlay), not the default scroll view.
+ * 1. Owned IR (`diagram.graph`) → ArchitectureJourney (overview + optional dive)
+ * 2. Base Input→Core→Output SVG with stepped captions
+ * Mermaid is escape-hatch only (overlay), not the default view.
  */
-export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
+export function ProjectDiagram({ title, diagram, slug }: ProjectDiagramProps) {
   const ownedGraph = diagram.graph;
   if (ownedGraph) {
     return (
@@ -174,6 +169,7 @@ export function ProjectDiagram({ title, diagram }: ProjectDiagramProps) {
         title={title}
         graph={ownedGraph}
         sourceNote={sourceCopy(diagram)}
+        slug={slug}
       />
     );
   }
@@ -310,88 +306,33 @@ function BaseDiagramFallback({ title, diagram }: ProjectDiagramProps) {
 
       ctx = gsap.context(() => {
         mm = gsap.matchMedia();
-        const panel = section.querySelector<HTMLElement>("[data-diagram-panel]");
         const stageInner = section.querySelector<HTMLElement>("[data-diagram-stage]");
 
         mm.add("(prefers-reduced-motion: reduce)", () => {
           paintChrome(0);
         });
 
-        mm.add(
-          "(prefers-reduced-motion: no-preference) and ((max-width: 1023px) or (pointer: coarse))",
-          () => {
-            paintChrome(0);
-            if (stageInner) {
-              gsap.fromTo(
-                stageInner,
-                { y: 4, autoAlpha: 0.85 },
-                {
-                  y: 0,
-                  autoAlpha: 1,
-                  duration: MOTION.medium,
-                  ease: MOTION.ease,
-                  scrollTrigger: {
-                    trigger: section,
-                    start: "top 80%",
-                    toggleActions: "play reverse play reverse",
-                    refreshPriority: 3,
-                  },
-                },
-              );
-            }
-          },
-        );
-
-        mm.add(
-          "(prefers-reduced-motion: no-preference) and (min-width: 1024px) and (pointer: fine)",
-          () => {
-            const n = Math.max(stepsRef.current.length, 1);
-            paintCaption(0);
-
-            if (stageInner) {
-              gsap.set(stageInner, { y: WALK.stageRestY });
-            }
-
-            const tl = gsap.timeline({
-              defaults: { ease: "none" },
-              scrollTrigger: {
-                trigger: section,
-                start: WALK.pinStart,
-                end: `+=${WALK.pinVh * 100}%`,
-                pin: true,
-                pinSpacing: true,
-                scrub: WALK.scrub,
-                anticipatePin: 1,
-                invalidateOnRefresh: true,
-                refreshPriority: 3,
-                ...(n > 1
-                  ? {
-                      snap: {
-                        snapTo: (value: number) => Math.round(value * (n - 1)) / (n - 1),
-                        duration: { min: 0.12, max: WALK.snapDuration },
-                        ease: MOTION.easeInOut,
-                      },
-                    }
-                  : {}),
-                onUpdate: (self) => {
-                  const idx = n <= 1 ? 0 : Math.round(self.progress * (n - 1));
-                  if (idx !== stepIndexRef.current) paintChrome(idx);
+        mm.add("(prefers-reduced-motion: no-preference)", () => {
+          paintChrome(0);
+          if (stageInner) {
+            gsap.fromTo(
+              stageInner,
+              { y: 8, autoAlpha: 0 },
+              {
+                y: 0,
+                autoAlpha: 1,
+                duration: MOTION.medium,
+                ease: MOTION.ease,
+                scrollTrigger: {
+                  trigger: section,
+                  start: "top 80%",
+                  toggleActions: "play none none none",
+                  once: true,
                 },
               },
-            });
-
-            if (stageInner) {
-              tl.to(stageInner, { y: WALK.stageLiftY, duration: 0.18 }, 0);
-            }
-
-            paintChrome(0);
-            tl.to({}, { duration: 1 }, 0);
-            if (panel) {
-              gsap.set(panel, { y: WALK.stageRestY });
-              tl.to(panel, { y: WALK.stageLiftY, duration: 0.2 }, 0);
-            }
-          },
-        );
+            );
+          }
+        });
       }, section);
 
       requestAnimationFrame(() => {

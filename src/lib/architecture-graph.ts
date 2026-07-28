@@ -15,9 +15,41 @@ export type GraphNodeKind =
   | "output"
   | "other";
 
-export type GraphNodeShape = "rect" | "rounded" | "diamond" | "cylinder" | "stadium";
+export type GraphNodeShape =
+  | "rect"
+  | "rounded"
+  | "diamond"
+  | "cylinder"
+  | "stadium"
+  | "ticket";
 
 export type GraphEdgeStyle = "solid" | "dashed";
+
+/** Subtle per-project visual tokens (same components; accent / density only). */
+export type ArchitectureGraphSkin =
+  | "studio"
+  | "sound"
+  | "pii"
+  | "ada"
+  | "gstf"
+  | "default";
+
+/** Composition weight for overview chrome (larger / quieter). */
+export type ArchitectureNodeWeight = "spine" | "normal" | "satellite";
+
+/**
+ * Optional layout hints — prefer algorithmic composition; nudge focal nodes.
+ * `dx`/`dy` are portable; absolute `x`/`y` are last-resort hand placement.
+ */
+export type ArchitectureNodeLayoutHint = {
+  dx?: number;
+  dy?: number;
+  x?: number;
+  y?: number;
+  /** Scale multiplier vs role default (clamped ~0.7–1.4). */
+  scale?: number;
+  weight?: ArchitectureNodeWeight;
+};
 
 export type ArchitectureGraphNode = {
   id: string;
@@ -25,6 +57,8 @@ export type ArchitectureGraphNode = {
   kind?: GraphNodeKind;
   groupId?: string;
   shape?: GraphNodeShape;
+  /** Optional composition overrides (nudge / scale / weight). */
+  layout?: ArchitectureNodeLayoutHint;
 };
 
 export type ArchitectureGraphEdge = {
@@ -63,7 +97,15 @@ export type ArchitectureTourCaption = {
   body: string;
   /** Optional child pieces when the stop stands for a set (e.g. three inputs). */
   items?: string[];
+  /**
+   * Explicit nodes to highlight for this beat (overview-story mode).
+   * When omitted, cluster/group heuristics apply.
+   */
+  spotlightIds?: string[];
 };
+
+/** How the portfolio presents this graph. Default: overview-story (fit map + path captions). */
+export type ArchitectureJourneyMode = "camera" | "overview-story";
 
 export type ArchitectureGraph = {
   version: typeof ARCHITECTURE_GRAPH_VERSION;
@@ -76,6 +118,16 @@ export type ArchitectureGraph = {
    * (collapsed internals, omitted alternate paths, etc.).
    */
   notes?: string;
+  /**
+   * `overview-story` (default): fit whole graph + path captions; dive is optional.
+   * `camera`: legacy per-stop camera framing (used by on-demand dive poses).
+   */
+  journeyMode?: ArchitectureJourneyMode;
+  /**
+   * Optional skin id for accent / density tokens.
+   * When omitted, portfolio resolves from project slug.
+   */
+  skin?: ArchitectureGraphSkin;
   nodes: ArchitectureGraphNode[];
   edges: ArchitectureGraphEdge[];
   groups?: ArchitectureGraphGroup[];
@@ -106,9 +158,66 @@ const NODE_KINDS: GraphNodeKind[] = [
   "other",
 ];
 
-const NODE_SHAPES: GraphNodeShape[] = ["rect", "rounded", "diamond", "cylinder", "stadium"];
+const NODE_SHAPES: GraphNodeShape[] = [
+  "rect",
+  "rounded",
+  "diamond",
+  "cylinder",
+  "stadium",
+  "ticket",
+];
 
 const EDGE_STYLES: GraphEdgeStyle[] = ["solid", "dashed"];
+
+const JOURNEY_MODES: ArchitectureJourneyMode[] = ["camera", "overview-story"];
+
+const GRAPH_SKINS: ArchitectureGraphSkin[] = [
+  "studio",
+  "sound",
+  "pii",
+  "ada",
+  "gstf",
+  "default",
+];
+
+const SLUG_SKINS: Record<string, ArchitectureGraphSkin> = {
+  "background-studio": "studio",
+  "sound-visualiser": "sound",
+  "pii-gateway": "pii",
+  ada: "ada",
+  gstf: "gstf",
+};
+
+/** Resolve skin from authored IR, else known slug, else default. */
+export function resolveArchitectureSkin(
+  graph: Pick<ArchitectureGraph, "skin">,
+  slug?: string,
+): ArchitectureGraphSkin {
+  if (graph.skin && GRAPH_SKINS.includes(graph.skin)) return graph.skin;
+  if (slug && SLUG_SKINS[slug]) return SLUG_SKINS[slug];
+  return "default";
+}
+
+/**
+ * Default render shape from kind when `shape` is omitted.
+ * input→chip, process→tablet, store→cylinder, decision→diamond, output→ticket.
+ */
+export function defaultShapeForKind(kind?: GraphNodeKind): GraphNodeShape {
+  switch (kind) {
+    case "input":
+      return "stadium";
+    case "process":
+      return "rounded";
+    case "store":
+      return "cylinder";
+    case "decision":
+      return "diamond";
+    case "output":
+      return "ticket";
+    default:
+      return "rounded";
+  }
+}
 
 const TOUR_MIN = 3;
 const TOUR_MAX = 8;
@@ -156,6 +265,30 @@ export function validateArchitectureGraph(
 
   if (data.notes !== undefined && !isNonEmptyString(data.notes)) {
     issues.push({ path: "notes", message: "notes must be a non-empty string when provided" });
+  }
+
+  if (data.journeyMode !== undefined) {
+    if (
+      !isNonEmptyString(data.journeyMode) ||
+      !JOURNEY_MODES.includes(data.journeyMode as ArchitectureJourneyMode)
+    ) {
+      issues.push({
+        path: "journeyMode",
+        message: `journeyMode must be one of: ${JOURNEY_MODES.join(", ")}`,
+      });
+    }
+  }
+
+  if (data.skin !== undefined) {
+    if (
+      !isNonEmptyString(data.skin) ||
+      !GRAPH_SKINS.includes(data.skin as ArchitectureGraphSkin)
+    ) {
+      issues.push({
+        path: "skin",
+        message: `skin must be one of: ${GRAPH_SKINS.join(", ")}`,
+      });
+    }
   }
 
   if (!Array.isArray(data.nodes) || data.nodes.length === 0) {
@@ -271,6 +404,42 @@ export function validateArchitectureGraph(
         });
       } else {
         node.groupId = raw.groupId.trim();
+      }
+    }
+
+    if (raw.layout !== undefined) {
+      if (!isPlainObject(raw.layout)) {
+        issues.push({
+          path: `nodes[${i}].layout`,
+          message: "layout must be an object when provided",
+        });
+      } else {
+        const hint: ArchitectureNodeLayoutHint = {};
+        const layoutRaw = raw.layout;
+        for (const key of ["dx", "dy", "x", "y", "scale"] as const) {
+          const v = layoutRaw[key];
+          if (v === undefined) continue;
+          if (typeof v !== "number" || !Number.isFinite(v)) {
+            issues.push({
+              path: `nodes[${i}].layout.${key}`,
+              message: `${key} must be a finite number when provided`,
+            });
+          } else {
+            hint[key] = v;
+          }
+        }
+        if (layoutRaw.weight !== undefined) {
+          const w = layoutRaw.weight;
+          if (w !== "spine" && w !== "normal" && w !== "satellite") {
+            issues.push({
+              path: `nodes[${i}].layout.weight`,
+              message: 'weight must be "spine", "normal", or "satellite"',
+            });
+          } else {
+            hint.weight = w;
+          }
+        }
+        if (Object.keys(hint).length > 0) node.layout = hint;
       }
     }
 
@@ -454,6 +623,39 @@ export function validateArchitectureGraph(
           }
         }
 
+        if (raw.spotlightIds !== undefined) {
+          if (!Array.isArray(raw.spotlightIds) || raw.spotlightIds.length === 0) {
+            issues.push({
+              path: `captions[${i}].spotlightIds`,
+              message: "spotlightIds must be a non-empty string array when provided",
+            });
+          } else {
+            const spotlightIds: string[] = [];
+            let spotOk = true;
+            raw.spotlightIds.forEach((sid, j) => {
+              if (!isNonEmptyString(sid)) {
+                spotOk = false;
+                issues.push({
+                  path: `captions[${i}].spotlightIds[${j}]`,
+                  message: "spotlight id must be a non-empty string",
+                });
+                return;
+              }
+              const trimmed = sid.trim();
+              if (!nodeIds.has(trimmed)) {
+                spotOk = false;
+                issues.push({
+                  path: `captions[${i}].spotlightIds[${j}]`,
+                  message: `unknown node "${trimmed}"`,
+                });
+                return;
+              }
+              spotlightIds.push(trimmed);
+            });
+            if (spotOk) caption.spotlightIds = spotlightIds;
+          }
+        }
+
         captionIds.add(id);
         captions.push(caption);
       });
@@ -491,6 +693,18 @@ export function validateArchitectureGraph(
   if (isNonEmptyString(data.title)) graph.title = data.title.trim();
   if (isNonEmptyString(data.summary)) graph.summary = data.summary.trim();
   if (isNonEmptyString(data.notes)) graph.notes = data.notes.trim();
+  if (
+    isNonEmptyString(data.journeyMode) &&
+    JOURNEY_MODES.includes(data.journeyMode as ArchitectureJourneyMode)
+  ) {
+    graph.journeyMode = data.journeyMode as ArchitectureJourneyMode;
+  }
+  if (
+    isNonEmptyString(data.skin) &&
+    GRAPH_SKINS.includes(data.skin as ArchitectureGraphSkin)
+  ) {
+    graph.skin = data.skin as ArchitectureGraphSkin;
+  }
   if (groups.length > 0) graph.groups = groups;
   if (captions.length > 0) graph.captions = captions;
 

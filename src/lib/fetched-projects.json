@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-26T21:29:17.263Z",
+  "fetchedAt": "2026-07-27T06:40:02.927Z",
   "results": [
     {
       "slug": "background-studio",
@@ -28,7 +28,7 @@
         "slug": "background-studio",
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T21:29:09.820Z",
+      "fetchedAt": "2026-07-27T06:39:55.757Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
@@ -134,13 +134,14 @@
           "tour": [
             "upload",
             "store",
+            "material",
             "shader",
             "pass",
             "json"
           ],
           "title": "Background Studio",
           "summary": "Uploads and looks land in scene state, drive one GLSL pass, then fan out to preset JSON and media exports.",
-          "notes": "Collapsed L0 / L1 / preview-text into a single GPU-pass node; Mermaid keeps the layered detail.",
+          "notes": "Collapsed L0 / L1 / preview-text into a single GPU-pass node; Mermaid keeps the layered detail. Tour is the spine: input cluster → store → material → shader → pass → export cluster.",
           "groups": [
             {
               "id": "inputs",
@@ -149,6 +150,48 @@
             {
               "id": "exports",
               "label": "Exports"
+            }
+          ],
+          "captions": [
+            {
+              "id": "upload",
+              "title": "Inputs",
+              "body": "Three ways work enters the system.",
+              "items": [
+                "Upload a hero or overlay image",
+                "Pick a look or mood",
+                "Tune intensity, motion, and grit"
+              ]
+            },
+            {
+              "id": "store",
+              "title": "Scene state",
+              "body": "Everything you chose lives in one shared store."
+            },
+            {
+              "id": "material",
+              "title": "Material uniforms",
+              "body": "The store is packed into shader uniforms."
+            },
+            {
+              "id": "shader",
+              "title": "Shader program",
+              "body": "One GLSL fragment program turns that state into look."
+            },
+            {
+              "id": "pass",
+              "title": "GPU pass",
+              "body": "A single pass draws layers and text together."
+            },
+            {
+              "id": "json",
+              "title": "Exports",
+              "body": "The same pass fans out into things you can take away.",
+              "items": [
+                "Preset JSON",
+                "WebM loop or PNG still",
+                "Embed behind your site"
+              ]
             }
           ]
         },
@@ -179,7 +222,7 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T21:29:11.685Z",
+      "fetchedAt": "2026-07-27T06:39:57.557Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
@@ -319,6 +362,7 @@
           "tour": [
             "mic",
             "engine",
+            "analyzers",
             "state",
             "router",
             "cinematic",
@@ -326,7 +370,7 @@
           ],
           "title": "Sound Visualiser",
           "summary": "Audio sources feed analyzers into scene state; a mode router picks the look and paints the full-screen canvas.",
-          "notes": "Collapsed loudness / mood / beat into one analyzers node and folded the per-frame snapshot into the engine step. Acid feedback is noted on the acid node label (no separate buffer). Webcam is a dashed secondary input into the router.",
+          "notes": "Collapsed loudness / mood / beat into one analyzers node and folded the per-frame snapshot into the engine step. Acid feedback is noted on the acid node label (no separate buffer). Webcam is a dashed secondary input into the router. Tour is the spine: audio cluster → engine → analyzers → state → router → modes cluster → canvas.",
           "groups": [
             {
               "id": "audio-in",
@@ -335,6 +379,53 @@
             {
               "id": "modes",
               "label": "Visual modes"
+            }
+          ],
+          "captions": [
+            {
+              "id": "mic",
+              "title": "Audio in",
+              "body": "Three ways sound enters the visualiser.",
+              "items": [
+                "Microphone",
+                "Your own audio file",
+                "Built-in demo track"
+              ]
+            },
+            {
+              "id": "engine",
+              "title": "Audio engine",
+              "body": "Each frame becomes a small snapshot of the sound."
+            },
+            {
+              "id": "analyzers",
+              "title": "Analyzers",
+              "body": "Energy, mood, and beat are tracked from that snapshot."
+            },
+            {
+              "id": "state",
+              "title": "Scene state",
+              "body": "Those readings live in one frame-sized store."
+            },
+            {
+              "id": "router",
+              "title": "Pick a mode",
+              "body": "A router chooses which visual look runs."
+            },
+            {
+              "id": "cinematic",
+              "title": "Visual modes",
+              "body": "Three looks share the same canvas.",
+              "items": [
+                "Cinematic 3D",
+                "Webcam shader",
+                "Acid shader"
+              ]
+            },
+            {
+              "id": "canvas",
+              "title": "Canvas",
+              "body": "The chosen mode paints full-screen."
             }
           ]
         },
@@ -363,7 +454,7 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T21:29:13.321Z",
+      "fetchedAt": "2026-07-27T06:39:59.015Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
@@ -480,6 +571,7 @@
           ],
           "tour": [
             "apps",
+            "sanitize",
             "auth",
             "pipeline",
             "presidio",
@@ -487,7 +579,7 @@
           ],
           "title": "PII Gateway",
           "summary": "Callers hit the sanitize API through API-key auth; a shared pipeline runs Presidio and optionally writes cleaned artifacts.",
-          "notes": "Portfolio map collapses nested FastAPI internals (jobs routes, healthz, scheduler). Batch inboxes stay as dashed secondary inputs. Artifact targets collapsed to one store.",
+          "notes": "Portfolio map collapses nested FastAPI internals (jobs routes, healthz, scheduler). Batch inboxes stay as dashed secondary inputs. Artifact targets collapsed to one store. Tour is the spine: callers cluster → sanitize → auth → pipeline → Presidio → artifacts.",
           "groups": [
             {
               "id": "callers",
@@ -500,6 +592,42 @@
             {
               "id": "batch",
               "label": "Batch sources"
+            }
+          ],
+          "captions": [
+            {
+              "id": "apps",
+              "title": "Callers",
+              "body": "Apps and workers send text to sanitize.",
+              "items": [
+                "Apps / workers / scripts",
+                "Cron or internal automation"
+              ]
+            },
+            {
+              "id": "sanitize",
+              "title": "Sanitize API",
+              "body": "Requests enter through one POST endpoint."
+            },
+            {
+              "id": "auth",
+              "title": "Auth gate",
+              "body": "An API key and correlation ID check who is calling."
+            },
+            {
+              "id": "pipeline",
+              "title": "Sanitize pipeline",
+              "body": "Shared steps prepare text using the mounted policy."
+            },
+            {
+              "id": "presidio",
+              "title": "Presidio",
+              "body": "Engines find and redact personal data."
+            },
+            {
+              "id": "artifacts",
+              "title": "Artifacts",
+              "body": "Optionally write cleaned results to storage."
             }
           ]
         },
@@ -533,7 +661,7 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T21:29:14.546Z",
+      "fetchedAt": "2026-07-27T06:40:00.157Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
@@ -653,7 +781,7 @@
           ],
           "title": "ADA",
           "summary": "Primary path: chat → orchestrator → allowlisted tools → SQLite. Cron publish and HUD read paths exist but are secondary on this map.",
-          "notes": "Chose chat as the portfolio happy path. Cron ingest / graph-lite / daemon→workflow→S3 and HUD→DB are kept as dashed alternate edges so the map stays honest without touring every path.",
+          "notes": "Chose chat as the portfolio happy path. Cron ingest / graph-lite / daemon→workflow→S3 and HUD→DB are kept as dashed alternate edges so the map stays honest without touring every path. Tour is that happy-path spine; memory is a sibling truth store after tools.",
           "groups": [
             {
               "id": "ingress",
@@ -666,6 +794,33 @@
             {
               "id": "truth",
               "label": "Local truth"
+            }
+          ],
+          "captions": [
+            {
+              "id": "chat",
+              "title": "Chat",
+              "body": "You talk to ADA through the chat surface."
+            },
+            {
+              "id": "orch",
+              "title": "Orchestrator",
+              "body": "Gemini picks tools and plans the next step."
+            },
+            {
+              "id": "tools",
+              "title": "Tools",
+              "body": "Only allowlisted tools are allowed to run."
+            },
+            {
+              "id": "db",
+              "title": "Local state",
+              "body": "Results land in a local SQLite database."
+            },
+            {
+              "id": "mem",
+              "title": "Memory files",
+              "body": "Longer notes live in plain markdown files."
             }
           ]
         },
@@ -699,7 +854,7 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-26T21:29:16.140Z",
+      "fetchedAt": "2026-07-27T06:40:01.773Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
@@ -817,15 +972,63 @@
           ],
           "tour": [
             "videos",
+            "preprocess",
             "datasets",
             "p1",
             "p2",
+            "p3",
             "ckpt",
             "eval"
           ],
           "title": "GSTF",
           "summary": "Videos become frame datasets; training phases write checkpoints that evaluation and Grad-CAM / UMAP read back.",
-          "notes": "Collapsed FF++/DFDM loader detail and optional joint 6-class branch. Fisher → Phase 3 kept as one adapt step. CLI fan-out shown without separate Fisher tour stop."
+          "notes": "Collapsed FF++/DFDM loader detail and optional joint 6-class branch. CLI / YAML stay on the map but off the tour. Spine: videos → preprocess → datasets → phases → checkpoints → eval cluster.",
+          "captions": [
+            {
+              "id": "videos",
+              "title": "Raw videos",
+              "body": "Training starts from real and deepfake video sets."
+            },
+            {
+              "id": "preprocess",
+              "title": "Preprocess",
+              "body": "Videos are turned into training frames."
+            },
+            {
+              "id": "datasets",
+              "title": "Datasets",
+              "body": "Frames are loaded into training datasets."
+            },
+            {
+              "id": "p1",
+              "title": "Phase 1",
+              "body": "Train a video backbone that understands motion."
+            },
+            {
+              "id": "p2",
+              "title": "Phase 2",
+              "body": "Add an ArcFace head for clearer class separation."
+            },
+            {
+              "id": "p3",
+              "title": "Phase 3",
+              "body": "Adapt the model to DFDM with EWC."
+            },
+            {
+              "id": "ckpt",
+              "title": "Checkpoints",
+              "body": "Weights and logs are saved as training continues."
+            },
+            {
+              "id": "eval",
+              "title": "Evaluate",
+              "body": "Checkpoints feed evaluation and explanation tools.",
+              "items": [
+                "Evaluate accuracy",
+                "Grad-CAM / UMAP views"
+              ]
+            }
+          ]
         },
         "graphSource": "local",
         "graphPath": "src/data/architecture-graphs/gstf.graph.json"

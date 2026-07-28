@@ -25,11 +25,14 @@ export type { DemoConfig };
 
 const BASE_DIAGRAM: ProjectDiagramData = { source: "base" };
 
+/**
+ * Prefer portfolio fixtures while rollout owns the IR.
+ * Fetched JSON may embed a stale copy; local `*.graph.json` is the live source.
+ */
 function attachLocalGraphIfMissing(
   diagram: ProjectDiagramData,
   slug: string,
 ): ProjectDiagramData {
-  if (diagram.graph) return diagram;
   const local = getLocalArchitectureGraph(slug);
   if (!local) return diagram;
   return {

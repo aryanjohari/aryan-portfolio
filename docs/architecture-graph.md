@@ -1,6 +1,6 @@
 # Architecture graph IR (portfolio)
 
-Owned graph IR for “How it works” maps on the portfolio. Mermaid stays canonical on **GitHub**; the site prefers this IR so every project can use the same rank/lane renderer and scrub tour later.
+Owned graph IR for “How it works” maps on the portfolio. Mermaid stays canonical on **GitHub**; the site prefers this IR so every project can use the same rank/lane renderer, path story, and optional dive.
 
 Related: [contract.md](./contract.md), [streamline-project-docs.md](./streamline-project-docs.md).
 
@@ -71,8 +71,10 @@ During rollout, fixtures in this repo are the source of truth until each project
 | `groups` | optional | Lane bands when present |
 | `title` / `summary` / `notes` | optional | Visitor copy / honesty |
 | `nodes[].kind` | optional | `input \| process \| decision \| store \| output \| other` |
-| `nodes[].shape` | optional | `rect \| rounded \| diamond \| cylinder \| stadium` |
+| `nodes[].shape` | optional | `rect \| rounded \| diamond \| cylinder \| stadium \| ticket` |
 | `nodes[].groupId` | optional | Must reference a group |
+| `nodes[].layout` | optional | Composition nudge: `dx`/`dy`/`x`/`y`/`scale`/`weight` |
+| `skin` | optional | `studio \| sound \| pii \| ada \| gstf \| default` (slug fallback on site) |
 | `edges[].id` | optional* | *Required if that edge appears in `tour` |
 | `edges[].style` | optional | `solid` (default) or `dashed` |
 | `edges[].label` | optional | Short; empty string rejected |
@@ -116,14 +118,14 @@ Tag for styling later; pick the closest honest kind:
 - `output` — exports, canvas, artifacts, published objects
 - `other` — only if none fit
 
-### Groups → lanes
+### Groups → columns
 
-Use groups when the Mermaid has meaningful subgraphs (Inputs, Gateway, Modes). Untagged nodes share an extra lane. No groups → pure topological ranks.
+Use groups when the Mermaid has meaningful subgraphs (Inputs, Gateway, Modes). Each group becomes a left→right pipeline column. Untagged nodes share a trailing column. No groups → pure topological ranks.
 
 ### Writing `tour`
 
-- One **primary happy path** (4–6 stops ideal, max 8).
-- Multi-inputs can be **one beat** (tour the representative input, e.g. `upload` or `mic`, not every sibling).
+- One **primary happy path** spine (ideal **5–7** stops, max **8**). Prefer solo frames for mid-path process nodes; keep fan-in/out as clusters.
+- Multi-inputs / multi-exports can be **one beat** (tour the representative node, e.g. `upload` or `mic`, with `captions[].items`).
 - Prefer node ids; use edge ids only when the stop is specifically a branch label.
 - Do not tour every alternate path (ADA cron/S3, PII batch) — dashed edges + `notes` are enough.
 - Labels: plain English, visitor-friendly, no invented capabilities.
@@ -164,14 +166,65 @@ When `items` is present (≥2), the camera frames the cluster (group siblings or
 
 Implemented as pure `layoutArchitectureGraph()` in `src/lib/architecture-graph-layout.ts` (no Mermaid, no WebGL).
 
+Composition goal: the overview should read as a **curated map** (hierarchy + asymmetry + air), not a default equal-box flowchart.
+
 1. **Ranks** — topological order on **solid** edges (Kahn). Dashed edges do not force rank. Cyclic leftovers get best-effort rank after max predecessor.
-2. **Lanes** — if `groups` exist and any node is grouped, each group is a horizontal lane (row). Ungrouped nodes share a final lane. Else single-lane **ranks** mode.
-3. **Sibling stacking** — nodes that share `(rank, lane)` stack vertically in declaration order.
-4. **Fan-in / fan-out** — natural: many edges into/out of a hub at its rank; no special Mermaid clustering.
-5. **Decisions** — same placement rules; `shape: "diamond"` is a render hint only.
-6. **Cycles / dashed** — marked `cyclic` or routed with a raised arc so back-edges stay readable; dashed style is preserved for the renderer to de-emphasize.
+2. **Columns (groups)** — if `groups` exist and any node is grouped, each group is a **vertical pipeline column** (Inputs → Core → Outputs). Ungrouped nodes share a trailing column. Else **ranks** mode (topo left→right).
+3. **Column roles** — first column = ingress (top-biased satellites), middle = core (larger spine), last = egress (bottom-biased satellites). Gaps that touch core use `spineGapMul` for breathing room.
+4. **Sibling stacking** — nodes in the same column stack by topo then declaration. Stack gaps tighten for satellites and open around spine pieces. Ingress/egress stagger horizontally (±`staggerX`); columns are **not** perfectly centered clones.
+5. **Weight + scale** — `input`/`output` → quieter satellites; tour `process`/`store`/`decision` → spine. Core process nodes get `coreProcessScale`. Optional per-node `layout` overrides.
+6. **Fan-in / fan-out** — travel lines exit/enter node sides; parallel elbows stagger so edges don’t stack.
+7. **Cycles / dashed** — marked `cyclic` or routed with a raised arc; dashed style is preserved for the renderer to de-emphasize.
 
 Coordinates are deterministic given the same IR + options.
+
+### Optional node `layout` hints
+
+Prefer the algorithmic composition. Hand-nudge focal nodes when a map still feels too systematic:
+
+```json
+{
+  "id": "look",
+  "label": "Look engine",
+  "kind": "process",
+  "groupId": "core",
+  "layout": { "weight": "spine", "scale": 1.26, "dx": 0, "dy": 0 }
+}
+```
+
+| Field | Notes |
+|-------|--------|
+| `dx` / `dy` | Nudge after placement (portable; preferred) |
+| `x` / `y` | Absolute world override (last resort) |
+| `scale` | Mul vs role default (clamped ~0.7–1.4) |
+| `weight` | `spine` \| `normal` \| `satellite` — overview chrome |
+
+### Tunables (`JOURNEY_LAYOUT`)
+
+| Key | Role |
+|-----|------|
+| `rankGap` / `spineGapMul` / `ranksGapMul` | Column air; core breathing; dense topo pipelines |
+| `stackGap` / `satelliteStackGap` | Vertical air in core vs satellites |
+| `nodeWidth` / `nodeHeight` | Base size before weight scale |
+| `padding` / `groupLabelH` | Stage margins |
+| `spineScale` / `satelliteScale` / `coreProcessScale` | Hierarchy |
+| `staggerX` | Horizontal satellite stagger |
+| `ingressYBias` / `coreYBias` / `egressYBias` | Vertical asymmetry |
+
+Overview fit uses `fitOverviewPose` (nodes + groups + edge routes, no dive cluster min-floor). Width: how-it-works is near-full viewport; path story stays a readable column.
+
+### Node kind visual language
+
+| Kind | Default shape | Chrome |
+|------|---------------|--------|
+| `input` | stadium (chip) | Pill + left accent bar |
+| `process` | rounded (tablet) | Bezeled rounded rect |
+| `store` | cylinder | DB-style cylinder |
+| `decision` | diamond | Diamond |
+| `output` | ticket | Notch on trailing edge |
+| `other` | rounded | Plain tablet |
+
+Optional `skin` (`studio` \| `sound` \| `pii` \| `ada` \| `gstf`) or slug fallback sets subtle accent / edge tokens — cream contours on void, not rainbow. Overview also uses `data-weight` for spine vs satellite depth.
 
 ## Fetch integration
 
@@ -195,57 +248,51 @@ graph: docs/architecture.graph.json     # preferred site map (optional until shi
 
 Run `npm run validate:graphs` for live counts. Expected shape:
 
-| Project | Layout intent | Tour intent |
-|---------|---------------|-------------|
-| background-studio | lanes (inputs / exports) | Inputs → Store → Shader → Pass → Exports |
-| sound-visualiser | lanes (audio-in / modes) | Audio → Engine → State → Mode → Canvas |
-| pii-gateway | lanes (callers / gateway / batch) | Caller → Auth → Pipeline → Presidio → Artifacts |
-| ada | lanes (ingress / core / truth) | Chat → Orch → Tools → DB (+ memory) |
-| gstf | ranks (no groups) | Videos → Datasets → Phases → Checkpoint → Eval |
+| Project | Layout intent | Tour intent (path story) | Skin |
+|---------|---------------|--------------------------|------|
+| background-studio | columns (inputs / core / exports) | Inputs → Core → Pass → Exports (4) | studio |
+| sound-visualiser | columns (audio-in / hear / modes / out) | Audio → Hear → Route → Modes → Canvas (5) | sound |
+| pii-gateway | columns (callers / gateway / batch) | Callers → Gateway → Pipeline → Presidio → Artifacts (5) | pii |
+| ada | columns (ingress / core / truth) | Chat → Orch → Tools → DB → Memory (5) | ada |
+| gstf | ranks (no groups) | Videos → Datasets → Phases → Ckpt → Eval (5) | gstf |
+
+All curated fixtures use `journeyMode: "overview-story"`. Default page UX: fitted map + path captions; **Dive into architecture** is optional.
+
+### Project slug page chapters (first draft)
+
+`/projects/[slug]` is a short case study with a map — readable with motion mostly off:
+
+1. **Hero** — badge, title, full description, CTAs (demo / GitHub / docs / back). Soft enter OK; content scrolls away naturally (no exit theatre).
+2. **How it works** — path story (tour + captions) + full owned graph overview fitted once. Beat select only highlights the map.
+3. **Dive (optional)** — “Dive into architecture” dialog; not forced by page scroll.
+4. **Stack + details** — tags, status, links.
+
+Atmosphere stays ambient background only. Animation polish / showcase handoffs deferred.
 
 ## Rollout steps (next pass)
 
 1. Push `docs/architecture.graph.json` (+ optional `graph:`) into each curated repo; remove reliance on fixtures over time.
 2. ~~SVG/HTML renderer from `layoutArchitectureGraph` (static first).~~ → `ArchitectureGraphView` + `ProjectDiagram` (IR primary).
-3. ~~Scrub / GSAP tour driven by `tour` on the project slug page.~~ → **camera journey** (`ArchitectureJourney`): pin + scrub along edges; fan-in/out zoom; mobile stepped; reduced-motion static path.
+3. ~~Scrub / GSAP tour driven by `tour` on the project slug page.~~ → **overview + optional dive** (`ArchitectureJourney`): fitted map, path story beats, on-demand dive with light focus; reduced-motion keeps the same structure without entrance motion.
 4. Deprecate Mermaid render on the site once IR coverage is solid; keep `.mmd` for GitHub.
 
 ### Site render fallback
 
-1. **Owned IR** (`diagram.graph`) → `ArchitectureJourney` (layout SVG world + scroll camera) over a void-transparent stage.
-2. **Base** Input→Core→Output SVG when no IR.
+1. **Owned IR** (`diagram.graph`) → `ArchitectureJourney` (overview stage + path story + optional dive dialog).
+2. **Base** Input→Core→Output SVG when no IR (stepped captions, no pin quest).
 3. **Mermaid** only in the “View full architecture” overlay when no IR but `.mmd` was fetched — never the default scroll view.
 
-### Camera journey (desktop)
+### Overview vs dive
 
-Path journey, not map overview. Layout coordinates are the **world**; the viewport is a **camera** (`translate` + `scale` on `[data-journey-camera]`). Never transform the pinned section root.
+| Mode | Camera | Interaction |
+|------|--------|-------------|
+| **Overview** (default) | Fitted whole-graph pose | Click / select numbered path beats → spotlight nodes/edges |
+| **Dive** (optional) | Light per-stop zoom | Dialog: Prev/Next + keyboard; Exit dive / Escape |
 
-**Sequence:** hero exit → empty void spacer → stage fades in → opening **dive** → **hold** (read caption) → travel edge → **hold** → … → rest after unpin.
+- Animate the **camera / world children**, never a pinned section root.
+- Focus opacity + tour classes: **one** `applyStopFocus` owner per stop change.
+- Overview stage: void-friendly but not a full-viewport pin prison; prose + captions teach.
+- `prefers-reduced-motion`: instant final states; path story + map still usable.
+- Captions: `captions[]` on IR → path story + dive captions (`title`, `body`, optional `items` / `spotlightIds`).
 
-**Targets from layout + `tour` (+ captions):**
-
-- Node stop → focus pose = node center framed at ~56% viewport width (`poseForNode`).
-- Cluster stop (`captions[].items`) → wide pose over group / fan siblings, then travel into the next hub.
-- Consecutive stops → connecting solid edge (if any); stroke-draw + quiet packet along the path.
-- Edge id in `tour` → travel that edge; arrive focused on `to`.
-
-**Pin / scrub / snap** (`JOURNEY` in `architecture-journey.ts`):
-
-| Knob | Default | Role |
-|------|---------|------|
-| `pinVhBase` / `pinVhPerHop` | 0.72 / 0.36 | Pin distance scales with tour hops; clamped ~1.0–2.2 vh |
-| `scrub` | 0.75 | Soft scroll catch-up |
-| `beatDur` | 1 | Hold + travel units per stop (`ease: "none"`) |
-| `holdFrac` / `travelFrac` | 0.42 / 0.58 | Readable hold vs edge travel within a beat |
-| `diveFrac` | 0.38 | Opening void → first-stop dive |
-| `focusNodeFrac` | 0.56 | How large the active node reads in-frame |
-| `nodeDim` / `edgeDim` | 0.035 / 0.02 | Hard dim so one focus owns the screen |
-| `snapProgress` | per hold end | ScrollTrigger snap targets (directional, ~0.12–0.32s) |
-
-- Animate the **camera / world children**, never the pinned section root.
-- Focus opacity + tour classes: **one** `applyStopFocus` owner per stop change (no competing opacity timelines).
-- Journey stage: full-bleed, transparent (no panel chrome / group boxes / “How it works” header).
-- 2.5D cues: focus drop-shadow + brighter stroke; dimmed nodes blurred/faint; caption slight parallax.
-- Mobile / coarse: no pin; Prev/Next steps the camera to each stop.
-- `prefers-reduced-motion`: static full graph + step list (same captions); no pin/scrub.
-- Captions: `captions[]` on IR → progress `i / n`, title, body, optional `items`.
+<!-- Optional later: case-study fields in portfolio.yaml (problem / approach / outcome) can feed hero or coda without changing the graph IR. -->

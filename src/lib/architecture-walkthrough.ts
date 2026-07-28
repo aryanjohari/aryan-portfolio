@@ -40,7 +40,8 @@ export const GENERIC_PATH_STEPS: WalkthroughStep[] = [
 ];
 
 const MIN_STEPS = 3;
-const MAX_STEPS = 5;
+/** Align with IR TOUR_MAX — spine tours can run 6–8 stops. */
+const MAX_STEPS = 8;
 
 type StageCandidate = {
   id: string;
@@ -323,12 +324,15 @@ export function resolveTourStepsFromGraph(graph: ArchitectureGraph): Walkthrough
   );
   const captionsById = new Map((graph.captions ?? []).map((c) => [c.id, c]));
 
-  return graph.tour.map((stopId, i) => {
+  const tourSteps = graph.tour.map((stopId, i) => {
     const authored = captionsById.get(stopId);
     const node = nodeById.get(stopId);
 
     if (authored) {
-      const isCluster = Boolean(authored.items && authored.items.length >= 2);
+      const isCluster = Boolean(
+        (authored.items && authored.items.length >= 2) ||
+          (authored.spotlightIds && authored.spotlightIds.length >= 2),
+      );
       return {
         id: stopId,
         title: shortTitle(authored.title),
@@ -368,7 +372,6 @@ export function resolveTourStepsFromGraph(graph: ArchitectureGraph): Walkthrough
       };
     }
 
-    // Should not happen after validation — keep a readable stub.
     return {
       id: stopId,
       title: shortTitle(stopId),
@@ -377,6 +380,8 @@ export function resolveTourStepsFromGraph(graph: ArchitectureGraph): Walkthrough
       targetKind: "node" as const,
     };
   });
+
+  return tourSteps;
 }
 
 /**

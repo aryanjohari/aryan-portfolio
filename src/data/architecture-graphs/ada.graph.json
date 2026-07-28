@@ -3,6 +3,8 @@
   "title": "ADA",
   "summary": "Primary path: chat → orchestrator → allowlisted tools → SQLite. Cron publish and HUD read paths exist but are secondary on this map.",
   "notes": "Chose chat as the portfolio happy path. Cron ingest / graph-lite / daemon→workflow→S3 and HUD→DB are kept as dashed alternate edges so the map stays honest without touring every path.",
+  "journeyMode": "overview-story",
+  "skin": "ada",
   "groups": [
     { "id": "ingress", "label": "Operator surfaces" },
     { "id": "core", "label": "Agent core" },
@@ -13,60 +15,70 @@
       "id": "chat",
       "label": "ada chat (Entity / Agent / Plan)",
       "kind": "input",
-      "groupId": "ingress"
+      "groupId": "ingress",
+      "layout": { "weight": "spine", "scale": 1.08, "dx": -4 }
     },
     {
       "id": "cron",
       "label": "cron / systemd",
       "kind": "input",
-      "groupId": "ingress"
+      "groupId": "ingress",
+      "layout": { "weight": "satellite", "scale": 0.82, "dx": 10 }
     },
     {
       "id": "hud",
       "label": "ada hud (read-only)",
       "kind": "input",
-      "groupId": "ingress"
+      "groupId": "ingress",
+      "layout": { "weight": "satellite", "scale": 0.82, "dx": -6 }
     },
     {
       "id": "orch",
       "label": "Orchestrator (Gemini tools)",
       "kind": "process",
-      "groupId": "core"
+      "groupId": "core",
+      "layout": { "weight": "spine", "scale": 1.24 }
     },
     {
       "id": "tools",
       "label": "Tool executor (allowlist)",
       "kind": "process",
-      "groupId": "core"
+      "groupId": "core",
+      "layout": { "weight": "spine", "scale": 1.14 }
     },
     {
       "id": "daemon",
       "label": "ada daemon (goals + workflows)",
       "kind": "process",
-      "groupId": "core"
+      "groupId": "core",
+      "layout": { "weight": "satellite", "scale": 0.88, "dx": 16 }
     },
     {
       "id": "db",
       "label": "state.db (SQLite)",
       "kind": "store",
       "groupId": "truth",
-      "shape": "cylinder"
+      "shape": "cylinder",
+      "layout": { "weight": "spine", "scale": 1.12 }
     },
     {
       "id": "mem",
       "label": "memory/*.md",
       "kind": "store",
-      "groupId": "truth"
+      "groupId": "truth",
+      "layout": { "dy": 8 }
     },
     {
       "id": "workflow",
       "label": "Publish workflows → S3",
-      "kind": "process"
+      "kind": "process",
+      "layout": { "weight": "satellite", "scale": 0.84 }
     },
     {
       "id": "out",
       "label": "S3 page.json + manifest",
-      "kind": "output"
+      "kind": "output",
+      "layout": { "weight": "satellite", "scale": 0.84, "dy": 10 }
     }
   ],
   "edges": [
@@ -85,27 +97,32 @@
     {
       "id": "chat",
       "title": "Chat",
-      "body": "You talk to ADA through the chat surface."
+      "body": "You talk to ADA through the chat surface.",
+      "spotlightIds": ["chat"]
     },
     {
       "id": "orch",
       "title": "Orchestrator",
-      "body": "Gemini picks tools and plans the next step."
+      "body": "Gemini picks tools and plans the next step.",
+      "spotlightIds": ["orch"]
     },
     {
       "id": "tools",
       "title": "Tools",
-      "body": "Only allowlisted tools are allowed to run."
+      "body": "Only allowlisted tools are allowed to run.",
+      "spotlightIds": ["tools"]
     },
     {
       "id": "db",
       "title": "Local state",
-      "body": "Results land in a local SQLite database."
+      "body": "Results land in a local SQLite database.",
+      "spotlightIds": ["db"]
     },
     {
       "id": "mem",
       "title": "Memory files",
-      "body": "Longer notes live in plain markdown files."
+      "body": "Longer notes live in plain markdown files.",
+      "spotlightIds": ["mem"]
     }
   ]
 }

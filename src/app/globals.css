@@ -92,7 +92,8 @@ html[data-boot-cover-skip] #boot-cover {
 }
 
 .site-main--project {
-  max-width: min(100%, 1400px);
+  max-width: 100%;
+  width: 100%;
   overflow: visible;
 }
 
@@ -1347,7 +1348,7 @@ body:has(.workshop-page) .site-main {
   color: var(--color-muted);
 }
 
-/* Project exhibit layout — hero + rest share a rail; journey is full-bleed void */
+/* Project exhibit layout — hero → how it works → stack/details (normal scroll) */
 
 .project-exhibit {
   display: flex;
@@ -1356,31 +1357,30 @@ body:has(.workshop-page) .site-main {
   width: 100%;
   max-width: none;
   margin-inline: auto;
-  /* Pin-safe: never clip Act 3 ScrollTrigger pin */
   overflow: visible;
 }
 
 .project-exhibit-rail {
   width: 100%;
-  max-width: min(100%, 1100px);
-  margin-inline: auto;
+  max-width: none;
+  margin-inline: 0;
 }
 
-@media (min-width: 768px) {
-  .project-exhibit-rail {
-    max-width: min(70vw, 1100px);
-  }
+.project-exhibit-how {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  padding-block: var(--space-3) var(--space-4);
+  box-sizing: border-box;
+  overflow: visible;
 }
 
-/* Act 1 — asymmetric project homepage hero
-   Mobile stack: badge → title → actions → description
-   Desktop: title/badge/lede left, actions top-right */
+/* Act 1 — project homepage hero (scrolls away naturally; no exit theatre) */
 .project-exhibit-hero {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  /* First viewport minus site chrome + main padding */
-  min-height: calc(100dvh - 7.5rem);
+  min-height: min(52dvh, calc(100dvh - 8rem));
   justify-content: flex-start;
   padding-block: var(--space-3) var(--space-4);
   box-sizing: border-box;
@@ -1397,7 +1397,7 @@ body:has(.workshop-page) .site-main {
     column-gap: clamp(var(--space-3), 4vw, var(--space-4));
     row-gap: var(--space-2);
     align-content: start;
-    min-height: calc(100dvh - 6.5rem);
+    min-height: min(58dvh, calc(100dvh - 6.5rem));
     padding-block: clamp(var(--space-3), 4vh, var(--space-4)) var(--space-4);
     padding-top: clamp(2.5rem, 8vh, 5.5rem);
   }
@@ -1524,26 +1524,8 @@ body:has(.workshop-page) .site-main {
   display: block;
 }
 
-/* Void beat after hero clears — continuous transparent stage into the dive */
-.project-exhibit-void {
-  min-height: min(36vh, 300px);
-  pointer-events: none;
-}
-
 .project-exhibit-rest {
   padding-block: var(--space-4) calc(var(--space-4) * 1.5);
-}
-
-@media (min-width: 1024px) and (pointer: fine) {
-  .project-exhibit-void {
-    min-height: min(42vh, 360px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .project-exhibit-void {
-    display: none;
-  }
 }
 
 .project-exhibit-section-title {
@@ -1884,126 +1866,229 @@ body:has(.workshop-page) .site-main {
 }
 
 /* ==========================================================================
-   Owned IR camera journey — full-bleed void dive (Acts 2–3)
-   No panel chrome / “How it works” chapter; Atmosphere shows through.
+   Owned IR — overview + path story + optional dive
    ========================================================================== */
 
 .arch-journey-section {
   position: relative;
-  /* Bleed to site-main edges (Atmosphere still reads through transparent stage) */
-  width: calc(100% + 2 * var(--space-4));
+  width: 100%;
   max-width: none;
-  margin-left: calc(-1 * var(--space-4));
-  margin-right: calc(-1 * var(--space-4));
-  padding: 0;
+  margin: 0;
+  padding-block: var(--space-3) var(--space-4);
   overflow: visible;
   box-sizing: border-box;
 }
 
-.arch-journey-stage {
-  position: relative;
-  width: 100%;
-  min-height: min(78dvh, 680px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  box-sizing: border-box;
-  padding-inline: clamp(var(--space-1), 2.5vw, var(--space-3));
-  padding-block: var(--space-2);
-  /* No card / panel: Atmosphere is the only field */
-  background: transparent;
-  border: none;
-  box-shadow: none;
+.arch-overview-header {
+  margin-bottom: var(--space-3);
 }
 
-/* Avoid map flash before GSAP mounts the dive (stage fades in on scroll) */
-@media (prefers-reduced-motion: no-preference) {
-  .arch-journey-stage {
-    opacity: 0;
+.arch-overview-summary {
+  margin: 0 0 var(--space-2);
+  max-width: 52ch;
+  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  line-height: 1.65;
+  color: var(--color-text);
+}
+
+.arch-overview-source {
+  margin: 0 0 0.35rem;
+  max-width: 56ch;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+.arch-overview-layout {
+  display: grid;
+  gap: var(--space-3);
+  align-items: start;
+  width: 100%;
+  max-width: none;
+}
+
+@media (min-width: 1024px) {
+  .arch-overview-layout {
+    /* Story stays a readable column; graph takes the remaining viewport */
+    grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+    gap: clamp(var(--space-3), 2.5vw, var(--space-4));
   }
 }
 
-/* Quiet floating caption in the void — progress + title + body (+ cluster items) */
-.arch-journey-caption {
-  position: absolute;
-  z-index: 2;
-  top: clamp(0.75rem, 2.5vh, 1.5rem);
-  left: clamp(var(--space-2), 4vw, var(--space-4));
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  max-width: min(22rem, 72vw);
-  pointer-events: none;
-  /* Slight elevation vs world (depth cue) */
-  text-shadow: 0 1px 18px rgba(8, 8, 8, 0.55);
-  will-change: transform;
-}
-
-.arch-journey-index {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.6875rem;
-  letter-spacing: 0.1em;
-  color: var(--color-muted);
-  opacity: 0.9;
-}
-
-.arch-journey-label {
-  margin: 0;
-  font-size: clamp(1rem, 1.6vw, 1.25rem);
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: 0.01em;
-  color: rgba(242, 240, 235, 0.94);
-}
-
-.arch-journey-body {
-  margin: 0.1rem 0 0;
-  font-size: clamp(0.8125rem, 1.1vw, 0.9rem);
-  line-height: 1.45;
-  color: rgba(242, 240, 235, 0.62);
-  max-width: 36ch;
-}
-
-.arch-journey-items {
+.arch-path-story {
   list-style: none;
-  margin: 0.35rem 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.35rem;
 }
 
-.arch-journey-items li {
+.arch-path-beat {
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  gap: var(--space-2);
+  width: 100%;
+  margin: 0;
+  padding: 0.7rem 0.65rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.arch-path-beat:hover,
+.arch-path-beat:focus-visible {
+  border-color: rgba(242, 240, 235, 0.22);
+  outline: none;
+}
+
+.arch-path-beat.is-active,
+.arch-path-beat[aria-current="step"] {
+  border-color: rgba(242, 240, 235, 0.32);
+  background: rgba(242, 240, 235, 0.04);
+}
+
+.arch-path-beat-index {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+  padding-top: 0.15rem;
+}
+
+.arch-path-beat-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.arch-path-beat-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.arch-path-beat-body {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-muted);
+}
+
+.arch-path-beat-items {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.arch-path-beat-items li {
   position: relative;
   padding-left: 0.85rem;
-  font-size: clamp(0.75rem, 1vw, 0.8125rem);
+  font-size: 0.75rem;
   line-height: 1.4;
-  color: rgba(242, 240, 235, 0.55);
+  color: var(--color-muted);
 }
 
-.arch-journey-items li::before {
+.arch-path-beat-items li::before {
   content: "";
   position: absolute;
   left: 0;
   top: 0.55em;
   width: 0.35rem;
   height: 1px;
-  background: rgba(242, 240, 235, 0.4);
+  background: var(--color-border);
+}
+
+.arch-overview-actions {
+  margin-top: var(--space-3);
+}
+
+.arch-dive-open,
+.arch-dive-close {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.arch-dive-open:hover,
+.arch-dive-open:focus-visible,
+.arch-dive-close:hover,
+.arch-dive-close:focus-visible {
+  background-color: var(--color-accent-band);
+  border-color: rgba(242, 240, 235, 0.36);
+  outline: none;
+}
+
+.arch-overview-active {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin: var(--space-2) 0 0;
+}
+
+.arch-overview-active-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.arch-journey-stage {
+  position: relative;
+  width: 100%;
+  min-height: min(62dvh, 640px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .arch-journey-stage {
+    opacity: 0;
+  }
+}
+
+.arch-journey-index {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  color: rgba(242, 240, 235, 0.55);
+  opacity: 1;
 }
 
 .arch-journey-viewport {
   position: relative;
   width: 100%;
   flex: 1 1 auto;
-  min-height: min(58dvh, 520px);
-  height: min(68dvh, 600px);
+  min-height: min(48dvh, 440px);
+  height: min(58dvh, 560px);
   overflow: hidden;
   isolation: isolate;
   background: transparent;
   border: none;
   box-shadow: none;
   padding: 0;
-  will-change: auto;
 }
 
 .arch-journey-camera {
@@ -2042,39 +2127,65 @@ body:has(.workshop-page) .site-main {
   display: block;
 }
 
-/* Journey world: no lane/group map chrome — contours only */
-.arch-graph-svg.is-world-sized .arch-graph-group {
+/* Journey world: hide group chrome in dive; overview keeps lanes readable */
+.arch-dive-dialog .arch-graph-svg.is-world-sized .arch-graph-group {
   display: none;
 }
 
-.arch-graph-svg.is-world-sized .arch-graph-edge-label {
+.arch-dive-dialog .arch-graph-svg.is-world-sized .arch-graph-edge-label {
   opacity: 0;
 }
 
-.arch-journey-packet {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 7px;
-  height: 7px;
-  margin: -3.5px 0 0 -3.5px;
-  border-radius: 1px;
-  background: rgba(242, 240, 235, 0.92);
-  box-shadow: 0 0 0 1px rgba(242, 240, 235, 0.25);
-  opacity: 0;
+.arch-journey-section.is-overview-story .arch-graph-svg.is-world-sized .arch-graph-group {
+  display: block;
+}
+
+.arch-journey-section.is-overview-story .arch-graph-svg.is-world-sized .arch-graph-edge-label {
+  opacity: 0.55;
+}
+
+/* Under-plate: invisible until focus — sells the tablet lift */
+.arch-graph-node-plate {
+  fill: transparent;
+  stroke: none;
   pointer-events: none;
-  z-index: 2;
 }
 
-/* Mobile / coarse stepped controls */
-.arch-journey-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-  padding-top: var(--space-1);
+.arch-graph-node.is-tour-active .arch-graph-node-plate {
+  fill: rgba(242, 240, 235, 0.09);
+  stroke: rgba(242, 240, 235, 0.12);
+  stroke-width: 1;
+}
+
+.arch-graph-node.is-tour-dim .arch-graph-node-plate {
+  fill: transparent;
+  stroke: none;
+}
+
+.arch-graph-node.is-tour-revealed.is-tour-cluster .arch-graph-node-plate {
+  fill: rgba(242, 240, 235, 0.03);
+}
+
+.arch-journey-nav {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.arch-journey-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.arch-journey-nav:hover:not(:disabled),
+.arch-journey-nav:focus-visible {
+  color: var(--color-text);
+  outline: none;
 }
 
 .arch-journey-dots {
@@ -2105,143 +2216,73 @@ body:has(.workshop-page) .site-main {
   box-shadow: 0 0 0 1px rgba(242, 240, 235, 0.55);
 }
 
-.arch-journey-switcher {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.arch-journey-nav {
-  display: inline-block;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid transparent;
-  font-size: 0.75rem;
-  line-height: 1.4;
-  color: var(--color-muted);
-  background: transparent;
-  cursor: pointer;
-}
-
-.arch-journey-nav:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.arch-journey-nav:hover:not(:disabled),
-.arch-journey-nav:focus-visible {
+/* Optional dive takeover */
+.arch-dive-dialog {
+  width: min(96vw, 1100px);
+  max-width: 1100px;
+  height: min(92dvh, 820px);
+  max-height: 92dvh;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg) 92%, #000);
   color: var(--color-text);
-  outline: none;
+  box-sizing: border-box;
 }
 
-.arch-journey-escape {
-  position: absolute;
-  z-index: 2;
-  bottom: clamp(0.5rem, 2vh, 1.25rem);
-  right: clamp(var(--space-2), 4vw, var(--space-4));
-  padding: var(--space-1) 0;
-  border: none;
-  background: transparent;
-  font-size: 0.6875rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgba(242, 240, 235, 0.45);
-  cursor: pointer;
+.arch-dive-dialog::backdrop {
+  background: rgba(8, 8, 8, 0.72);
 }
 
-.arch-journey-escape:hover,
-.arch-journey-escape:focus-visible {
-  color: rgba(242, 240, 235, 0.85);
-  outline: none;
-}
-
-@media (min-width: 1024px) and (pointer: fine) {
-  .arch-journey-stage {
-    min-height: calc(100dvh - 4rem);
-    padding-block: 0;
-    padding-inline: 0;
-  }
-
-  .arch-journey-viewport {
-    height: calc(100dvh - 4.5rem);
-    min-height: 480px;
-  }
-
-  .arch-journey-controls {
-    display: none;
-  }
-
-  .arch-journey-caption {
-    left: clamp(var(--space-3), 5vw, calc(var(--space-4) * 1.5));
-  }
-
-  .arch-journey-escape {
-    right: clamp(var(--space-3), 5vw, calc(var(--space-4) * 1.5));
-  }
-}
-
-/* Reduced-motion / a11y path list + static map */
-.arch-journey-list {
-  list-style: none;
-  margin: 0 auto;
-  padding: var(--space-3) clamp(var(--space-2), 4vw, var(--space-4));
-  max-width: min(100%, 1100px);
-  display: none;
-  flex-direction: column;
-  gap: 0;
-}
-
-.arch-journey-list li {
-  display: grid;
-  grid-template-columns: 2.5rem 1fr;
-  gap: var(--space-2);
-  padding: var(--space-2) 0;
-  border-top: 1px solid var(--color-border);
-}
-
-.arch-journey-list li:last-child {
+.arch-dive-chrome {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3);
   border-bottom: 1px solid var(--color-border);
 }
 
-.arch-journey-list-index {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+.arch-dive-kicker {
+  margin: 0 0 0.35rem;
   font-size: 0.6875rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--color-muted);
-  padding-top: 0.2rem;
 }
 
-.arch-journey-list-title {
+.arch-dive-caption-title {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: 1.1rem;
   font-weight: 600;
+  line-height: 1.25;
 }
 
-.arch-journey-list-body {
-  margin: 0.15rem 0 0;
+.arch-dive-caption-body {
+  margin: 0.35rem 0 0;
+  max-width: 48ch;
   font-size: 0.875rem;
-  color: var(--color-muted);
   line-height: 1.5;
+  color: var(--color-muted);
 }
 
-.arch-journey-list-items {
+.arch-dive-caption-items {
   list-style: none;
-  margin: 0.4rem 0 0;
+  margin: 0.45rem 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.15rem;
 }
 
-.arch-journey-list-items li {
+.arch-dive-caption-items li {
   position: relative;
-  padding: 0 0 0 0.85rem;
-  border: none;
-  display: block;
-  font-size: 0.8125rem;
+  padding-left: 0.85rem;
+  font-size: 0.75rem;
   color: var(--color-muted);
-  line-height: 1.4;
 }
 
-.arch-journey-list-items li::before {
+.arch-dive-caption-items li::before {
   content: "";
   position: absolute;
   left: 0;
@@ -2251,54 +2292,158 @@ body:has(.workshop-page) .site-main {
   background: var(--color-border);
 }
 
-.arch-journey-static {
-  display: none;
-  margin: 0 auto;
-  padding: var(--space-3) clamp(var(--space-2), 4vw, var(--space-4));
-  max-width: min(100%, 1100px);
+.arch-dive-viewport {
+  position: relative;
+  width: 100%;
+  height: min(58dvh, 520px);
+  overflow: hidden;
+  isolation: isolate;
 }
 
-.arch-journey-static-note {
-  margin: 0 0 var(--space-2);
+/* Large kind-matching focus card — dive reads as a card, not zoom chaos */
+.arch-dive-focus-card {
+  position: absolute;
+  z-index: 2;
+  left: var(--space-3);
+  top: var(--space-3);
+  max-width: min(22rem, 46%);
+  padding: 1rem 1.15rem 1.05rem;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--color-bg) 88%, #000);
+  border: 1px solid rgba(242, 240, 235, 0.28);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.arch-dive-focus-card--input {
+  border-radius: 999px 12px 12px 999px;
+  border-left-width: 3px;
+  border-left-color: var(--arch-accent, rgba(242, 240, 235, 0.55));
+}
+
+.arch-dive-focus-card--process {
+  border-radius: 10px;
+  box-shadow:
+    inset 0 0 0 1px rgba(242, 240, 235, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.arch-dive-focus-card--store {
+  border-radius: 4px 4px 14px 14px;
+  border-top-width: 2px;
+}
+
+.arch-dive-focus-card--decision {
+  border-radius: 4px;
+  clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+}
+
+.arch-dive-focus-card--output {
+  border-radius: 8px 0 0 8px;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
+}
+
+.arch-dive-focus-card--other {
+  border-radius: 8px;
+}
+
+.arch-dive-focus-kind {
+  display: block;
+  margin: 0 0 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--arch-accent, rgba(242, 240, 235, 0.55));
+}
+
+.arch-dive-focus-title {
+  margin: 0;
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  font-weight: 650;
+  line-height: 1.25;
+  color: rgba(252, 250, 245, 0.96);
+}
+
+.arch-dive-focus-items {
+  list-style: none;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.arch-dive-focus-items li {
+  position: relative;
+  padding-left: 0.85rem;
   font-size: 0.75rem;
+  line-height: 1.4;
   color: var(--color-muted);
-  max-width: 52ch;
-  line-height: 1.5;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .arch-journey-caption,
-  .arch-journey-controls,
-  .arch-journey-escape {
-    display: none;
-  }
+.arch-dive-focus-items li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 0.35rem;
+  height: 1px;
+  background: var(--color-border);
+}
 
-  .arch-journey-stage {
-    min-height: 0;
-    padding: 0;
-  }
+.arch-dive-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
 
-  .arch-journey-viewport {
-    display: none;
-  }
-
-  .arch-journey-list {
-    display: flex;
-  }
-
-  .arch-journey-static {
-    display: block;
-  }
+.arch-dive-nav {
+  display: flex;
+  gap: var(--space-2);
 }
 
 @media (max-width: 1023px) {
+  .arch-overview-layout {
+    grid-template-columns: 1fr;
+  }
+
   .arch-journey-stage {
-    min-height: min(62dvh, 520px);
+    min-height: min(48dvh, 420px);
+    width: 100%;
   }
 
   .arch-journey-viewport {
-    height: min(48dvh, 380px);
-    min-height: 240px;
+    height: min(44dvh, 380px);
+    min-height: 260px;
+    width: 100%;
+  }
+
+  .arch-dive-dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: none;
+  }
+
+  .arch-dive-viewport {
+    height: min(52dvh, 420px);
+  }
+
+  .arch-dive-focus-card {
+    max-width: min(18rem, 72%);
+    left: var(--space-2);
+    top: var(--space-2);
+    padding: 0.75rem 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arch-journey-stage {
+    opacity: 1 !important;
   }
 }
 
@@ -2388,18 +2533,68 @@ body:has(.workshop-page) .site-main {
 }
 
 .arch-graph-group-box {
-  fill: rgba(242, 240, 235, 0.02);
-  stroke: rgba(242, 240, 235, 0.1);
+  fill: rgba(242, 240, 235, 0.01);
+  stroke: rgba(242, 240, 235, 0.09);
   stroke-width: 1;
+  stroke-dasharray: 2 7;
 }
 
 .arch-graph-group-label {
   fill: var(--color-muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
-  letter-spacing: 0.06em;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  opacity: 0.75;
+  opacity: 0.62;
+}
+
+/* ── Skin tokens (subtle cream/void accents — not rainbow) ── */
+[data-arch-skin="studio"],
+[data-arch-skin="studio"] .arch-graph-svg {
+  --arch-accent: rgba(236, 220, 190, 0.62);
+  --arch-node-fill: rgba(242, 236, 220, 0.045);
+  --arch-node-stroke: rgba(236, 220, 190, 0.42);
+  --arch-edge: rgba(236, 220, 190, 0.2);
+}
+
+[data-arch-skin="sound"],
+[data-arch-skin="sound"] .arch-graph-svg {
+  --arch-accent: rgba(210, 228, 236, 0.55);
+  --arch-node-fill: rgba(220, 232, 240, 0.04);
+  --arch-node-stroke: rgba(210, 228, 236, 0.4);
+  --arch-edge: rgba(210, 228, 236, 0.18);
+}
+
+[data-arch-skin="pii"],
+[data-arch-skin="pii"] .arch-graph-svg {
+  --arch-accent: rgba(230, 226, 214, 0.58);
+  --arch-node-fill: rgba(242, 240, 235, 0.035);
+  --arch-node-stroke: rgba(230, 226, 214, 0.48);
+  --arch-edge: rgba(230, 226, 214, 0.2);
+}
+
+[data-arch-skin="ada"],
+[data-arch-skin="ada"] .arch-graph-svg {
+  --arch-accent: rgba(220, 214, 200, 0.5);
+  --arch-node-fill: rgba(242, 240, 235, 0.03);
+  --arch-node-stroke: rgba(220, 214, 200, 0.38);
+  --arch-edge: rgba(220, 214, 200, 0.16);
+}
+
+[data-arch-skin="gstf"],
+[data-arch-skin="gstf"] .arch-graph-svg {
+  --arch-accent: rgba(228, 222, 208, 0.52);
+  --arch-node-fill: rgba(242, 240, 235, 0.038);
+  --arch-node-stroke: rgba(228, 222, 208, 0.4);
+  --arch-edge: rgba(228, 222, 208, 0.17);
+}
+
+[data-arch-skin="default"],
+.arch-graph-svg {
+  --arch-accent: rgba(242, 240, 235, 0.5);
+  --arch-node-fill: rgba(242, 240, 235, 0.03);
+  --arch-node-stroke: rgba(242, 240, 235, 0.38);
+  --arch-edge: rgba(242, 240, 235, 0.18);
 }
 
 /* Near-empty node bodies — cream contour over the void */
@@ -2407,29 +2602,86 @@ body:has(.workshop-page) .site-main {
 .arch-graph-node-shape rect,
 .arch-graph-node-shape ellipse,
 .arch-graph-node-shape path {
-  fill: rgba(242, 240, 235, 0.035);
-  stroke: rgba(242, 240, 235, 0.48);
-  stroke-width: 1.25;
+  fill: var(--arch-node-fill, rgba(242, 240, 235, 0.03));
+  stroke: var(--arch-node-stroke, rgba(242, 240, 235, 0.38));
+  stroke-width: 1.15;
 }
 
 .arch-graph-node-shape line {
   fill: none;
-  stroke: rgba(242, 240, 235, 0.48);
-  stroke-width: 1.25;
+  stroke: var(--arch-node-stroke, rgba(242, 240, 235, 0.38));
+  stroke-width: 1.1;
 }
 
+/* Tablet bezel (process) — inner contour */
+.arch-graph-tablet-bezel {
+  fill: none !important;
+  stroke: rgba(242, 240, 235, 0.14) !important;
+  stroke-width: 1 !important;
+  pointer-events: none;
+}
+
+/* Chip accent bar (input) */
+.arch-graph-chip-accent {
+  fill: var(--arch-accent, rgba(242, 240, 235, 0.45)) !important;
+  stroke: none !important;
+  pointer-events: none;
+}
+
+/* Cylinder cap / rim */
+.arch-graph-cylinder-cap {
+  fill: rgba(242, 240, 235, 0.06) !important;
+  stroke: var(--arch-node-stroke, rgba(242, 240, 235, 0.45)) !important;
+}
+
+.arch-graph-cylinder-rim {
+  fill: none !important;
+  stroke: var(--arch-node-stroke, rgba(242, 240, 235, 0.35)) !important;
+}
+
+/* Kind marks */
+.arch-graph-kind-mark,
+.arch-graph-kind-mark path,
+.arch-graph-kind-mark line,
+.arch-graph-kind-mark rect,
+.arch-graph-kind-mark circle {
+  fill: none;
+  stroke: var(--arch-accent, rgba(242, 240, 235, 0.45));
+  stroke-width: 1;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.arch-graph-kind-mark path {
+  fill: var(--arch-accent, rgba(242, 240, 235, 0.35));
+  stroke: none;
+}
+
+.arch-graph-kind-mark--process rect {
+  fill: none;
+  stroke: var(--arch-accent, rgba(242, 240, 235, 0.45));
+}
+
+.arch-graph-kind-mark--decision {
+  fill: rgba(242, 240, 235, 0.12);
+  stroke: var(--arch-accent, rgba(242, 240, 235, 0.5));
+}
+
+/* Kind stroke weight / fill cues */
 .arch-graph-node-shape--input,
 .arch-graph-node-shape--input rect,
-.arch-graph-node-shape--input ellipse,
 .arch-graph-node-shape--input path {
-  stroke: rgba(242, 240, 235, 0.4);
+  stroke: rgba(242, 240, 235, 0.3);
+  stroke-width: 1;
+  fill: rgba(242, 240, 235, 0.02);
 }
 
 .arch-graph-node-shape--process,
 .arch-graph-node-shape--process rect,
-.arch-graph-node-shape--process ellipse,
 .arch-graph-node-shape--process path {
-  stroke: rgba(242, 240, 235, 0.58);
+  stroke: rgba(242, 240, 235, 0.52);
+  stroke-width: 1.3;
+  fill: rgba(242, 240, 235, 0.045);
 }
 
 .arch-graph-node-shape--store,
@@ -2437,20 +2689,60 @@ body:has(.workshop-page) .site-main {
 .arch-graph-node-shape--store ellipse,
 .arch-graph-node-shape--store path {
   fill: rgba(242, 240, 235, 0.05);
-  stroke: rgba(242, 240, 235, 0.5);
+  stroke: rgba(242, 240, 235, 0.48);
+  stroke-width: 1.2;
 }
 
 .arch-graph-node-shape--output,
-.arch-graph-node-shape--output rect,
-.arch-graph-node-shape--output ellipse,
 .arch-graph-node-shape--output path {
-  stroke: rgba(242, 240, 235, 0.68);
+  stroke: rgba(242, 240, 235, 0.5);
+  stroke-width: 1.2;
+  fill: rgba(242, 240, 235, 0.035);
 }
 
 .arch-graph-node-shape--decision,
 .arch-graph-node-shape--decision path {
   fill: rgba(242, 240, 235, 0.04);
   stroke: rgba(242, 240, 235, 0.55);
+  stroke-width: 1.25;
+}
+
+/* Overview depth: spine stronger, satellites quieter — before any beat */
+.arch-graph-node--weight-spine .arch-graph-node-shape,
+.arch-graph-node--weight-spine .arch-graph-node-shape rect,
+.arch-graph-node--weight-spine .arch-graph-node-shape ellipse,
+.arch-graph-node--weight-spine .arch-graph-node-shape path {
+  stroke-width: 1.4;
+  fill: rgba(242, 240, 235, 0.055);
+}
+
+.arch-graph-node--weight-spine .arch-graph-label {
+  font-size: 11.5px;
+  font-weight: 560;
+  opacity: 0.95;
+}
+
+.arch-graph-node--weight-satellite .arch-graph-label {
+  font-size: 10px;
+  opacity: 0.72;
+  letter-spacing: 0.01em;
+}
+
+.arch-graph-node--weight-satellite .arch-graph-kind-mark {
+  opacity: 0.45;
+}
+
+.arch-graph-node--weight-satellite .arch-graph-node-shape,
+.arch-graph-node--weight-satellite .arch-graph-node-shape rect,
+.arch-graph-node--weight-satellite .arch-graph-node-shape ellipse,
+.arch-graph-node--weight-satellite .arch-graph-node-shape path {
+  stroke: rgba(242, 240, 235, 0.28);
+  fill: rgba(242, 240, 235, 0.018);
+}
+
+.arch-graph-node--weight-normal .arch-graph-label {
+  font-size: 10.75px;
+  opacity: 0.86;
 }
 
 /* 2.5D focus: active node elevates; dimmed nodes fall away */
@@ -2461,56 +2753,152 @@ body:has(.workshop-page) .site-main {
 }
 
 .arch-graph-node.is-tour-active {
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55))
-    drop-shadow(0 2px 0 rgba(242, 240, 235, 0.08));
+  transform: scale(1.12) translateY(-2px);
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.62))
+    drop-shadow(0 0 14px color-mix(in srgb, var(--arch-accent, rgba(242, 240, 235, 0.5)) 40%, transparent))
+    drop-shadow(0 2px 0 rgba(242, 240, 235, 0.1));
 }
 
 .arch-graph-node.is-tour-active .arch-graph-node-shape,
 .arch-graph-node.is-tour-active .arch-graph-node-shape rect,
 .arch-graph-node.is-tour-active .arch-graph-node-shape ellipse,
 .arch-graph-node.is-tour-active .arch-graph-node-shape path {
-  stroke: rgba(242, 240, 235, 0.95);
-  stroke-width: 1.7;
-  fill: rgba(242, 240, 235, 0.09);
+  stroke: rgba(242, 240, 235, 0.96);
+  stroke-width: 1.85;
+  fill: rgba(242, 240, 235, 0.14);
 }
 
-.arch-graph-node.is-tour-active .arch-graph-node-shape line {
-  stroke: rgba(242, 240, 235, 0.95);
+.arch-graph-node.is-tour-active .arch-graph-node-shape line,
+.arch-graph-node.is-tour-active .arch-graph-chip-accent {
+  stroke: rgba(242, 240, 235, 0.96);
+}
+
+.arch-graph-node.is-tour-active .arch-graph-chip-accent {
+  fill: rgba(242, 240, 235, 0.75) !important;
+}
+
+.arch-graph-node.is-tour-active .arch-graph-kind-mark,
+.arch-graph-node.is-tour-active .arch-graph-kind-mark path,
+.arch-graph-node.is-tour-active .arch-graph-kind-mark line,
+.arch-graph-node.is-tour-active .arch-graph-kind-mark rect {
+  opacity: 1;
+  stroke: rgba(252, 250, 245, 0.85);
 }
 
 .arch-graph-node.is-tour-active .arch-graph-label {
   opacity: 1;
-  font-weight: 600;
+  font-weight: 650;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+  color: rgba(252, 250, 245, 0.98);
 }
 
 /* Cluster siblings: readable but secondary to the hub */
 .arch-graph-node.is-tour-revealed.is-tour-cluster {
-  filter: none;
+  transform: scale(1.04);
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.4));
 }
 
 .arch-graph-node.is-tour-revealed .arch-graph-label {
-  opacity: 0.7;
+  opacity: 0.82;
+  font-size: 11px;
+}
+
+.arch-graph-node.is-tour-revealed .arch-graph-node-shape,
+.arch-graph-node.is-tour-revealed .arch-graph-node-shape rect,
+.arch-graph-node.is-tour-revealed .arch-graph-node-shape ellipse,
+.arch-graph-node.is-tour-revealed .arch-graph-node-shape path {
+  stroke: rgba(242, 240, 235, 0.48);
+  fill: rgba(242, 240, 235, 0.06);
 }
 
 .arch-graph-node.is-tour-dim {
-  filter: blur(0.55px);
+  filter: blur(0.85px) saturate(0.3);
 }
 
 .arch-graph-node.is-tour-dim .arch-graph-label {
-  opacity: 0.2;
+  opacity: 0.1;
 }
 
 .arch-graph-node.is-tour-dim .arch-graph-node-shape,
 .arch-graph-node.is-tour-dim .arch-graph-node-shape rect,
 .arch-graph-node.is-tour-dim .arch-graph-node-shape ellipse,
 .arch-graph-node.is-tour-dim .arch-graph-node-shape path {
+  stroke: rgba(242, 240, 235, 0.08);
+  fill: rgba(242, 240, 235, 0.008);
+}
+
+.arch-graph-node.is-tour-dim .arch-graph-kind-mark {
+  opacity: 0.15;
+}
+
+/* Overview-story: keep the whole map calm; highlight without camera drama */
+.arch-journey-section.is-overview-story .arch-graph-node.is-tour-active {
+  transform: scale(1.05) translateY(-1px);
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 0 10px color-mix(in srgb, var(--arch-accent, rgba(242, 240, 235, 0.5)) 28%, transparent));
+  opacity: 1;
+}
+
+.arch-journey-section.is-overview-story .arch-graph-node.is-tour-dim {
+  filter: none;
+}
+
+.arch-journey-section.is-overview-story .arch-graph-node.is-tour-dim .arch-graph-label {
+  opacity: 0.4;
+}
+
+.arch-journey-section.is-overview-story .arch-graph-node.is-tour-dim .arch-graph-kind-mark {
+  opacity: 0.3;
+}
+
+.arch-journey-section.is-overview-story .arch-graph-node.is-tour-dim .arch-graph-node-shape,
+.arch-journey-section.is-overview-story .arch-graph-node.is-tour-dim .arch-graph-node-shape rect,
+.arch-journey-section.is-overview-story .arch-graph-node.is-tour-dim .arch-graph-node-shape ellipse,
+.arch-journey-section.is-overview-story .arch-graph-node.is-tour-dim .arch-graph-node-shape path {
+  stroke: rgba(242, 240, 235, 0.18);
+  fill: rgba(242, 240, 235, 0.02);
+}
+
+.arch-journey-section.is-overview-story .arch-graph-node.is-tour-revealed {
+  filter: none;
+  opacity: 1;
+}
+
+.arch-journey-section.is-overview-story .arch-graph-edge.is-tour-active .arch-graph-edge-path {
+  stroke-width: 1.65;
+}
+
+.arch-journey-section.is-overview-story .arch-journey-packet {
+  display: none;
+}
+
+/* Dive: active node reads as a lifted card matching its kind */
+.arch-dive-dialog .arch-graph-node.is-tour-active {
+  transform: scale(1.22) translateY(-4px);
+  filter: drop-shadow(0 22px 36px rgba(0, 0, 0, 0.7))
+    drop-shadow(0 0 20px color-mix(in srgb, var(--arch-accent, rgba(242, 240, 235, 0.5)) 35%, transparent));
+  opacity: 1;
+}
+
+.arch-dive-dialog .arch-graph-node.is-tour-active .arch-graph-label {
+  font-size: 13px;
+}
+
+.arch-dive-dialog .arch-graph-node.is-tour-active .arch-graph-node-plate {
+  fill: rgba(242, 240, 235, 0.11);
   stroke: rgba(242, 240, 235, 0.16);
-  fill: rgba(242, 240, 235, 0.015);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .arch-graph-node.is-tour-dim {
     filter: none;
+  }
+
+  .arch-graph-node.is-tour-active,
+  .arch-graph-node.is-tour-revealed.is-tour-cluster,
+  .arch-dive-dialog .arch-graph-node.is-tour-active {
+    transform: none;
   }
 }
 
@@ -2526,12 +2914,12 @@ body:has(.workshop-page) .site-main {
   height: 100%;
   width: 100%;
   margin: 0;
-  padding: 0;
+  padding: 0 1px;
   box-sizing: border-box;
   color: var(--color-text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
-  line-height: 1.25;
+  line-height: 1.2;
   text-align: center;
   overflow: hidden;
   word-break: break-word;
@@ -2539,21 +2927,22 @@ body:has(.workshop-page) .site-main {
 }
 
 .arch-graph-edge-path {
-  stroke: rgba(242, 240, 235, 0.42);
-  stroke-width: 1.5;
-  stroke-linecap: square;
-  stroke-linejoin: miter;
+  stroke: var(--arch-edge, rgba(242, 240, 235, 0.16));
+  stroke-width: 0.95;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   transition: none;
 }
 
 .arch-graph-edge.is-dashed .arch-graph-edge-path {
   stroke-dasharray: 5 4;
-  stroke: rgba(242, 240, 235, 0.28);
+  stroke: rgba(242, 240, 235, 0.14);
 }
 
 .arch-graph-edge.is-tour-active .arch-graph-edge-path {
-  stroke: rgba(242, 240, 235, 0.88);
-  stroke-width: 1.85;
+  stroke: rgba(242, 240, 235, 0.94);
+  stroke-width: 2.35;
+  filter: drop-shadow(0 0 8px rgba(242, 240, 235, 0.28));
 }
 
 .arch-graph-edge-label {
@@ -2563,7 +2952,11 @@ body:has(.workshop-page) .site-main {
 }
 
 .arch-graph-arrow {
-  fill: rgba(242, 240, 235, 0.55);
+  fill: rgba(242, 240, 235, 0.35);
+}
+
+.arch-graph-edge.is-tour-active .arch-graph-arrow {
+  fill: rgba(242, 240, 235, 0.9);
 }
 
 .arch-graph-svg.is-static-full .arch-graph-node,

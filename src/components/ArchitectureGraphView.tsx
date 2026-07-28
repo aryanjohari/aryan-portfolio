@@ -2,16 +2,22 @@
 
 import { useId, useMemo } from "react";
 
-import type { ArchitectureGraph } from "@/lib/architecture-graph";
+import type {
+  ArchitectureGraph,
+  ArchitectureGraphSkin,
+  GraphNodeKind,
+  GraphNodeShape,
+} from "@/lib/architecture-graph";
+import {
+  defaultShapeForKind,
+  resolveArchitectureSkin,
+} from "@/lib/architecture-graph";
 import { JOURNEY_LAYOUT } from "@/lib/architecture-journey";
 import {
   layoutArchitectureGraph,
   type GraphLayoutNode,
   type GraphLayoutResult,
 } from "@/lib/architecture-graph-layout";
-
-const NODE_W = JOURNEY_LAYOUT.nodeWidth;
-const NODE_H = JOURNEY_LAYOUT.nodeHeight;
 
 const LAYOUT_OPTS = JOURNEY_LAYOUT;
 
@@ -30,6 +36,10 @@ export type ArchitectureGraphViewProps = {
   worldSized?: boolean;
   /** Optional precomputed layout (must match LAYOUT_OPTS). */
   layout?: GraphLayoutResult;
+  /** Project slug — resolves skin when graph.skin is omitted. */
+  slug?: string;
+  /** Override resolved skin. */
+  skin?: ArchitectureGraphSkin;
 };
 
 function pointsToPath(points: { x: number; y: number }[]): string {
@@ -38,61 +48,213 @@ function pointsToPath(points: { x: number; y: number }[]): string {
     const [a, b, c] = points;
     return `M ${a.x} ${a.y} Q ${b.x} ${b.y} ${c.x} ${c.y}`;
   }
+  // Orthogonal elbows (4 pts): soft rounded corners along the spine
+  if (points.length === 4) {
+    const [a, b, c, d] = points;
+    const dx1 = b.x - a.x;
+    const dy1 = b.y - a.y;
+    const dx2 = c.x - b.x;
+    const dy2 = c.y - b.y;
+    const dx3 = d.x - c.x;
+    const dy3 = d.y - c.y;
+    const len1 = Math.hypot(dx1, dy1);
+    const len2 = Math.hypot(dx2, dy2);
+    const len3 = Math.hypot(dx3, dy3);
+    const r = Math.min(16, len1 * 0.4, len2 * 0.4, len3 * 0.4);
+    if (r < 4) {
+      return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+    }
+    const u1x = dx1 / (len1 || 1);
+    const u1y = dy1 / (len1 || 1);
+    const u2x = dx2 / (len2 || 1);
+    const u2y = dy2 / (len2 || 1);
+    const u3x = dx3 / (len3 || 1);
+    const u3y = dy3 / (len3 || 1);
+    return [
+      `M ${a.x} ${a.y}`,
+      `L ${b.x - u1x * r} ${b.y - u1y * r}`,
+      `Q ${b.x} ${b.y} ${b.x + u2x * r} ${b.y + u2y * r}`,
+      `L ${c.x - u2x * r} ${c.y - u2y * r}`,
+      `Q ${c.x} ${c.y} ${c.x + u3x * r} ${c.y + u3y * r}`,
+      `L ${d.x} ${d.y}`,
+    ].join(" ");
+  }
   return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
 }
 
-function NodeShape({ node }: { node: GraphLayoutNode }) {
-  const shape = node.shape ?? (node.kind === "decision" ? "diamond" : "rounded");
-  const kind = node.kind ?? "other";
-  const { x, y } = node;
-  const cx = x + NODE_W / 2;
-  const cy = y + NODE_H / 2;
-  const className = `arch-graph-node-shape arch-graph-node-shape--${kind} arch-graph-node-shape--${shape}`;
+function resolveShape(node: GraphLayoutNode): GraphNodeShape {
+  return node.shape ?? defaultShapeForKind(node.kind);
+}
 
-  if (shape === "diamond") {
+/** Tiny kind mark — reads at overview scale without competing with the label. */
+function KindMark({
+  kind,
+  cx,
+  cy,
+}: {
+  kind: GraphNodeKind | undefined;
+  cx: number;
+  cy: number;
+}) {
+  const k = kind ?? "other";
+  const className = `arch-graph-kind-mark arch-graph-kind-mark--${k}`;
+
+  if (k === "input") {
+    return (
+      <g className={className} aria-hidden="true">
+        <path d={`M ${cx - 4} ${cy} L ${cx} ${cy - 3.5} L ${cx} ${cy + 3.5} Z`} />
+        <line x1={cx} y1={cy} x2={cx + 5} y2={cy} />
+      </g>
+    );
+  }
+  if (k === "output") {
+    return (
+      <g className={className} aria-hidden="true">
+        <line x1={cx - 5} y1={cy} x2={cx} y2={cy} />
+        <path d={`M ${cx} ${cy - 3.5} L ${cx + 4} ${cy} L ${cx} ${cy + 3.5} Z`} />
+      </g>
+    );
+  }
+  if (k === "store") {
+    return (
+      <g className={className} aria-hidden="true">
+        <line x1={cx - 4} y1={cy - 3} x2={cx + 4} y2={cy - 3} />
+        <line x1={cx - 4} y1={cy} x2={cx + 4} y2={cy} />
+        <line x1={cx - 4} y1={cy + 3} x2={cx + 4} y2={cy + 3} />
+      </g>
+    );
+  }
+  if (k === "decision") {
     return (
       <path
         className={className}
-        d={`M ${cx} ${y} L ${x + NODE_W} ${cy} L ${cx} ${y + NODE_H} L ${x} ${cy} Z`}
+        aria-hidden="true"
+        d={`M ${cx} ${cy - 4} L ${cx + 4} ${cy} L ${cx} ${cy + 4} L ${cx - 4} ${cy} Z`}
+      />
+    );
+  }
+  if (k === "process") {
+    return (
+      <g className={className} aria-hidden="true">
+        <rect x={cx - 3.5} y={cy - 3.5} width={7} height={7} rx={1} />
+      </g>
+    );
+  }
+  return (
+    <circle className={className} aria-hidden="true" cx={cx} cy={cy} r={2.5} />
+  );
+}
+
+function NodeShape({
+  node,
+  shape,
+}: {
+  node: GraphLayoutNode;
+  shape: GraphNodeShape;
+}) {
+  const kind = node.kind ?? "other";
+  const { x, y, width: w, height: h } = node;
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const className = `arch-graph-node-shape arch-graph-node-shape--${kind} arch-graph-node-shape--${shape}`;
+
+  if (shape === "diamond") {
+    const inset = 2;
+    return (
+      <path
+        className={className}
+        d={`M ${cx} ${y + inset} L ${x + w - inset} ${cy} L ${cx} ${y + h - inset} L ${x + inset} ${cy} Z`}
       />
     );
   }
 
   if (shape === "cylinder") {
-    const ry = 8;
+    const ry = Math.max(7, Math.round(h * 0.16));
     return (
       <g className={className}>
-        <ellipse cx={cx} cy={y + ry} rx={NODE_W / 2} ry={ry} />
-        <rect x={x} y={y + ry} width={NODE_W} height={NODE_H - ry * 2} />
-        <ellipse cx={cx} cy={y + NODE_H - ry} rx={NODE_W / 2} ry={ry} />
-        <line x1={x} y1={y + ry} x2={x} y2={y + NODE_H - ry} />
-        <line x1={x + NODE_W} y1={y + ry} x2={x + NODE_W} y2={y + NODE_H - ry} />
+        <path
+          d={[
+            `M ${x} ${y + ry}`,
+            `A ${w / 2} ${ry} 0 0 1 ${x + w} ${y + ry}`,
+            `L ${x + w} ${y + h - ry}`,
+            `A ${w / 2} ${ry} 0 0 1 ${x} ${y + h - ry}`,
+            "Z",
+          ].join(" ")}
+        />
+        <ellipse cx={cx} cy={y + ry} rx={w / 2} ry={ry} className="arch-graph-cylinder-cap" />
+        <ellipse
+          cx={cx}
+          cy={y + h - ry}
+          rx={w / 2}
+          ry={ry}
+          className="arch-graph-cylinder-rim"
+        />
       </g>
     );
   }
 
   if (shape === "stadium") {
+    // Chip / pill — input language
+    const accentH = Math.max(12, h - 20);
     return (
-      <rect
+      <g className={className}>
+        <rect x={x} y={y} width={w} height={h} rx={h / 2} ry={h / 2} />
+        <rect
+          className="arch-graph-chip-accent"
+          x={x + 8}
+          y={y + (h - accentH) / 2}
+          width={3}
+          height={accentH}
+          rx={1.5}
+        />
+      </g>
+    );
+  }
+
+  if (shape === "ticket") {
+    // Ticket / stub — output language (notched trailing edge)
+    const notch = Math.max(9, Math.round(h * 0.2));
+    return (
+      <path
         className={className}
-        x={x}
-        y={y}
-        width={NODE_W}
-        height={NODE_H}
-        rx={NODE_H / 2}
-        ry={NODE_H / 2}
+        d={[
+          `M ${x} ${y}`,
+          `L ${x + w - notch} ${y}`,
+          `L ${x + w} ${cy}`,
+          `L ${x + w - notch} ${y + h}`,
+          `L ${x} ${y + h}`,
+          "Z",
+        ].join(" ")}
       />
     );
   }
 
-  const rx = shape === "rect" ? 0 : 6;
+  // Tablet (process) or plain rect
+  const rx = shape === "rect" ? 2 : 10;
+  if (kind === "process" || shape === "rounded") {
+    return (
+      <g className={className}>
+        <rect x={x} y={y} width={w} height={h} rx={rx} ry={rx} />
+        <rect
+          className="arch-graph-tablet-bezel"
+          x={x + 4}
+          y={y + 4}
+          width={w - 8}
+          height={h - 8}
+          rx={Math.max(2, rx - 3)}
+          ry={Math.max(2, rx - 3)}
+        />
+      </g>
+    );
+  }
+
   return (
     <rect
       className={className}
       x={x}
       y={y}
-      width={NODE_W}
-      height={NODE_H}
+      width={w}
+      height={h}
       rx={rx}
       ry={rx}
     />
@@ -100,19 +262,43 @@ function NodeShape({ node }: { node: GraphLayoutNode }) {
 }
 
 function GraphNode({ node }: { node: GraphLayoutNode }) {
+  const shape = resolveShape(node);
+  const kind = node.kind ?? "other";
+  const w = node.width;
+  const h = node.height;
+  const markX = node.x + (shape === "stadium" ? 22 : 14);
+  const markY = node.y + Math.max(10, h * 0.22);
+  const labelPadL = shape === "stadium" ? 28 : shape === "ticket" ? 10 : 18;
+  const labelPadR = shape === "ticket" ? 18 : 10;
+  const platePadX = Math.max(5, Math.round(w * 0.04));
+  const platePadY = Math.max(4, Math.round(h * 0.08));
+
   return (
     <g
-      className={`arch-graph-node${node.kind ? ` arch-graph-node--${node.kind}` : ""}`}
+      className={`arch-graph-node arch-graph-node--${kind} arch-graph-node--${shape} arch-graph-node--weight-${node.weight}`}
       data-node-id={node.id}
       data-diagram-node=""
-      data-kind={node.kind}
+      data-kind={kind}
+      data-shape={shape}
+      data-weight={node.weight}
     >
-      <NodeShape node={node} />
+      <rect
+        className="arch-graph-node-plate"
+        x={node.x - platePadX}
+        y={node.y - platePadY}
+        width={w + platePadX * 2}
+        height={h + platePadY * 2}
+        rx={shape === "stadium" ? h / 2 + 4 : 14}
+        ry={shape === "stadium" ? h / 2 + 4 : 14}
+        aria-hidden="true"
+      />
+      <NodeShape node={node} shape={shape} />
+      <KindMark kind={node.kind} cx={markX} cy={markY} />
       <foreignObject
-        x={node.x + 8}
-        y={node.y + 6}
-        width={NODE_W - 16}
-        height={NODE_H - 12}
+        x={node.x + labelPadL}
+        y={node.y + Math.max(4, h * 0.1)}
+        width={Math.max(24, w - labelPadL - labelPadR)}
+        height={Math.max(20, h - Math.max(8, h * 0.2))}
         className="arch-graph-label-fo"
       >
         <div className="arch-graph-label">{node.label}</div>
@@ -133,12 +319,15 @@ export function ArchitectureGraphView({
   staticFull,
   worldSized,
   layout: layoutProp,
+  slug,
+  skin: skinProp,
 }: ArchitectureGraphViewProps) {
   const reactId = useId().replace(/:/g, "");
   const layout = useMemo(
     () => layoutProp ?? layoutArchitectureGraph(graph, LAYOUT_OPTS),
     [graph, layoutProp],
   );
+  const skin = skinProp ?? resolveArchitectureSkin(graph, slug);
 
   const label =
     ariaLabel ?? (graph.title ? `How ${graph.title} works` : "Architecture diagram");
@@ -148,6 +337,7 @@ export function ArchitectureGraphView({
     <div
       className={className}
       data-arch-graph
+      data-arch-skin={skin}
       data-world-sized={worldSized ? "1" : undefined}
     >
       <svg
@@ -158,6 +348,7 @@ export function ArchitectureGraphView({
         role="img"
         aria-label={label}
         data-layout-mode={layout.mode}
+        data-arch-skin={skin}
       >
         <defs>
           <marker
@@ -165,8 +356,8 @@ export function ArchitectureGraphView({
             viewBox="0 0 10 10"
             refX="9"
             refY="5"
-            markerWidth="6"
-            markerHeight="6"
+            markerWidth="5"
+            markerHeight="5"
             orient="auto-start-reverse"
           >
             <path d="M 0 0 L 10 5 L 0 10 z" className="arch-graph-arrow" />
@@ -184,7 +375,7 @@ export function ArchitectureGraphView({
               rx={4}
               ry={4}
             />
-            <text className="arch-graph-group-label" x={g.x + 10} y={g.y + 14}>
+            <text className="arch-graph-group-label" x={g.x + 12} y={g.y + 16}>
               {g.label}
             </text>
           </g>

@@ -2,36 +2,42 @@
   "version": 1,
   "title": "GSTF",
   "summary": "Videos become frame datasets; training phases write checkpoints that evaluation and Grad-CAM / UMAP read back.",
-  "notes": "Collapsed FF++/DFDM loader detail and optional joint 6-class branch. Fisher → Phase 3 kept as one adapt step. CLI fan-out shown without separate Fisher tour stop.",
+  "notes": "Collapsed FF++/DFDM loader detail and optional joint 6-class branch. CLI / YAML stay on the map but off the tour. Path story folds three training phases into one beat.",
+  "journeyMode": "overview-story",
+  "skin": "gstf",
   "nodes": [
-    { "id": "videos", "label": "Raw videos (FF++ / DFDM)", "kind": "input" },
+    { "id": "videos", "label": "Raw videos (FF++ / DFDM)", "kind": "input", "layout": { "dx": -8 } },
     { "id": "preprocess", "label": "Preprocess frames", "kind": "process" },
-    { "id": "datasets", "label": "Dataset loaders", "kind": "store" },
-    { "id": "config", "label": "YAML configs", "kind": "input" },
-    { "id": "cli", "label": "main.py CLI", "kind": "process" },
+    { "id": "datasets", "label": "Dataset loaders", "kind": "store", "layout": { "weight": "spine", "scale": 1.1 } },
+    { "id": "config", "label": "YAML configs", "kind": "input", "layout": { "weight": "satellite", "scale": 0.84, "dy": -18 } },
+    { "id": "cli", "label": "main.py CLI", "kind": "process", "layout": { "weight": "satellite", "scale": 0.88, "dy": 14 } },
     {
       "id": "p1",
       "label": "Phase 1: backbone (R(2+1)D / CNN-LSTM)",
-      "kind": "process"
+      "kind": "process",
+      "layout": { "weight": "spine", "scale": 1.18 }
     },
     {
       "id": "p2",
       "label": "Phase 2: ArcFace head",
-      "kind": "process"
+      "kind": "process",
+      "layout": { "weight": "spine", "scale": 1.12, "dy": 6 }
     },
     {
       "id": "p3",
       "label": "Phase 3: DFDM adapt (EWC)",
-      "kind": "process"
+      "kind": "process",
+      "layout": { "weight": "spine", "scale": 1.12, "dy": 12 }
     },
     {
       "id": "ckpt",
       "label": "Checkpoints + logs",
       "kind": "store",
-      "shape": "cylinder"
+      "shape": "cylinder",
+      "layout": { "weight": "spine", "scale": 1.14 }
     },
-    { "id": "eval", "label": "Evaluate", "kind": "output" },
-    { "id": "xai", "label": "Grad-CAM / UMAP", "kind": "output" }
+    { "id": "eval", "label": "Evaluate", "kind": "output", "layout": { "dx": 6 } },
+    { "id": "xai", "label": "Grad-CAM / UMAP", "kind": "output", "layout": { "dx": -8, "dy": 10 } }
   ],
   "edges": [
     { "from": "videos", "to": "preprocess" },
@@ -47,38 +53,44 @@
     { "from": "ckpt", "to": "eval" },
     { "from": "ckpt", "to": "xai" }
   ],
-  "tour": ["videos", "datasets", "p1", "p2", "ckpt", "eval"],
+  "tour": ["videos", "datasets", "p1", "ckpt", "eval"],
   "captions": [
     {
       "id": "videos",
       "title": "Raw videos",
-      "body": "Training starts from real and deepfake video sets."
+      "body": "Training starts from real and deepfake video sets.",
+      "spotlightIds": ["videos"]
     },
     {
       "id": "datasets",
-      "title": "Datasets",
-      "body": "Frames are loaded into training datasets."
+      "title": "Frames & datasets",
+      "body": "Videos are turned into frames and loaded for training.",
+      "items": ["Preprocess frames", "Dataset loaders"],
+      "spotlightIds": ["preprocess", "datasets"]
     },
     {
       "id": "p1",
-      "title": "Phase 1",
-      "body": "Train a video backbone that understands motion."
-    },
-    {
-      "id": "p2",
-      "title": "Phase 2",
-      "body": "Add an ArcFace head for clearer class separation."
+      "title": "Training phases",
+      "body": "Three phases train, specialize, then adapt the model.",
+      "items": [
+        "Phase 1: backbone",
+        "Phase 2: ArcFace head",
+        "Phase 3: DFDM adapt (EWC)"
+      ],
+      "spotlightIds": ["p1", "p2", "p3"]
     },
     {
       "id": "ckpt",
       "title": "Checkpoints",
-      "body": "Weights and logs are saved as training continues."
+      "body": "Weights and logs are saved as training continues.",
+      "spotlightIds": ["ckpt"]
     },
     {
       "id": "eval",
       "title": "Evaluate",
       "body": "Checkpoints feed evaluation and explanation tools.",
-      "items": ["Evaluate accuracy", "Grad-CAM / UMAP views"]
+      "items": ["Evaluate accuracy", "Grad-CAM / UMAP views"],
+      "spotlightIds": ["eval", "xai"]
     }
   ]
 }

@@ -2,52 +2,65 @@
   "version": 1,
   "title": "Sound Visualiser",
   "summary": "Audio sources feed analyzers into scene state; a mode router picks the look and paints the full-screen canvas.",
-  "notes": "Collapsed loudness / mood / beat into one analyzers node and folded the per-frame snapshot into the engine step. Acid feedback is noted on the acid node label (no separate buffer). Webcam is a dashed secondary input into the router.",
+  "notes": "Collapsed loudness / mood / beat into one analyzers node. Webcam is a dashed secondary input into the router. Path story is five beats: audio in → hear → route → modes → canvas.",
+  "journeyMode": "overview-story",
+  "skin": "sound",
   "groups": [
     { "id": "audio-in", "label": "Audio in" },
-    { "id": "modes", "label": "Visual modes" }
+    { "id": "core", "label": "Hear & route" },
+    { "id": "modes", "label": "Visual modes" },
+    { "id": "out", "label": "Output" }
   ],
   "nodes": [
-    { "id": "mic", "label": "Microphone", "kind": "input", "groupId": "audio-in" },
-    { "id": "file", "label": "Your own audio file", "kind": "input", "groupId": "audio-in" },
-    { "id": "demo", "label": "Built-in demo track", "kind": "input", "groupId": "audio-in" },
+    { "id": "mic", "label": "Microphone", "kind": "input", "groupId": "audio-in", "layout": { "dx": -6 } },
+    { "id": "file", "label": "Your own audio file", "kind": "input", "groupId": "audio-in", "layout": { "dx": 8 } },
+    { "id": "demo", "label": "Built-in demo track", "kind": "input", "groupId": "audio-in", "layout": { "dx": -4 } },
     {
       "id": "engine",
       "label": "Audio engine + frame snapshot",
-      "kind": "process"
+      "kind": "process",
+      "groupId": "core",
+      "layout": { "weight": "normal", "scale": 1.05 }
     },
     {
       "id": "analyzers",
       "label": "Energy · mood · beat trackers",
-      "kind": "process"
+      "kind": "process",
+      "groupId": "core",
+      "layout": { "weight": "spine", "scale": 1.18 }
     },
-    { "id": "state", "label": "Scene state for this frame", "kind": "store" },
-    { "id": "webcam", "label": "Webcam texture (Live & Acid)", "kind": "input" },
+    { "id": "state", "label": "Scene state for this frame", "kind": "store", "groupId": "core" },
+    { "id": "webcam", "label": "Webcam texture (Live & Acid)", "kind": "input", "groupId": "core", "layout": { "weight": "satellite", "scale": 0.82, "dx": 14 } },
     {
       "id": "router",
       "label": "Which visual mode?",
       "kind": "decision",
-      "shape": "diamond"
+      "shape": "diamond",
+      "groupId": "core",
+      "layout": { "weight": "spine", "scale": 1.16 }
     },
     {
       "id": "cinematic",
       "label": "Cinematic 3D scene",
       "kind": "process",
-      "groupId": "modes"
+      "groupId": "modes",
+      "layout": { "weight": "normal", "scale": 1.0, "dx": -4 }
     },
     {
       "id": "live",
       "label": "Webcam shader",
       "kind": "process",
-      "groupId": "modes"
+      "groupId": "modes",
+      "layout": { "weight": "normal", "scale": 0.96, "dx": 8 }
     },
     {
       "id": "acid",
       "label": "Acid shader (+ frame feedback)",
       "kind": "process",
-      "groupId": "modes"
+      "groupId": "modes",
+      "layout": { "weight": "normal", "scale": 0.96, "dx": -6 }
     },
-    { "id": "canvas", "label": "Full-screen canvas", "kind": "output" }
+    { "id": "canvas", "label": "Full-screen canvas", "kind": "output", "groupId": "out", "layout": { "weight": "spine", "scale": 1.12 } }
   ],
   "edges": [
     { "from": "mic", "to": "engine" },
@@ -64,39 +77,40 @@
     { "from": "live", "to": "canvas" },
     { "from": "acid", "to": "canvas" }
   ],
-  "tour": ["mic", "engine", "state", "router", "cinematic", "canvas"],
+  "tour": ["mic", "analyzers", "router", "cinematic", "canvas"],
   "captions": [
     {
       "id": "mic",
       "title": "Audio in",
       "body": "Three ways sound enters the visualiser.",
-      "items": ["Microphone", "Your own audio file", "Built-in demo track"]
+      "items": ["Microphone", "Your own audio file", "Built-in demo track"],
+      "spotlightIds": ["mic", "file", "demo"]
     },
     {
-      "id": "engine",
-      "title": "Audio engine",
-      "body": "Each frame becomes a small snapshot of the sound."
-    },
-    {
-      "id": "state",
-      "title": "Scene state",
-      "body": "Energy, mood, and beat feed what you see this frame."
+      "id": "analyzers",
+      "title": "Hear the signal",
+      "body": "Each frame is snapshotted, analyzed, and stored.",
+      "items": ["Audio engine + frame snapshot", "Energy · mood · beat", "Scene state"],
+      "spotlightIds": ["engine", "analyzers", "state"]
     },
     {
       "id": "router",
       "title": "Pick a mode",
-      "body": "A router chooses which visual look runs."
+      "body": "A router chooses which visual look runs.",
+      "spotlightIds": ["router"]
     },
     {
       "id": "cinematic",
       "title": "Visual modes",
       "body": "Three looks share the same canvas.",
-      "items": ["Cinematic 3D", "Webcam shader", "Acid shader"]
+      "items": ["Cinematic 3D", "Webcam shader", "Acid shader"],
+      "spotlightIds": ["cinematic", "live", "acid"]
     },
     {
       "id": "canvas",
       "title": "Canvas",
-      "body": "The chosen mode paints full-screen."
+      "body": "The chosen mode paints full-screen.",
+      "spotlightIds": ["canvas"]
     }
   ]
 }

@@ -1,10 +1,10 @@
 /**
- * Camera targets + fan-in/out beats for the architecture scroll journey.
- * Layout gives world coordinates; the viewport is a camera (translate + scale).
+ * Architecture presentation planning.
  *
- * Timeline shape (scrubbed, ease none):
- *   dive → hold stop0 → travel → hold stop1 → … → hold stopN
- * Snap lands on each hold; focus opacity/classes are owned by one applyFocus call.
+ * Default page UX is overview-story: fit the whole graph, teach via captions.
+ * Optional dive mode uses camera poses (planDiveJourney) for on-demand focus.
+ *
+ * Legacy scrub timeline (pin + camera travel) is no longer the default experience.
  */
 
 import type {
@@ -19,54 +19,81 @@ import {
 } from "@/lib/architecture-graph-layout";
 
 export const JOURNEY_LAYOUT = {
-  rankGap: 148,
-  laneGap: 100,
+  /** Base gap between columns; spine-adjacent gaps get spineGapMul. */
+  rankGap: 248,
+  spineGapMul: 1.28,
+  /** Ranks pipelines (e.g. GSTF) pack denser so the fitted overview stays readable. */
+  ranksGapMul: 0.58,
+  laneGap: 56,
+  /** Vertical air in core / ranks stacks. */
   stackGap: 52,
-  nodeWidth: 132,
-  nodeHeight: 44,
-  padding: 32,
+  /** Satellite stacks (inputs / outputs) — still tighter than core, with real air. */
+  satelliteStackGap: 36,
+  nodeWidth: 152,
+  nodeHeight: 54,
+  padding: 72,
+  groupLabelH: 36,
+  spineScale: 1.14,
+  satelliteScale: 0.86,
+  coreProcessScale: 1.2,
+  staggerX: 14,
+  ingressYBias: -12,
+  coreYBias: 12,
+  egressYBias: 18,
 } as const;
 
-/** Pin / scrub tunables — skimmable void dive, not a 10-screen prison. */
+/** Dive-mode camera tunables — soft framing, not flowchart zoom chaos. */
 export const JOURNEY = {
   /** Base viewport-heights of pin scroll; scaled by tour length. */
   pinVhBase: 0.72,
-  pinVhPerHop: 0.36,
-  pinVhMin: 1.0,
-  pinVhMax: 2.2,
+  pinVhPerHop: 0.38,
+  pinVhMin: 1.15,
+  /** Room for 5–7 spine stops without a punishing scroll. */
+  pinVhMax: 3.1,
   /** Soft catch-up so scrub doesn’t feel locked to the wheel. */
-  scrub: 0.75,
+  scrub: 0.9,
   /** Align under site chrome; hero exit + void hand off into this pin. */
   pinStart: "top top+=56",
   /** Timeline duration units per stop beat (hold + optional travel after). */
   beatDur: 1,
   /**
-   * One node owns the frame: target ~56% of viewport width.
-   * focusScaleMax must be high enough that wide desktops still hit this frac.
+   * Dive frames a readable card-sized stop (~38% viewport width),
+   * not a full-bleed flowchart blow-up.
    */
-  focusNodeFrac: 0.56,
-  focusScaleMin: 1.45,
-  focusScaleMax: 4.4,
+  focusNodeFrac: 0.38,
+  focusScaleMin: 1.15,
+  focusScaleMax: 2.6,
   /** Opening dive: wider empty peek → first stop (share of one beatDur). */
-  diveFrac: 0.38,
-  diveFromScaleMul: 0.38,
+  diveFrac: 0.36,
+  diveFromScaleMul: 0.42,
   /** Within a beat after the first: hold readable pose, then travel to next. */
-  holdFrac: 0.42,
-  travelFrac: 0.58,
-  /** Cluster / fan framing is slightly tighter than a full-map dump. */
-  clusterFrac: 0.72,
+  holdFrac: 0.52,
+  travelFrac: 0.48,
+  /**
+   * Cluster framing: fit siblings if possible, but never below clusterScaleMinMul
+   * of a single-node focus (siblings may clip — focus must stay readable).
+   */
+  clusterFrac: 0.88,
+  clusterScaleMinMul: 0.72,
+  clusterScaleMaxMul: 0.95,
   widePad: 56,
+  /** Fan mid beat: brief pull-back so fan-in/out reads as a scene, not a hop. */
+  fanMidPad: 52,
+  fanMidFrac: 1.05,
   /** Dim non-focused hard so one node owns the screen. */
-  nodeDim: 0.035,
-  nodeNear: 0.22,
+  nodeDim: 0.04,
+  nodeNear: 0.38,
   nodeFull: 1,
   edgeDim: 0.02,
-  edgeNear: 0.22,
-  edgeFull: 0.95,
-  /** Snap: short directional settle onto each hold. */
-  snapDurationMin: 0.12,
-  snapDurationMax: 0.32,
-  snapDelay: 0.02,
+  edgeNear: 0.28,
+  edgeFull: 0.85,
+  /**
+   * Snap onto hold midpoints (not hold ends) so travel doesn’t immediately
+   * fight the snap spring when scrub overshoots by a hair.
+   */
+  snapDurationMin: 0.18,
+  snapDurationMax: 0.42,
+  snapDelay: 0.08,
 } as const;
 
 export type CameraPose = {
@@ -77,17 +104,19 @@ export type CameraPose = {
 
 export type ViewportSize = { width: number; height: number };
 
-export type JourneyStopKind = "node" | "edge" | "cluster";
+export type JourneyStopKind = "node" | "edge" | "cluster" | "overview";
 
 export type JourneyStop = {
   index: number;
-  /** Tour id (node or edge). */
+  /** Tour id (node, edge, or synthetic overview). */
   id: string;
   kind: JourneyStopKind;
   /** Primary node for class spotlight (hub or representative). */
   focusNodeId: string;
   /** All nodes that should read as “here” (cluster siblings or single). */
   spotlightIds: string[];
+  /** Solid edges to light for this story beat. */
+  edgeIds: string[];
   pose: CameraPose;
   label: string;
 };
@@ -107,7 +136,14 @@ export type JourneyHop = {
   fanIn: boolean;
   /** Nodes visible during a fan beat (hub + siblings). */
   fanNodeIds: string[];
+  /** Solid edges among fan nodes (drawn during the fan beat). */
+  fanEdgeIds: string[];
   fromPose: CameraPose;
+  /**
+   * Brief wide pose mid-travel for fan-in/out (zoom out → zoom in).
+   * Linear hops leave this undefined.
+   */
+  midPose?: CameraPose;
   toPose: CameraPose;
   label: string;
 };
@@ -136,7 +172,28 @@ export type JourneyPlan = {
   /** Progress [0..1] at each stop’s hold end (snap targets). */
   snapProgress: number[];
   captions: JourneyCaption[];
+  /** Presentation mode — overview-story keeps camera fitted. */
+  mode: "camera" | "overview-story";
 };
+
+/** Softer dim for caption-led storytelling over a fitted map. */
+export const OVERVIEW_STORY = {
+  /** World padding around nodes/groups/edge routes when fitting. */
+  overviewPad: 64,
+  /** Fraction of viewport the fitted bounds may fill (leave chrome air). */
+  overviewFrac: 0.92,
+  /** Cap so tiny graphs don’t blow up; never used as a zoom-in floor. */
+  scaleCeil: 1.45,
+  /** Whole-map entrance opacity (readable, not ghost). */
+  overviewNode: 0.9,
+  overviewEdge: 0.42,
+  /** Story beat dim — rest of map stays legible. */
+  nodeDim: 0.32,
+  nodeNear: 0.78,
+  nodeFull: 1,
+  edgeDim: 0.16,
+  edgeFull: 0.95,
+} as const;
 
 function edgeKey(
   edge: { id?: string; from: string; to: string },
@@ -151,8 +208,8 @@ export function layoutForJourney(graph: ArchitectureGraph): GraphLayoutResult {
 
 export function nodeCenter(
   node: GraphLayoutNode,
-  nodeWidth = JOURNEY_LAYOUT.nodeWidth,
-  nodeHeight = JOURNEY_LAYOUT.nodeHeight,
+  nodeWidth: number = node.width ?? JOURNEY_LAYOUT.nodeWidth,
+  nodeHeight: number = node.height ?? JOURNEY_LAYOUT.nodeHeight,
 ): { x: number; y: number } {
   return {
     x: node.x + nodeWidth / 2,
@@ -173,8 +230,11 @@ export function poseForPoint(
   };
 }
 
-export function focusScaleForViewport(viewport: ViewportSize): number {
-  const raw = (viewport.width * JOURNEY.focusNodeFrac) / JOURNEY_LAYOUT.nodeWidth;
+export function focusScaleForViewport(
+  viewport: ViewportSize,
+  nodeWidth: number = JOURNEY_LAYOUT.nodeWidth,
+): number {
+  const raw = (viewport.width * JOURNEY.focusNodeFrac) / nodeWidth;
   return Math.min(JOURNEY.focusScaleMax, Math.max(JOURNEY.focusScaleMin, raw));
 }
 
@@ -182,12 +242,16 @@ function boundsOfNodes(
   nodes: GraphLayoutNode[],
   pad: number,
 ): { cx: number; cy: number; width: number; height: number } {
-  const nw = JOURNEY_LAYOUT.nodeWidth;
-  const nh = JOURNEY_LAYOUT.nodeHeight;
   const minX = Math.min(...nodes.map((n) => n.x)) - pad;
   const minY = Math.min(...nodes.map((n) => n.y)) - pad;
-  const maxX = Math.max(...nodes.map((n) => n.x + nw)) + pad;
-  const maxY = Math.max(...nodes.map((n) => n.y + nh)) + pad;
+  const maxX =
+    Math.max(
+      ...nodes.map((n) => n.x + (n.width ?? JOURNEY_LAYOUT.nodeWidth)),
+    ) + pad;
+  const maxY =
+    Math.max(
+      ...nodes.map((n) => n.y + (n.height ?? JOURNEY_LAYOUT.nodeHeight)),
+    ) + pad;
   return {
     cx: (minX + maxX) / 2,
     cy: (minY + maxY) / 2,
@@ -196,23 +260,103 @@ function boundsOfNodes(
   };
 }
 
+/** World bounds for overview fit — nodes, group chrome, and edge routes. */
+export function boundsOfLayout(
+  layout: GraphLayoutResult,
+  pad: number,
+): { cx: number; cy: number; width: number; height: number } {
+  const xs: number[] = [];
+  const ys: number[] = [];
+
+  for (const n of layout.nodes) {
+    xs.push(n.x, n.x + n.width);
+    ys.push(n.y, n.y + n.height);
+  }
+  for (const g of layout.groups) {
+    xs.push(g.x, g.x + g.width);
+    ys.push(g.y, g.y + g.height);
+  }
+  for (const e of layout.edges) {
+    for (const p of e.points) {
+      xs.push(p.x);
+      ys.push(p.y);
+    }
+  }
+
+  if (xs.length === 0) {
+    return {
+      cx: layout.width / 2,
+      cy: layout.height / 2,
+      width: Math.max(1, layout.width),
+      height: Math.max(1, layout.height),
+    };
+  }
+
+  const minX = Math.min(...xs) - pad;
+  const minY = Math.min(...ys) - pad;
+  const maxX = Math.max(...xs) + pad;
+  const maxY = Math.max(...ys) + pad;
+  return {
+    cx: (minX + maxX) / 2,
+    cy: (minY + maxY) / 2,
+    width: Math.max(1, maxX - minX),
+    height: Math.max(1, maxY - minY),
+  };
+}
+
+/**
+ * True fit for overview: scale to show the whole map.
+ * No cluster min-floor (that was cropping the overview).
+ */
+export function fitOverviewPose(
+  layout: GraphLayoutResult,
+  viewport: ViewportSize,
+  pad: number = OVERVIEW_STORY.overviewPad,
+  fillFrac: number = OVERVIEW_STORY.overviewFrac,
+): CameraPose {
+  const b = boundsOfLayout(layout, pad);
+  const sx = (viewport.width * fillFrac) / b.width;
+  const sy = (viewport.height * fillFrac) / b.height;
+  const scale = Math.min(sx, sy, OVERVIEW_STORY.scaleCeil);
+  return poseForPoint(b.cx, b.cy, scale, viewport);
+}
+
+/**
+ * Dive / fan framing: keep a readable tablet-sized zoom.
+ * Not for whole-map overview — use fitOverviewPose there.
+ */
 export function widePoseForNodes(
   nodes: GraphLayoutNode[],
   viewport: ViewportSize,
-  pad = JOURNEY.widePad,
-  fillFrac = JOURNEY.clusterFrac,
+  pad: number = JOURNEY.widePad,
+  fillFrac: number = JOURNEY.clusterFrac,
+  /** Prefer weighting the frame toward this node so the hub still dominates. */
+  biasNode?: GraphLayoutNode,
 ): CameraPose {
   const b = boundsOfNodes(nodes, pad);
+  const focus = focusScaleForViewport(viewport);
   const sx = (viewport.width * fillFrac) / b.width;
   const sy = (viewport.height * fillFrac) / b.height;
-  const scale = Math.min(sx, sy, focusScaleForViewport(viewport) * 0.85);
-  return poseForPoint(b.cx, b.cy, Math.max(0.4, scale), viewport);
+  const fitted = Math.min(sx, sy, focus * JOURNEY.clusterScaleMaxMul);
+  // Floor: cluster stops were reading ~1.5× (flat map). Keep focus tablet-sized.
+  const scale = Math.max(focus * JOURNEY.clusterScaleMinMul, fitted);
+  let cx = b.cx;
+  let cy = b.cy;
+  if (biasNode) {
+    const c = nodeCenter(biasNode);
+    cx = b.cx * 0.4 + c.x * 0.6;
+    cy = b.cy * 0.4 + c.y * 0.6;
+  }
+  return poseForPoint(cx, cy, scale, viewport);
 }
 
 export function poseForNode(
   node: GraphLayoutNode,
   viewport: ViewportSize,
-  scale = focusScaleForViewport(viewport),
+  scale = focusScaleForViewport(
+    viewport,
+    node.width ?? JOURNEY_LAYOUT.nodeWidth,
+  ),
 ): CameraPose {
   const c = nodeCenter(node);
   return poseForPoint(c.x, c.y, scale, viewport);
@@ -473,10 +617,155 @@ function clusterNodesForStop(
 }
 
 /**
- * Build camera hops from layout + `graph.tour`.
- * Hold/travel beats + snapProgress align so scroll rests on readable frames.
+ * Default page plan: fitted overview + path-story stops.
+ * Pass `journeyMode: "camera"` only if a caller still needs scrub poses as primary.
  */
 export function planArchitectureJourney(
+  graph: ArchitectureGraph,
+  viewport: ViewportSize,
+): JourneyPlan {
+  if (graph.journeyMode === "camera") {
+    return planCameraJourney(graph, viewport);
+  }
+  return planOverviewStoryJourney(graph, viewport);
+}
+
+/** On-demand dive: per-stop camera poses from the same tour. */
+export function planDiveJourney(
+  graph: ArchitectureGraph,
+  viewport: ViewportSize,
+): JourneyPlan {
+  return planCameraJourney(graph, viewport);
+}
+
+function edgesAmongNodes(
+  nodeIds: string[],
+  degrees: DegreeMaps,
+): string[] {
+  if (nodeIds.length < 2) return [];
+  const set = new Set(nodeIds);
+  const out: string[] = [];
+  for (const [ends, eid] of degrees.edgeByEnds) {
+    const [a, b] = ends.split("->");
+    if (set.has(a) && set.has(b)) out.push(eid);
+  }
+  return out;
+}
+
+/** Solid edges with at least one end in the set (solo-node story beats). */
+function edgesTouchingNodes(
+  nodeIds: string[],
+  degrees: DegreeMaps,
+): string[] {
+  if (nodeIds.length === 0) return [];
+  const set = new Set(nodeIds);
+  const out: string[] = [];
+  for (const [ends, eid] of degrees.edgeByEnds) {
+    const [a, b] = ends.split("->");
+    if (set.has(a) || set.has(b)) out.push(eid);
+  }
+  return out;
+}
+
+/**
+ * Overview-first storytelling: one fitted pose; path beats are caption + highlight.
+ * Tour length should stay in the 3–5 teaching range for the path story UI.
+ */
+export function planOverviewStoryJourney(
+  graph: ArchitectureGraph,
+  viewport: ViewportSize,
+): JourneyPlan {
+  const layout = layoutForJourney(graph);
+  const degrees = buildDegreeMaps(graph, layout);
+  const captionsById = captionMap(graph);
+  const overviewPose = fitOverviewPose(layout, viewport);
+
+  const overviewTitle = graph.title
+    ? `How ${graph.title} works`
+    : "How it works";
+
+  const stops: JourneyStop[] = [];
+  const captions: JourneyCaption[] = [];
+
+  graph.tour.forEach((id, i) => {
+    const resolved = resolveStop(id, degrees, graph);
+    const authored = captionsById.get(id);
+    const explicit = authored?.spotlightIds?.filter((sid) =>
+      degrees.nodeById.has(sid),
+    );
+    const cluster = clusterNodesForStop(
+      resolved.focusNodeId,
+      graph,
+      degrees,
+      authored,
+    );
+
+    let spotlightIds: string[];
+    let kind: JourneyStopKind;
+
+    if (explicit && explicit.length >= 1) {
+      spotlightIds = explicit;
+      kind =
+        explicit.length >= 2 || (authored?.items && authored.items.length >= 2)
+          ? "cluster"
+          : "node";
+    } else if (cluster.length >= 2) {
+      spotlightIds = cluster.map((n) => n.id);
+      kind = "cluster";
+    } else {
+      spotlightIds = [resolved.focusNodeId];
+      kind = resolved.kind === "edge" ? "edge" : "node";
+    }
+
+    const edgeIds =
+      spotlightIds.length === 1
+        ? edgesTouchingNodes(spotlightIds, degrees)
+        : edgesAmongNodes(spotlightIds, degrees);
+
+    stops.push({
+      index: i,
+      id,
+      kind,
+      focusNodeId: resolved.focusNodeId,
+      spotlightIds,
+      edgeIds,
+      pose: overviewPose,
+      label: authored?.title ?? resolved.label,
+    });
+
+    captions.push({
+      id,
+      title: authored?.title ?? resolved.label,
+      body: authored?.body ?? "Next stage in the path.",
+      items: authored?.items,
+      kind,
+    });
+  });
+
+  const n = Math.max(stops.length, 1);
+  const duration = n;
+  const snapProgress = stops.map((_, i) => Math.min(1, (i + 0.5) / n));
+
+  return {
+    layout,
+    stops,
+    hops: [],
+    startPose: overviewPose,
+    diveFromPose: {
+      ...overviewPose,
+      scale: overviewPose.scale * 0.92,
+    },
+    startNodeId: layout.nodes[0]?.id ?? "",
+    startLabel: overviewTitle,
+    pinVh: 0,
+    duration,
+    snapProgress,
+    captions,
+    mode: "overview-story",
+  };
+}
+
+function planCameraJourney(
   graph: ArchitectureGraph,
   viewport: ViewportSize,
 ): JourneyPlan {
@@ -503,7 +792,7 @@ export function planArchitectureJourney(
     const isCluster = cluster.length >= 2;
     const pose =
       isCluster && focusNode
-        ? widePoseForNodes(cluster, viewport)
+        ? widePoseForNodes(cluster, viewport, JOURNEY.widePad, JOURNEY.clusterFrac, focusNode)
         : focusNode
           ? poseForNode(focusNode, viewport, focusScale)
           : { x: 0, y: 0, scale: 1 };
@@ -514,14 +803,17 @@ export function planArchitectureJourney(
         ? "edge"
         : "node";
 
+    const spotlightIds = isCluster
+      ? cluster.map((n) => n.id)
+      : [resolved.focusNodeId];
+
     stops.push({
       index: i,
       id,
       kind,
       focusNodeId: resolved.focusNodeId,
-      spotlightIds: isCluster
-        ? cluster.map((n) => n.id)
-        : [resolved.focusNodeId],
+      spotlightIds,
+      edgeIds: edgesAmongNodes(spotlightIds, degrees),
       pose,
       label: authored?.title ?? resolved.label,
     });
@@ -583,6 +875,54 @@ export function planArchitectureJourney(
 
     const { fanOut, fanIn, fanNodeIds } = detectFan(degrees, fromNodeId, toNodeId);
 
+    const fanEdgeIds: string[] = [];
+    if (fanNodeIds.length >= 2) {
+      const fanSet = new Set(fanNodeIds);
+      for (const [ends, eid] of degrees.edgeByEnds) {
+        const [a, b] = ends.split("->");
+        if (fanSet.has(a) && fanSet.has(b)) fanEdgeIds.push(eid);
+      }
+    }
+
+    let midPose: CameraPose | undefined;
+    const alreadyWide =
+      fromStop.kind === "cluster" || toStop.kind === "cluster";
+    if ((fanOut || fanIn) && fanNodeIds.length >= 2 && !alreadyWide) {
+      const fanLaid = fanNodeIds
+        .map((id) => degrees.nodeById.get(id))
+        .filter((n): n is GraphLayoutNode => Boolean(n));
+      if (fanLaid.length >= 2) {
+        midPose = widePoseForNodes(
+          fanLaid,
+          viewport,
+          JOURNEY.fanMidPad,
+          JOURNEY.fanMidFrac,
+          toNode,
+        );
+      }
+    } else if (
+      (fanOut || fanIn) &&
+      fanNodeIds.length >= 2 &&
+      alreadyWide &&
+      fromStop.kind !== "cluster"
+    ) {
+      const fanLaid = fanNodeIds
+        .map((id) => degrees.nodeById.get(id))
+        .filter((n): n is GraphLayoutNode => Boolean(n));
+      if (fanLaid.length >= 2) {
+        const peek = widePoseForNodes(
+          fanLaid,
+          viewport,
+          JOURNEY.fanMidPad,
+          JOURNEY.fanMidFrac,
+          fromNode,
+        );
+        if (peek.scale < toStop.pose.scale * 0.92) {
+          midPose = peek;
+        }
+      }
+    }
+
     hops.push({
       toIndex: i,
       fromId: fromNodeId,
@@ -594,13 +934,14 @@ export function planArchitectureJourney(
       fanOut,
       fanIn,
       fanNodeIds,
+      fanEdgeIds,
       fromPose: fromStop.pose,
+      midPose,
       toPose: toStop.pose,
       label: toStop.label,
     });
   }
 
-  // Timeline: dive + hold0 + (travel + hold)* + tiny settle
   const beat = JOURNEY.beatDur;
   const diveDur = beat * JOURNEY.diveFrac;
   const holdDur = beat * JOURNEY.holdFrac;
@@ -611,11 +952,10 @@ export function planArchitectureJourney(
     diveDur + holdDur + Math.max(0, n - 1) * (travelDur + holdDur) + settleDur;
 
   const snapProgress: number[] = [];
-  let t = diveDur + holdDur;
-  snapProgress.push(Math.min(1, t / duration));
-  for (let i = 1; i < n; i++) {
-    t += travelDur + holdDur;
-    snapProgress.push(Math.min(1, t / duration));
+  for (let i = 0; i < n; i++) {
+    const holdStart = diveDur + i * (travelDur + holdDur);
+    const holdMid = holdStart + holdDur * 0.5;
+    snapProgress.push(Math.min(1, holdMid / duration));
   }
 
   return {
@@ -630,6 +970,7 @@ export function planArchitectureJourney(
     duration,
     snapProgress,
     captions,
+    mode: "camera",
   };
 }
 
@@ -650,6 +991,39 @@ export function stopIndexForProgress(
     if (progress < mid) return i;
   }
   return snapProgress.length - 1;
+}
+
+/**
+ * Active edge ids for the current scrub segment (primary + path edges on multi-hop).
+ * Aligned with stopIndexForProgress: outbound edges while leaving a stop, arrival
+ * edges once focus commits to the destination (incl. exact snap rest).
+ */
+export function activeEdgesForProgress(
+  progress: number,
+  snapProgress: number[],
+  hops: JourneyHop[],
+): string[] {
+  if (snapProgress.length === 0 || progress <= snapProgress[0]) return [];
+
+  const idx = stopIndexForProgress(progress, snapProgress);
+
+  if (idx < snapProgress.length - 1) {
+    const mid = (snapProgress[idx] + snapProgress[idx + 1]) / 2;
+    if (progress > snapProgress[idx] && progress < mid) {
+      return hopEdgeIds(hops.find((h) => h.toIndex === idx + 1));
+    }
+  }
+
+  if (idx > 0) {
+    return hopEdgeIds(hops.find((h) => h.toIndex === idx));
+  }
+  return [];
+}
+
+function hopEdgeIds(hop: JourneyHop | undefined): string[] {
+  if (!hop) return [];
+  if (hop.edgeIds.length > 0) return hop.edgeIds;
+  return hop.edgeId ? [hop.edgeId] : [];
 }
 
 /** Nodes/edges that should be near-visible for a hop's fan beat. */

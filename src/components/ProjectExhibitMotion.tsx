@@ -16,24 +16,21 @@ type MatchMediaHandle = {
 type GsapLike = typeof import("gsap").default;
 type SplitTextLike = typeof import("gsap/SplitText").SplitText;
 
-/** Tunables — hero entry + scrub-exit into void; journey owns the dive after. */
-const HERO = {
-  titleStagger: 0.045,
+/**
+ * Soft hero entry only — no exit theatre, no pin/scrub handoff.
+ * Animation polish (showcase handoffs) deferred to a later pass.
+ */
+export const HERO_ENTRY = {
+  titleStaggerIn: 0.045,
   titleDuration: 0.55,
-  ledeStagger: 0.07,
+  ledeStaggerIn: 0.07,
   ledeDuration: 0.5,
   badgeDuration: 0.4,
-  buttonStagger: 0.055,
+  buttonStaggerIn: 0.055,
   buttonDuration: 0.4,
-  /** Delay (s) before title after badge start */
   titleAt: 0.06,
-  /** Delay (s) before buttons after badge start */
   buttonsAt: 0.18,
-  /** Delay (s) before lede lines after badge start */
   ledeAt: 0.32,
-  exitScrub: 0.4,
-  /** Short pin distance for exit beat (~viewport fraction) */
-  exitPinEnd: "+=32%",
   hoverX: 3,
   hoverDuration: MOTION.fast,
 } as const;
@@ -50,17 +47,15 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
     let cancelled = false;
 
     async function setup() {
-      const [gsapMod, stMod, splitMod] = await Promise.all([
+      const [gsapMod, splitMod] = await Promise.all([
         import("gsap"),
-        import("gsap/ScrollTrigger"),
         import("gsap/SplitText"),
       ]);
       if (cancelled || !root) return;
 
       const gsap = gsapMod.default;
-      const { ScrollTrigger } = stMod;
       const { SplitText } = splitMod;
-      gsap.registerPlugin(ScrollTrigger, SplitText);
+      gsap.registerPlugin(SplitText);
 
       try {
         await document.fonts.ready;
@@ -69,7 +64,6 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
       }
       if (cancelled || !root) return;
 
-      const hero = root.querySelector<HTMLElement>('[data-exhibit-act="hero"]');
       const badge = root.querySelector<HTMLElement>("[data-exhibit-hero-badge]");
       const title = root.querySelector<HTMLElement>("[data-exhibit-hero-title]");
       const lede = root.querySelector<HTMLElement>("[data-exhibit-hero-lede]");
@@ -77,8 +71,6 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
       const buttons = actions
         ? Array.from(actions.querySelectorAll<HTMLElement>(".project-exhibit-action"))
         : [];
-      const rest = root.querySelector<HTMLElement>("[data-exhibit-rest]");
-      const voidEl = root.querySelector<HTMLElement>("[data-exhibit-void]");
 
       const heroPieces = [badge, title, lede, actions].filter(
         (el): el is HTMLElement => Boolean(el),
@@ -91,108 +83,21 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
         if (buttons.length) gsap.set(buttons, { autoAlpha: 1, x: 0, y: 0 });
       };
 
-      /** Reduced-motion: skip void spacer; rest always in flow. */
-      const setReducedPath = () => {
-        if (rest) {
-          rest.hidden = false;
-          gsap.set(rest, { clearProps: "opacity,visibility,transform" });
-        }
-        if (voidEl) {
-          voidEl.style.minHeight = "0";
-          voidEl.hidden = true;
-        }
-      };
-
-      /** Motion path: void spacer on; rest stays in flow after the dive (quiet fade-in). */
-      const setMotionPath = () => {
-        if (voidEl) {
-          voidEl.hidden = false;
-          voidEl.style.minHeight = "";
-        }
-        if (rest) {
-          rest.hidden = false;
-          gsap.set(rest, { autoAlpha: 0.35, y: 18 });
-        }
-      };
-
       ctx = gsap.context(() => {
         mm = gsap.matchMedia();
 
         mm.add("(prefers-reduced-motion: reduce)", () => {
           setHeroFinal();
-          setReducedPath();
         });
 
-        mm.add(
-          "(prefers-reduced-motion: no-preference) and (min-width: 1024px) and (pointer: fine)",
-          () => {
-            setMotionPath();
-
-            if (hero) {
-              addHeroEntry(gsap, SplitText, { badge, title, lede, buttons });
-              addHeroExit(gsap, hero, { badge, title, lede, actions }, { pin: true });
-            } else {
-              setHeroFinal();
-            }
-
-            if (rest) {
-              gsap.to(rest, {
-                autoAlpha: 1,
-                y: 0,
-                ease: "none",
-                scrollTrigger: {
-                  trigger: rest,
-                  start: "top 88%",
-                  end: "top 55%",
-                  scrub: 0.4,
-                  refreshPriority: 4,
-                },
-              });
-            }
-
-            const unbindHover = buttons.length > 0 ? bindButtonHovers(gsap, buttons) : null;
-            return () => {
-              unbindHover?.();
-            };
-          },
-        );
-
-        mm.add(
-          "(prefers-reduced-motion: no-preference) and ((max-width: 1023px) or (pointer: coarse))",
-          () => {
-            setMotionPath();
-
-            if (hero) {
-              addHeroEntry(gsap, SplitText, { badge, title, lede, buttons });
-              addHeroExit(gsap, hero, { badge, title, lede, actions }, { pin: false });
-            } else {
-              setHeroFinal();
-            }
-
-            if (rest) {
-              gsap.to(rest, {
-                autoAlpha: 1,
-                y: 0,
-                ease: "none",
-                scrollTrigger: {
-                  trigger: rest,
-                  start: "top 92%",
-                  end: "top 70%",
-                  scrub: 0.35,
-                  refreshPriority: 4,
-                },
-              });
-            }
-
-            const unbindHover = buttons.length > 0 ? bindButtonHovers(gsap, buttons) : null;
-            return () => {
-              unbindHover?.();
-            };
-          },
-        );
+        mm.add("(prefers-reduced-motion: no-preference)", () => {
+          addHeroEntry(gsap, SplitText, { badge, title, lede, buttons });
+          const unbindHover = buttons.length > 0 ? bindButtonHovers(gsap, buttons) : null;
+          return () => {
+            unbindHover?.();
+          };
+        });
       }, root);
-
-      ScrollTrigger.refresh();
     }
 
     void setup();
@@ -261,11 +166,7 @@ function addHeroEntry(
   const tl = gsap.timeline({ defaults: { ease: MOTION.ease } });
 
   if (badge) {
-    tl.to(
-      badge,
-      { autoAlpha: 1, y: 0, duration: HERO.badgeDuration },
-      0,
-    );
+    tl.to(badge, { autoAlpha: 1, y: 0, duration: HERO_ENTRY.badgeDuration }, 0);
   }
 
   if (titleSplit?.words?.length) {
@@ -274,17 +175,13 @@ function addHeroEntry(
       {
         autoAlpha: 1,
         y: 0,
-        duration: HERO.titleDuration,
-        stagger: HERO.titleStagger,
+        duration: HERO_ENTRY.titleDuration,
+        stagger: HERO_ENTRY.titleStaggerIn,
       },
-      HERO.titleAt,
+      HERO_ENTRY.titleAt,
     );
   } else if (title) {
-    tl.to(
-      title,
-      { autoAlpha: 1, y: 0, duration: HERO.titleDuration },
-      HERO.titleAt,
-    );
+    tl.to(title, { autoAlpha: 1, y: 0, duration: HERO_ENTRY.titleDuration }, HERO_ENTRY.titleAt);
   }
 
   if (buttons.length) {
@@ -293,10 +190,10 @@ function addHeroEntry(
       {
         autoAlpha: 1,
         y: 0,
-        duration: HERO.buttonDuration,
-        stagger: HERO.buttonStagger,
+        duration: HERO_ENTRY.buttonDuration,
+        stagger: HERO_ENTRY.buttonStaggerIn,
       },
-      HERO.buttonsAt,
+      HERO_ENTRY.buttonsAt,
     );
   }
 
@@ -306,56 +203,13 @@ function addHeroEntry(
       {
         autoAlpha: 1,
         y: 0,
-        duration: HERO.ledeDuration,
-        stagger: HERO.ledeStagger,
+        duration: HERO_ENTRY.ledeDuration,
+        stagger: HERO_ENTRY.ledeStaggerIn,
       },
-      HERO.ledeAt,
+      HERO_ENTRY.ledeAt,
     );
   } else if (lede) {
-    tl.to(
-      lede,
-      { autoAlpha: 1, y: 0, duration: HERO.ledeDuration },
-      HERO.ledeAt,
-    );
-  }
-}
-
-function addHeroExit(
-  gsap: GsapLike,
-  hero: HTMLElement,
-  els: {
-    badge: HTMLElement | null;
-    title: HTMLElement | null;
-    lede: HTMLElement | null;
-    actions: HTMLElement | null;
-  },
-  opts: { pin: boolean },
-) {
-  const { badge, title, lede, actions } = els;
-  const exitTl = gsap.timeline({
-    defaults: { ease: "none" },
-    scrollTrigger: {
-      trigger: hero,
-      start: "top top",
-      end: opts.pin ? HERO.exitPinEnd : "bottom top",
-      scrub: HERO.exitScrub,
-      pin: opts.pin,
-      pinSpacing: opts.pin,
-      refreshPriority: 1,
-    },
-  });
-
-  if (badge) {
-    exitTl.to(badge, { autoAlpha: 0, x: -28, y: -10, duration: 1 }, 0);
-  }
-  if (title) {
-    exitTl.to(title, { autoAlpha: 0, x: -56, duration: 1 }, 0.04);
-  }
-  if (actions) {
-    exitTl.to(actions, { autoAlpha: 0, x: 48, duration: 1 }, 0.04);
-  }
-  if (lede) {
-    exitTl.to(lede, { autoAlpha: 0, y: 40, duration: 1 }, 0.1);
+    tl.to(lede, { autoAlpha: 1, y: 0, duration: HERO_ENTRY.ledeDuration }, HERO_ENTRY.ledeAt);
   }
 }
 
@@ -365,8 +219,8 @@ function bindButtonHovers(gsap: GsapLike, buttons: HTMLElement[]): () => void {
   for (const btn of buttons) {
     const nudgeIn = () => {
       gsap.to(btn, {
-        x: HERO.hoverX,
-        duration: HERO.hoverDuration,
+        x: HERO_ENTRY.hoverX,
+        duration: HERO_ENTRY.hoverDuration,
         ease: MOTION.ease,
         overwrite: "auto",
       });
@@ -374,7 +228,7 @@ function bindButtonHovers(gsap: GsapLike, buttons: HTMLElement[]): () => void {
     const nudgeOut = () => {
       gsap.to(btn, {
         x: 0,
-        duration: HERO.hoverDuration,
+        duration: HERO_ENTRY.hoverDuration,
         ease: MOTION.ease,
         overwrite: "auto",
       });

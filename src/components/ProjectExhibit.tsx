@@ -37,6 +37,15 @@ function exhibitDescription(project: Project): string {
   return project.summary.trim();
 }
 
+/**
+ * Visual / live demos lead with the demo CTA.
+ * Systems / research lead with GitHub (docs next when present).
+ */
+/** Visual projects lead with demo; systems/research lead with GitHub (+ docs). */
+function isVisualProject(liveDemoUrl: string | undefined): boolean {
+  return Boolean(liveDemoUrl);
+}
+
 function StackTags({ stack }: { stack: string[] }) {
   if (stack.length === 0) {
     return <span className="project-details-empty">—</span>;
@@ -53,17 +62,29 @@ function StackTags({ stack }: { stack: string[] }) {
   );
 }
 
+/**
+ * Project case study shell (first draft):
+ * 1. Hero — badge, title, description, CTAs (scrolls away naturally)
+ * 2. How it works — path story + full owned graph (via ProjectDiagram)
+ * 3. Dive — optional, inside ArchitectureJourney (not scroll-forced)
+ * 4. Stack + details
+ *
+ * Motion polish / showcase handoffs deferred.
+ */
 export function ProjectExhibit({ project }: ProjectExhibitProps) {
   const hasContent = project.contentStatus === "ok";
   const liveDemoUrl = resolveLiveDemoUrl(project);
   const badge = resolveBadge(project);
   const showExhibitStage = project.demo?.type === "exhibit";
+  const visual = isVisualProject(liveDemoUrl);
 
   return (
     <ProjectExhibitMotion>
       <article className="project-exhibit">
-        {/* Act 1 — Hero (asymmetric mini-homepage) */}
-        <header className="project-exhibit-hero project-exhibit-rail" data-exhibit-act="hero">
+        <header
+          className="project-exhibit-hero project-exhibit-rail"
+          data-exhibit-act="hero"
+        >
           <p className="project-exhibit-badge" data-exhibit-hero-badge>
             {badge}
           </p>
@@ -80,7 +101,9 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
                 href={liveDemoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="project-exhibit-action project-exhibit-action--primary"
+                className={`project-exhibit-action${
+                  visual ? " project-exhibit-action--primary" : ""
+                }`}
               >
                 Open live demo ↗
               </a>
@@ -89,7 +112,9 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
               href={project.links.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="project-exhibit-action"
+              className={`project-exhibit-action${
+                !visual ? " project-exhibit-action--primary" : ""
+              }`}
             >
               GitHub
             </a>
@@ -98,7 +123,9 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
                 href={project.links.docs}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="project-exhibit-action"
+                className={`project-exhibit-action${
+                  !visual ? " project-exhibit-action--primary" : ""
+                }`}
               >
                 Docs
               </a>
@@ -112,22 +139,21 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
           </p>
         </header>
 
-        {/* Act 2 — brief empty void; Atmosphere reads through transparent main */}
-        <div className="project-exhibit-void" data-exhibit-void aria-hidden="true" />
+        <div className="project-exhibit-how" data-exhibit-act="how">
+          <ProjectDiagram
+            title={project.title}
+            diagram={project.diagram}
+            slug={project.slug}
+          />
+        </div>
 
-        {/* Act 3 — architecture void dive (full-bleed when owned IR) */}
-        <ProjectDiagram title={project.title} diagram={project.diagram} />
-
-        {/* Act 4 — quiet rest after unpin */}
         <div className="project-exhibit-rest project-exhibit-rail" data-exhibit-rest>
-          {/* Optional exhibit — after architecture so it doesn't steal the path beat */}
           {showExhibitStage && (
             <section className="project-exhibit-stage" aria-label="Exhibit" data-exhibit-act="stage">
               <DemoPanel demo={project.demo} />
             </section>
           )}
 
-          {/* Skills / coda — quiet after the dive */}
           <section
             className="project-exhibit-skills"
             aria-labelledby="project-skills-heading"

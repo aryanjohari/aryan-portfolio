@@ -2,7 +2,9 @@
   "version": 1,
   "title": "PII Gateway",
   "summary": "Callers hit the sanitize API through API-key auth; a shared pipeline runs Presidio and optionally writes cleaned artifacts.",
-  "notes": "Portfolio map collapses nested FastAPI internals (jobs routes, healthz, scheduler). Batch inboxes stay as dashed secondary inputs. Artifact targets collapsed to one store.",
+  "notes": "Portfolio map collapses nested FastAPI internals. Batch inboxes stay as dashed secondary inputs. Path story is five beats along the happy path.",
+  "journeyMode": "overview-story",
+  "skin": "pii",
   "groups": [
     { "id": "callers", "label": "Callers" },
     { "id": "gateway", "label": "PII Gateway" },
@@ -13,19 +15,22 @@
       "id": "apps",
       "label": "Apps / workers / scripts",
       "kind": "input",
-      "groupId": "callers"
+      "groupId": "callers",
+      "layout": { "dx": -6 }
     },
     {
       "id": "auto",
       "label": "Cron or internal automation",
       "kind": "input",
-      "groupId": "callers"
+      "groupId": "callers",
+      "layout": { "dx": 8 }
     },
     {
       "id": "sanitize",
       "label": "POST /v1/sanitize",
       "kind": "process",
-      "groupId": "gateway"
+      "groupId": "gateway",
+      "layout": { "weight": "spine", "scale": 1.16 }
     },
     {
       "id": "auth",
@@ -38,38 +43,44 @@
       "label": "Mounted policy YAML/JSON",
       "kind": "store",
       "groupId": "gateway",
-      "shape": "cylinder"
+      "shape": "cylinder",
+      "layout": { "dx": -12, "weight": "satellite", "scale": 0.88 }
     },
     {
       "id": "pipeline",
       "label": "Sanitize pipeline",
       "kind": "process",
-      "groupId": "gateway"
+      "groupId": "gateway",
+      "layout": { "weight": "spine", "scale": 1.22 }
     },
     {
       "id": "presidio",
       "label": "Presidio engines",
       "kind": "process",
-      "groupId": "gateway"
+      "groupId": "gateway",
+      "layout": { "weight": "spine", "scale": 1.14 }
     },
     {
       "id": "postgres",
       "label": "PostgreSQL exports",
       "kind": "input",
       "groupId": "batch",
-      "shape": "cylinder"
+      "shape": "cylinder",
+      "layout": { "weight": "satellite", "scale": 0.84, "dx": 6 }
     },
     {
       "id": "inbox",
       "label": "CSV / JSON / S3 inbox",
       "kind": "input",
-      "groupId": "batch"
+      "groupId": "batch",
+      "layout": { "weight": "satellite", "scale": 0.84, "dx": -4 }
     },
     {
       "id": "artifacts",
       "label": "Artifact storage (disk / S3)",
       "kind": "store",
-      "shape": "cylinder"
+      "shape": "cylinder",
+      "layout": { "weight": "spine", "scale": 1.1, "dy": 12 }
     }
   ],
   "edges": [
@@ -87,33 +98,39 @@
       "label": "optional raw / cleaned"
     }
   ],
-  "tour": ["apps", "auth", "pipeline", "presidio", "artifacts"],
+  "tour": ["apps", "sanitize", "pipeline", "presidio", "artifacts"],
   "captions": [
     {
       "id": "apps",
       "title": "Callers",
       "body": "Apps and workers send text to sanitize.",
-      "items": ["Apps / workers / scripts", "Cron or internal automation"]
+      "items": ["Apps / workers / scripts", "Cron or internal automation"],
+      "spotlightIds": ["apps", "auto"]
     },
     {
-      "id": "auth",
-      "title": "Auth gate",
-      "body": "An API key and correlation ID check who is calling."
+      "id": "sanitize",
+      "title": "Enter the gateway",
+      "body": "Requests hit one POST endpoint, then an API-key gate.",
+      "items": ["POST /v1/sanitize", "API-key auth + correlation ID"],
+      "spotlightIds": ["sanitize", "auth"]
     },
     {
       "id": "pipeline",
       "title": "Sanitize pipeline",
-      "body": "Shared steps prepare text before detection."
+      "body": "Shared steps prepare text using the mounted policy.",
+      "spotlightIds": ["pipeline", "policy"]
     },
     {
       "id": "presidio",
       "title": "Presidio",
-      "body": "Engines find and redact personal data."
+      "body": "Engines find and redact personal data.",
+      "spotlightIds": ["presidio"]
     },
     {
       "id": "artifacts",
       "title": "Artifacts",
-      "body": "Optionally write cleaned results to storage."
+      "body": "Optionally write cleaned results to storage.",
+      "spotlightIds": ["artifacts"]
     }
   ]
 }
