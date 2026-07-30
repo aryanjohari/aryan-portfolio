@@ -3,7 +3,6 @@
   "title": "Sound Visualiser",
   "summary": "Audio sources feed analyzers into scene state; a mode router picks the look and paints the full-screen canvas.",
   "notes": "Collapsed loudness / mood / beat into one analyzers node. Webcam is a dashed secondary input into the router. Path story is five beats: audio in → hear → route → modes → canvas.",
-  "journeyMode": "overview-story",
   "skin": "sound",
   "groups": [
     { "id": "audio-in", "label": "Audio in" },

@@ -3,7 +3,6 @@
   "title": "Background Studio",
   "summary": "Upload, looks, and knobs pack into one look engine, render in a single GPU pass, then fan out into exports.",
   "notes": "Portfolio map folds Mermaid Material + Shader into one look-engine node, and L0 / L1 / preview-text into one GPU-pass node.",
-  "journeyMode": "overview-story",
   "skin": "studio",
   "groups": [
     { "id": "inputs", "label": "Inputs" },

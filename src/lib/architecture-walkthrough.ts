@@ -1,344 +1,63 @@
-/**
- * Architecture chapter walkthrough steps.
- * Prefer owned graph `tour` → authored yaml → Mermaid → SVG labels → generic path.
- * Captions stay honest: IR labels / node labels or clearly generic copy.
- */
-
 import type { ArchitectureGraph } from "@/lib/architecture-graph";
 
 export type WalkthroughStep = {
   id: string;
   title: string;
   body: string;
-  /** Cluster children in plain English (fan-in/out stops). */
   items?: string[];
-  /** Label / node id used to spotlight in the rendered SVG */
-  highlight?: string;
-  /** When from owned IR: node vs edge vs cluster stop */
   targetKind?: "node" | "edge" | "cluster";
+  /** Node ids to highlight when this beat is selected. */
+  spotlightIds?: string[];
 };
-
-export const GENERIC_PATH_STEPS: WalkthroughStep[] = [
-  {
-    id: "input",
-    title: "Input",
-    body: "What enters the system.",
-    highlight: "Input",
-  },
-  {
-    id: "process",
-    title: "Process",
-    body: "What happens along the path.",
-    highlight: "core system",
-  },
-  {
-    id: "output",
-    title: "Output",
-    body: "What comes out.",
-    highlight: "Output",
-  },
-];
-
-const MIN_STEPS = 3;
-/** Align with IR TOUR_MAX — spine tours can run 6–8 stops. */
-const MAX_STEPS = 8;
-
-type StageCandidate = {
-  id: string;
-  title: string;
-  highlight: string;
-  index: number;
-};
-
-function cleanLabel(raw: string): string {
-  return raw
-    .replace(/<br\s*\/?>/gi, " ")
-    .replace(/\\n/g, " ")
-    .replace(/["']/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function shortTitle(label: string): string {
   const first = label.split(/[—|]/)[0]?.trim() || label;
-  if (first.length <= 42) return first;
-  return `${first.slice(0, 41)}…`;
-}
-
-function slugify(value: string): string {
-  const base = value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-  return base || "step";
+  return first.length <= 42 ? first : `${first.slice(0, 41)}…`;
 }
 
 function positionBody(index: number, total: number): string {
   if (total <= 1) return "Stage in the system path.";
   if (index === 0) return "What enters the system.";
   if (index === total - 1) return "What comes out.";
-  if (total === 3 && index === 1) return "What happens along the path.";
   return "Next stage in the path.";
 }
 
-function thinCandidates(items: StageCandidate[], min: number, max: number): StageCandidate[] {
-  if (items.length === 0) return [];
-  if (items.length <= max) return items;
-
-  const count = Math.min(max, Math.max(min, max));
-  const picked: StageCandidate[] = [];
-  const seen = new Set<string>();
-
-  for (let i = 0; i < count; i++) {
-    const idx = Math.round((i * (items.length - 1)) / (count - 1));
-    const item = items[idx];
-    if (seen.has(item.id)) continue;
-    seen.add(item.id);
-    picked.push(item);
-  }
-
-  for (const item of items) {
-    if (picked.length >= count) break;
-    if (seen.has(item.id)) continue;
-    seen.add(item.id);
-    picked.push(item);
-  }
-
-  return picked.slice(0, max);
-}
-
-function toSteps(candidates: StageCandidate[]): WalkthroughStep[] {
-  const sorted = [...candidates].sort((a, b) => a.index - b.index);
-  const thinned = thinCandidates(sorted, MIN_STEPS, MAX_STEPS);
-  if (thinned.length < MIN_STEPS) return [];
-
-  return thinned.map((c, i) => ({
-    id: c.id,
-    title: c.title,
-    body: positionBody(i, thinned.length),
-    highlight: c.highlight,
-  }));
-}
-
-function findSubgraphSpans(text: string): Array<{ start: number; end: number }> {
-  const spans: Array<{ start: number; end: number }> = [];
-  const startRe = /\bsubgraph\b/gi;
-  let startMatch: RegExpExecArray | null;
-  while ((startMatch = startRe.exec(text)) !== null) {
-    const start = startMatch.index;
-    const endRe = /\bend\b/gi;
-    endRe.lastIndex = start + startMatch[0].length;
-    const endMatch = endRe.exec(text);
-    if (!endMatch) break;
-    const end = endMatch.index + endMatch[0].length;
-    spans.push({ start, end });
-    startRe.lastIndex = end;
-  }
-  return spans;
-}
-
-function isInsideSpan(index: number, spans: Array<{ start: number; end: number }>): boolean {
-  return spans.some((s) => index > s.start && index < s.end);
-}
-
 /**
- * Derive 3–5 steps from Mermaid flowchart source (subgraphs + top-level nodes).
- */
-export function deriveStepsFromMermaid(mermaidSource: string): WalkthroughStep[] {
-  const text = mermaidSource.replace(/%%[^\n]*/g, "");
-  const subgraphs: StageCandidate[] = [];
-
-  const subgraphRe =
-    /subgraph\s+([A-Za-z][\w-]*)\s*(?:\[\s*"([^"]+)"\s*\]|\[\s*([^\]]+)\s*\])?/gi;
-  let match: RegExpExecArray | null;
-  while ((match = subgraphRe.exec(text)) !== null) {
-    const rawId = match[1];
-    const title = cleanLabel(match[2] || match[3] || rawId);
-    subgraphs.push({
-      id: slugify(rawId),
-      title: shortTitle(title),
-      highlight: title,
-      index: match.index,
-    });
-  }
-
-  if (subgraphs.length >= MIN_STEPS) {
-    return toSteps(subgraphs);
-  }
-
-  const nodes: StageCandidate[] = [];
-  const seen = new Set<string>(subgraphs.map((s) => s.id));
-  const spans = findSubgraphSpans(text);
-
-  const nodeRe =
-    /(?:^|\n)\s*([A-Za-z][\w-]*)\s*(?:\[\s*"([^"]+)"\s*\]|\[\s*([^\]]+)\s*\]|\(\s*"([^"]+)"\s*\)|\(\s*([^)]+)\s*\)|\{\s*"([^"]+)"\s*\}|\{\s*([^}]+)\s*\}|\[\(\s*"([^"]+)"\s*\)\]|\[\(\s*([^\]]+)\s*\)\])/g;
-
-  while ((match = nodeRe.exec(text)) !== null) {
-    if (isInsideSpan(match.index, spans)) continue;
-
-    const nodeId = match[1];
-    const id = slugify(nodeId);
-    if (seen.has(id)) continue;
-    if (/^(flowchart|graph|subgraph|end|style|classDef|linkStyle|click)$/i.test(nodeId)) {
-      continue;
-    }
-
-    const label = cleanLabel(
-      match[2] ||
-        match[3] ||
-        match[4] ||
-        match[5] ||
-        match[6] ||
-        match[7] ||
-        match[8] ||
-        match[9] ||
-        nodeId,
-    );
-    seen.add(id);
-    nodes.push({
-      id,
-      title: shortTitle(label),
-      highlight: label,
-      index: match.index,
-    });
-  }
-
-  const mixed = preferSubgraphsThenNodes(subgraphs, nodes);
-  const fromMixed = toSteps(mixed);
-  if (fromMixed.length >= MIN_STEPS) return fromMixed;
-
-  const fromNodes = toSteps(nodes);
-  if (fromNodes.length >= MIN_STEPS) return fromNodes;
-
-  return [];
-}
-
-/** Keep every subgraph when possible; fill remaining slots with top-level nodes. */
-function preferSubgraphsThenNodes(
-  subgraphs: StageCandidate[],
-  nodes: StageCandidate[],
-): StageCandidate[] {
-  if (subgraphs.length === 0) return nodes;
-  if (nodes.length === 0) return subgraphs;
-
-  if (subgraphs.length >= MAX_STEPS) {
-    return thinCandidates(subgraphs, MIN_STEPS, MAX_STEPS);
-  }
-
-  const slots = MAX_STEPS - subgraphs.length;
-  const nodePicks =
-    slots <= 0 ? [] : thinCandidates(nodes, Math.min(slots, nodes.length) || 1, slots);
-  // If nodes < needed for overall min, take more nodes by dropping nothing from subgraphs
-  const combined = [...subgraphs, ...nodePicks].sort((a, b) => a.index - b.index);
-  if (combined.length >= MIN_STEPS) return combined;
-
-  return [...subgraphs, ...nodes].sort((a, b) => a.index - b.index);
-}
-
-/**
- * Derive steps from rendered SVG node labels (base diagram or Mermaid SVG).
- */
-export function deriveStepsFromSvg(root: HTMLElement): WalkthroughStep[] {
-  const nodes = Array.from(
-    root.querySelectorAll<SVGElement>("[data-diagram-node], .node, .cluster"),
-  ).filter((el) => !el.closest("defs"));
-
-  const candidates: StageCandidate[] = [];
-  const seen = new Set<string>();
-
-  nodes.forEach((node, index) => {
-    const label = readNodeLabel(node);
-    if (!label) return;
-    const id = slugify(label);
-    if (seen.has(id)) return;
-    seen.add(id);
-    candidates.push({
-      id,
-      title: shortTitle(label),
-      highlight: label,
-      index,
-    });
-  });
-
-  return toSteps(candidates);
-}
-
-export function readNodeLabel(node: Element): string {
-  const texts = Array.from(node.querySelectorAll("text, .nodeLabel, .label, foreignObject"));
-  for (const t of texts) {
-    const value = (t.textContent || "").replace(/\s+/g, " ").trim();
-    if (value) return cleanLabel(value);
-  }
-  return cleanLabel((node.textContent || "").replace(/\s+/g, " "));
-}
-
-export function normalizeAuthoredSteps(raw: unknown): WalkthroughStep[] | undefined {
-  if (!Array.isArray(raw) || raw.length === 0) return undefined;
-
-  const steps: WalkthroughStep[] = [];
-  for (const item of raw) {
-    if (item === null || typeof item !== "object" || Array.isArray(item)) continue;
-    const rec = item as Record<string, unknown>;
-    if (typeof rec.title !== "string" || !rec.title.trim()) continue;
-    const title = rec.title.trim();
-    const id =
-      typeof rec.id === "string" && rec.id.trim()
-        ? slugify(rec.id.trim())
-        : slugify(title);
-    const body =
-      typeof rec.body === "string" && rec.body.trim()
-        ? rec.body.trim()
-        : positionBody(steps.length, Math.min(MAX_STEPS, raw.length));
-    const highlight =
-      typeof rec.highlight === "string" && rec.highlight.trim()
-        ? rec.highlight.trim()
-        : typeof rec.mermaidNodeId === "string" && rec.mermaidNodeId.trim()
-          ? rec.mermaidNodeId.trim()
-          : title;
-    steps.push({ id, title, body, highlight });
-    if (steps.length >= MAX_STEPS) break;
-  }
-
-  if (steps.length < MIN_STEPS) return undefined;
-  return steps;
-}
-
-export type ResolveWalkthroughInput = {
-  authored?: WalkthroughStep[];
-  mermaid?: string;
-  svgRoot?: HTMLElement | null;
-  /** Owned architecture graph IR — preferred when present. */
-  graph?: ArchitectureGraph;
-};
-
-/**
- * Build walkthrough captions from owned IR `tour` stops.
- * Prefer authored `graph.captions` (title + body + optional items).
- * Fallback: node/edge labels + summary / honest generic path copy —
- * never invented architecture claims.
+ * Resolve the optional plain beat list from owned graph IR.
+ *
+ * Captions stay honest: authored copy wins, otherwise node/edge labels and
+ * generic positional text are used. Mermaid/SVG walkthrough derivation was
+ * intentionally removed with the old scroll-tour UI.
  */
 export function resolveTourStepsFromGraph(graph: ArchitectureGraph): WalkthroughStep[] {
-  const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
   const edgeById = new Map(
-    graph.edges.filter((e) => e.id).map((e) => [e.id as string, e]),
+    graph.edges.filter((edge) => edge.id).map((edge) => [edge.id as string, edge]),
   );
-  const captionsById = new Map((graph.captions ?? []).map((c) => [c.id, c]));
+  const captionsById = new Map((graph.captions ?? []).map((caption) => [caption.id, caption]));
 
-  const tourSteps = graph.tour.map((stopId, i) => {
-    const authored = captionsById.get(stopId);
+  return graph.tour.map((stopId, index) => {
+    const caption = captionsById.get(stopId);
     const node = nodeById.get(stopId);
+    const edge = edgeById.get(stopId);
 
-    if (authored) {
-      const isCluster = Boolean(
-        (authored.items && authored.items.length >= 2) ||
-          (authored.spotlightIds && authored.spotlightIds.length >= 2),
-      );
+    if (caption) {
+      const spotlightIds =
+        caption.spotlightIds && caption.spotlightIds.length > 0
+          ? caption.spotlightIds
+          : node
+            ? [node.id]
+            : edge
+              ? [edge.from, edge.to]
+              : [stopId];
+      const isCluster =
+        (caption.items?.length ?? 0) >= 2 || spotlightIds.length >= 2;
       return {
         id: stopId,
-        title: shortTitle(authored.title),
-        body: authored.body,
-        items: authored.items,
-        highlight: stopId,
+        title: shortTitle(caption.title),
+        body: caption.body,
+        items: caption.items,
+        spotlightIds,
         targetKind: isCluster ? ("cluster" as const) : node ? ("node" as const) : ("edge" as const),
       };
     }
@@ -348,26 +67,22 @@ export function resolveTourStepsFromGraph(graph: ArchitectureGraph): Walkthrough
         id: node.id,
         title: shortTitle(node.label),
         body:
-          i === 0 && graph.summary
+          index === 0 && graph.summary
             ? graph.summary
-            : positionBody(i, graph.tour.length),
-        highlight: node.id,
+            : positionBody(index, graph.tour.length),
+        spotlightIds: [node.id],
         targetKind: "node" as const,
       };
     }
 
-    const edge = edgeById.get(stopId);
     if (edge) {
-      const fromLabel = nodeById.get(edge.from)?.label ?? edge.from;
-      const toLabel = nodeById.get(edge.to)?.label ?? edge.to;
-      const title = edge.label
-        ? shortTitle(edge.label)
-        : shortTitle(`${fromLabel} → ${toLabel}`);
+      const from = nodeById.get(edge.from)?.label ?? edge.from;
+      const to = nodeById.get(edge.to)?.label ?? edge.to;
       return {
         id: edge.id ?? stopId,
-        title,
-        body: positionBody(i, graph.tour.length),
-        highlight: edge.id ?? stopId,
+        title: shortTitle(edge.label || `${from} → ${to}`),
+        body: positionBody(index, graph.tour.length),
+        spotlightIds: [edge.from, edge.to],
         targetKind: "edge" as const,
       };
     }
@@ -375,127 +90,9 @@ export function resolveTourStepsFromGraph(graph: ArchitectureGraph): Walkthrough
     return {
       id: stopId,
       title: shortTitle(stopId),
-      body: positionBody(i, graph.tour.length),
-      highlight: stopId,
+      body: positionBody(index, graph.tour.length),
+      spotlightIds: [stopId],
       targetKind: "node" as const,
     };
   });
-
-  return tourSteps;
-}
-
-/**
- * Resolve walkthrough steps with honest labels and a hard generic fallback.
- * Owned IR `tour` wins when present (including over authored yaml for highlights).
- */
-export function resolveWalkthroughSteps(input: ResolveWalkthroughInput): WalkthroughStep[] {
-  if (input.graph?.tour?.length) {
-    return resolveTourStepsFromGraph(input.graph);
-  }
-
-  if (input.authored && input.authored.length >= MIN_STEPS) {
-    return input.authored.slice(0, MAX_STEPS).map((step, i, arr) => ({
-      ...step,
-      body: step.body || positionBody(i, arr.length),
-    }));
-  }
-
-  if (input.mermaid) {
-    const fromMermaid = deriveStepsFromMermaid(input.mermaid);
-    if (fromMermaid.length >= MIN_STEPS) return fromMermaid;
-  }
-
-  if (input.svgRoot) {
-    const fromSvg = deriveStepsFromSvg(input.svgRoot);
-    if (fromSvg.length >= MIN_STEPS) return fromSvg;
-  }
-
-  return GENERIC_PATH_STEPS;
-}
-
-/** Ids revealed after completing tour stops up to `stepIndex` (inclusive). */
-export function tourRevealedIds(
-  graph: ArchitectureGraph,
-  stepIndex: number,
-): { nodes: Set<string>; edges: Set<string> } {
-  const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
-  const edgeById = new Map(
-    graph.edges.filter((e) => e.id).map((e) => [e.id as string, e]),
-  );
-  const nodes = new Set<string>();
-  const edges = new Set<string>();
-  const end = Math.max(0, Math.min(graph.tour.length - 1, stepIndex));
-
-  for (let i = 0; i <= end; i++) {
-    const id = graph.tour[i];
-    if (nodeById.has(id)) {
-      nodes.add(id);
-    } else if (edgeById.has(id)) {
-      const e = edgeById.get(id)!;
-      edges.add(id);
-      nodes.add(e.from);
-      nodes.add(e.to);
-    }
-  }
-
-  // Also reveal solid edges between already-revealed nodes (progressive path).
-  graph.edges.forEach((e, i) => {
-    const eid = e.id ?? `e:${e.from}->${e.to}#${i}`;
-    if (nodes.has(e.from) && nodes.has(e.to)) {
-      edges.add(eid);
-    }
-  });
-
-  return { nodes, edges };
-}
-
-/**
- * Find SVG elements to spotlight for a step (by label / id substring).
- */
-export function findHighlightElements(
-  root: HTMLElement,
-  step: WalkthroughStep,
-): SVGElement[] {
-  const needle = (step.highlight || step.title).toLowerCase();
-  if (!needle) return [];
-
-  const all = Array.from(
-    root.querySelectorAll<SVGElement>("[data-diagram-node], .node, .cluster"),
-  ).filter((el) => !el.closest("defs"));
-
-  return all.filter((el) => {
-    const id = (el.id || "").toLowerCase();
-    const label = readNodeLabel(el).toLowerCase();
-    const compactNeedle = needle.replace(/\s+/g, "");
-    return (
-      label === needle ||
-      label.includes(needle) ||
-      needle.includes(label) ||
-      id.includes(needle.replace(/\s+/g, "-")) ||
-      id.includes(compactNeedle)
-    );
-  });
-}
-
-export function pickFocusNode(
-  root: HTMLElement,
-  step: WalkthroughStep,
-  stepIndex: number,
-  stepCount: number,
-): SVGElement | null {
-  const matched = findHighlightElements(root, step);
-  if (matched.length > 0) return matched[0];
-
-  const all = Array.from(
-    root.querySelectorAll<SVGElement>("[data-diagram-node], .node, .cluster"),
-  ).filter((el) => {
-    if (el.closest("defs")) return false;
-    const tag = el.tagName.toLowerCase();
-    return tag === "g" || tag === "rect" || el.classList.contains("node");
-  });
-
-  if (all.length === 0) return null;
-  if (stepCount <= 1) return all[0];
-  const idx = Math.round((stepIndex * (all.length - 1)) / (stepCount - 1));
-  return all[idx] ?? all[0];
 }

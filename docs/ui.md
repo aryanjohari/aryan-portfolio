@@ -244,21 +244,15 @@ Single-column **exhibit** inside the wider project shell (`max-width: 1400px`). 
 ├──────────────────────────────────────────────────────────────┤
 │  live demo | exhibit | research                              │
 │  Title                                                       │
-│  One exhibit sentence…                                       │
-│                                                              │
-│  [Open live demo ↗]  GitHub  Docs  ← Back to workshop        │
-│                                                              │
-│  (Stage — exhibit DemoPanel only; live demos are CTA-first)  │
-│                                                              │
-│  Story                                                       │
-│  Full description…                                           │
+│  CTAs · full description lede…                               │
 │                                                              │
 │  How it works                                                │
-│  ┌ diagram (base SVG or GitHub mermaid) ──────────────────┐  │
-│  │  Input → Core → Output (+ Config / Storage)            │  │
-│  └────────────────────────────────────────────────────────┘  │
+│  ┌ fitted Containers map ────────────┐  path beats (rail)   │
+│  │ click marked nodes to Dive        │  (mobile: beats first)│
+│  └───────────────────────────────────┘                       │
+│  [Dive into architecture]                                    │
 │                                                              │
-│  Details — status, stack, secondary links                    │
+│  Stack + Details                                             │
 ├──────────────────────────────────────────────────────────────┤
 │ footer                                                       │
 └──────────────────────────────────────────────────────────────┘
@@ -266,9 +260,9 @@ Single-column **exhibit** inside the wider project shell (`max-width: 1400px`). 
 
 **Live / iframe:** primary action is **Open live demo ↗** (new tab). No full-page iframe hero on the slug page. Workshop cards stay the short hook; this page is the deeper exhibit.
 
-**Exhibit registry demos:** Stage still renders `DemoPanel` with static sample content.
+**Exhibit registry demos:** Stage still renders `DemoPanel` with static sample content (after How it works when present).
 
-**Diagram:** Every slug shows How it works. Build-time fetch stores GitHub Mermaid when found; otherwise the void base flowchart. Scroll-draw via GSAP StrokeDashoffset + ScrollTrigger; `prefers-reduced-motion` shows the full diagram.
+**Diagram:** Every slug shows How it works. Owned graph IR renders as a fitted Containers overview with selectable path beats (node highlight, no camera). When `diagram.c4.diveTargets` is present, Dive opens a sheet/modal with C3 mermaid + caption. Missing IR uses the base flowchart. There is no pinned scroll or Mermaid walkthrough on the overview.
 
 ### About (`/about`) — void blog read
 
@@ -311,17 +305,21 @@ Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **
 | `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Home ask + invite/reply; mini ask + panel on site chrome |
 | `ProjectGallery` | `src/components/ProjectGallery.tsx` | Workshop Three.js edge-glow tablet carousel (drag/snap; DOM a11y + fallback) |
 | `WorkshopCarousel` | `src/components/motion/WorkshopCarousel.ts` | Page-local transparent WebGL factory for edge-glow tablets — Fresnel plates / type / rim (dispose on unmount) |
-| `ProjectExhibit` | `src/components/ProjectExhibit.tsx` | Project exhibit: hero, CTAs, stage, story, details |
-| `ProjectDiagram` | `src/components/ProjectDiagram.tsx` | How it works — base SVG or Mermaid + scroll-draw |
+| `ProjectExhibit` | `src/components/ProjectExhibit.tsx` | Project exhibit: hero, How it works, stack, details |
+| `ProjectDiagram` | `src/components/ProjectDiagram.tsx` | How it works — owned fitted graph or static base SVG |
+| `ArchitectureJourney` | `src/components/ArchitectureJourney.tsx` | Containers overview + beats + Dive entry |
+| `ArchitectureGraphView` | `src/components/ArchitectureGraphView.tsx` | Owned IR → SVG (highlight / dive nodes) |
+| `ArchitectureDive` | `src/components/ArchitectureDive.tsx` | C3 sheet/modal (mermaid + caption) |
+| `MermaidDiagram` | `src/components/MermaidDiagram.tsx` | Client Mermaid renderer for Dive only |
 | `DemoPanel` | `src/components/DemoPanel.tsx` | Exhibit sandbox (and unused iframe helper) |
 
 ## Responsive rules
 
 | Breakpoint | Behaviour |
 |------------|-----------|
-| `< md` (768px) | Exhibit stacks naturally; diagram scrolls horizontally if needed; workshop carousel drag/touch (no hover tilt; lighter DPR/bevel); ask send ≥44px; void chrome morph uses crossfade |
-| `≥ md` | Index/about: 960px max-width. Project pages: 1400px shell, readable exhibit column; Flip morph home ↔ site |
-| All | Shell / header / footer respect `env(safe-area-inset-*)`; no horizontal page overflow (`overflow-x: clip`) |
+| `< 1024px` | Exhibit stacks; How it works shows path story above full-width graph; Dive is a full-viewport sheet; workshop carousel drag/touch; ask send ≥44px |
+| `≥ 1024px` | Index/about: 960px max-width. Project pages: wide shell; How it works = graph + story rail; Dive = side modal panel |
+| All | Shell / header / footer respect `env(safe-area-inset-*)`; no horizontal page overflow (`overflow-x: clip`); `prefers-reduced-motion` skips graph/dive entrance |
 
 ## Demo panel states
 

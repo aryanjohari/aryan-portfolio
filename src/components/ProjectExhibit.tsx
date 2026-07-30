@@ -144,6 +144,8 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
             title={project.title}
             diagram={project.diagram}
             slug={project.slug}
+            githubRepoUrl={project.links.github}
+            branch={project.branch}
           />
         </div>
 

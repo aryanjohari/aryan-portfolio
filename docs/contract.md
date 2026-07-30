@@ -51,6 +51,13 @@ type ProjectDiagramData = {
   graph?: ArchitectureGraph; // owned IR — preferred for site maps
   graphSource?: "github" | "local";
   graphPath?: string;
+  c4?: {
+    mapPath?: string;
+    context?: { mermaid?: string; markdown?: string; path?: string };
+    containers?: { mermaid?: string; markdown?: string; path?: string };
+    components: Record<string, { mermaid?: string; markdown?: string; path?: string }>;
+    diveTargets: { id: string; label: string; graphNodeIds: string[] }[];
+  };
 };
 ```
 
@@ -99,6 +106,28 @@ At build time the fetch script resolves a **How it works** diagram for each proj
 2. Fallback: `docs/architecture.graph.json` in the project repo
 3. Else portfolio-local fixture at `src/data/architecture-graphs/<slug>.graph.json`
 4. Else no `graph` — site keeps Mermaid or base template
+
+### C4 / Dive (optional)
+
+At fetch time the portfolio also pulls C4 artifacts when present (fail soft):
+
+1. `docs/c4/portfolio-map.json` — dive target list (shapes normalized at fetch)
+2. Else infer stems from `docs/c4/3-components/*.mmd`
+3. Optional: `docs/c4/1-context.{mmd,md}`, `docs/c4/2-containers.{mmd,md}`
+4. Per dive id: `docs/c4/3-components/<id>.{mmd,md}`
+
+Canonical map shape (preferred in new repos):
+
+```json
+{
+  "version": 1,
+  "diveTargets": [
+    { "id": "audio-engine", "label": "Audio engine", "graphNodeIds": ["audio-engine"] }
+  ]
+}
+```
+
+Legacy keys (`componentDiagrams`, `containersWithComponents`, `containerIdsWithComponents`, nested under `c4`) are still accepted.
 
 See [architecture-graph.md](./architecture-graph.md) for the IR schema, authoring rules, layout, and tour requirements.
 

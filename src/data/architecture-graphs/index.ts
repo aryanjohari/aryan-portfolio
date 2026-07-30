@@ -1,6 +1,6 @@
 /**
  * Portfolio-local architecture graph fixtures (rollout fallback).
- * Preferred long-term: fetch `docs/architecture.graph.json` from each project repo.
+ * Prefer fetched `docs/architecture.graph.json` when `graphSource === "github"`.
  *
  * @see docs/architecture-graph.md
  */

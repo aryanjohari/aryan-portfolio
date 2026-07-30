@@ -10,9 +10,13 @@ import type {
   FetchResult,
   FetchedProjectsFile,
   PortfolioYaml,
+  ProjectC4Data,
+  ProjectC4Doc,
+  ProjectC4DiveTarget,
   ProjectDiagramData,
 } from "../src/lib/portfolio-schema";
 import { validatePortfolioYaml } from "../src/lib/portfolio-schema";
+import type { ArchitectureGraph } from "../src/lib/architecture-graph";
 import { validateArchitectureGraph } from "../src/lib/architecture-graph";
 
 const OUTPUT_PATH = resolve(process.cwd(), "src/lib/fetched-projects.json");
@@ -25,8 +29,36 @@ const DIAGRAM_MARKDOWN_FALLBACKS = [
   "docs/architecture.md",
 ] as const;
 const GRAPH_FALLBACKS = ["docs/architecture.graph.json"] as const;
+const C4_MAP_PATH = "docs/c4/portfolio-map.json";
+const C4_COMPONENTS_DIR = "docs/c4/3-components";
+const MERMAID_MAX_CHARS = 48_000;
 
 const MERMAID_FENCE_RE = /```mermaid\s*\n([\s\S]*?)```/i;
+
+/**
+ * Known dive-id → overview graph node aliases while project maps catch up.
+ * Prefer fixing portfolio-map.json in source repos over growing this table.
+ */
+const DIVE_ID_ALIASES: Record<string, string[]> = {
+  "studio-spa": ["spa", "studio-spa"],
+  "mood-api": ["mood-api"],
+  "pii-gateway": [
+    "pii-gateway",
+    "sanitize-api",
+    "batch-jobs",
+    "sanitize-pipeline",
+    "presidio",
+    "policy",
+  ],
+};
+
+const DIVE_LABEL_OVERRIDES: Record<string, string> = {
+  "studio-spa": "Studio SPA",
+  "mood-api": "Mood API",
+  "vj-scene": "VJ scene",
+  "audio-engine": "Audio engine",
+  "pii-gateway": "PII Gateway",
+};
 
 function loadEnvFile(filename: string): void {
   try {
@@ -264,6 +296,244 @@ async function resolveGraph(
   return {};
 }
 
+type GitHubDirEntry = {
+  name: string;
+  type?: string;
+  path?: string;
+};
+
+async function listRepoDir(
+  repo: string,
+  branch: string,
+  path: string,
+  token: string | undefined,
+): Promise<GitHubDirEntry[]> {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "aryan-portfolio-fetch",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(apiUrl(repo, branch, path), { headers });
+  if (!response.ok) return [];
+  const body = (await response.json()) as unknown;
+  return Array.isArray(body) ? (body as GitHubDirEntry[]) : [];
+}
+
+function humanizeDiveId(id: string): string {
+  return id
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function clampMermaid(slug: string, path: string, text: string): string | undefined {
+  const trimmed = text.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.length > MERMAID_MAX_CHARS) {
+    console.warn(
+      `  [${slug}] mermaid at ${path} exceeds ${MERMAID_MAX_CHARS} chars — skipped`,
+    );
+    return undefined;
+  }
+  return trimmed;
+}
+
+async function fetchC4DocPair(
+  slug: string,
+  repo: string,
+  branch: string,
+  token: string | undefined,
+  basePathWithoutExt: string,
+): Promise<ProjectC4Doc | undefined> {
+  const mmdPath = `${basePathWithoutExt}.mmd`;
+  const mdPath = `${basePathWithoutExt}.md`;
+  const [mmdFile, mdFile] = await Promise.all([
+    fetchRepoFile(repo, branch, mmdPath, token),
+    fetchRepoFile(repo, branch, mdPath, token),
+  ]);
+
+  const doc: ProjectC4Doc = {};
+  if (mmdFile.ok) {
+    const mermaid = clampMermaid(slug, mmdPath, mmdFile.text);
+    if (mermaid) {
+      doc.mermaid = mermaid;
+      doc.path = mmdPath;
+    }
+  }
+  if (mdFile.ok) {
+    const markdown = mdFile.text.trim();
+    if (markdown) {
+      doc.markdown = markdown;
+      if (!doc.path) doc.path = mdPath;
+    }
+  }
+  return doc.mermaid || doc.markdown ? doc : undefined;
+}
+
+function extractDiveIdsFromMap(raw: unknown): string[] {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return [];
+  const record = raw as Record<string, unknown>;
+  const ids = new Set<string>();
+
+  const takeStringArray = (value: unknown) => {
+    if (!Array.isArray(value)) return;
+    for (const item of value) {
+      if (typeof item === "string" && item.trim()) ids.add(item.trim());
+    }
+  };
+
+  takeStringArray(record.componentDiagrams);
+  takeStringArray(record.containersWithComponents);
+  takeStringArray(record.containerIdsWithComponents);
+
+  const c4 = record.c4;
+  if (c4 && typeof c4 === "object" && !Array.isArray(c4)) {
+    const c4Rec = c4 as Record<string, unknown>;
+    takeStringArray(c4Rec.componentDiagrams);
+    takeStringArray(c4Rec.containersWithComponents);
+    takeStringArray(c4Rec.containerIdsWithComponents);
+  }
+
+  if (Array.isArray(record.diveTargets)) {
+    for (const item of record.diveTargets) {
+      if (typeof item === "string" && item.trim()) ids.add(item.trim());
+      if (item && typeof item === "object" && !Array.isArray(item)) {
+        const id = (item as Record<string, unknown>).id;
+        if (typeof id === "string" && id.trim()) ids.add(id.trim());
+      }
+    }
+  }
+
+  return [...ids];
+}
+
+function resolveGraphNodeIdsForDive(
+  diveId: string,
+  graphNodeIds: Set<string>,
+  mapEntry?: { graphNodeIds?: unknown },
+): string[] {
+  if (mapEntry && Array.isArray(mapEntry.graphNodeIds)) {
+    const explicit = mapEntry.graphNodeIds.filter(
+      (id): id is string => typeof id === "string" && id.trim().length > 0,
+    );
+    if (explicit.length > 0) {
+      return explicit.filter((id) => graphNodeIds.has(id));
+    }
+  }
+
+  const candidates = DIVE_ID_ALIASES[diveId] ?? [diveId];
+  return candidates.filter((id) => graphNodeIds.has(id));
+}
+
+/**
+ * Resolve optional C4 artifacts for Dive. Fail soft — missing C4 never breaks a project.
+ */
+async function resolveC4(
+  slug: string,
+  repo: string,
+  branch: string,
+  token: string | undefined,
+  graph: ArchitectureGraph | undefined,
+): Promise<ProjectC4Data | undefined> {
+  const graphNodeIds = new Set(graph?.nodes.map((n) => n.id) ?? []);
+
+  let mapPath: string | undefined;
+  let diveIds: string[] = [];
+  const mapDiveMeta = new Map<string, { label?: string; graphNodeIds?: unknown }>();
+
+  const mapFile = await fetchRepoFile(repo, branch, C4_MAP_PATH, token);
+  if (mapFile.ok) {
+    try {
+      const parsed = JSON.parse(mapFile.text) as unknown;
+      mapPath = C4_MAP_PATH;
+      diveIds = extractDiveIdsFromMap(parsed);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const diveTargets = (parsed as Record<string, unknown>).diveTargets;
+        if (Array.isArray(diveTargets)) {
+          for (const item of diveTargets) {
+            if (item && typeof item === "object" && !Array.isArray(item)) {
+              const rec = item as Record<string, unknown>;
+              if (typeof rec.id === "string" && rec.id.trim()) {
+                mapDiveMeta.set(rec.id.trim(), {
+                  label: typeof rec.label === "string" ? rec.label : undefined,
+                  graphNodeIds: rec.graphNodeIds,
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      console.warn(`  [${slug}] invalid C4 portfolio-map.json — ignoring map`);
+    }
+  }
+
+  if (diveIds.length === 0) {
+    const entries = await listRepoDir(repo, branch, C4_COMPONENTS_DIR, token);
+    for (const entry of entries) {
+      if (entry.type && entry.type !== "file") continue;
+      const name = entry.name;
+      if (name.endsWith(".mmd")) {
+        diveIds.push(name.slice(0, -4));
+      } else if (name.endsWith(".md")) {
+        const stem = name.slice(0, -3);
+        if (!entries.some((e) => e.name === `${stem}.mmd`)) {
+          diveIds.push(stem);
+        }
+      }
+    }
+  }
+
+  diveIds = [...new Set(diveIds)];
+
+  const [context, containers] = await Promise.all([
+    fetchC4DocPair(slug, repo, branch, token, "docs/c4/1-context"),
+    fetchC4DocPair(slug, repo, branch, token, "docs/c4/2-containers"),
+  ]);
+
+  const components: Record<string, ProjectC4Doc> = {};
+  const diveTargets: ProjectC4DiveTarget[] = [];
+
+  for (const id of diveIds) {
+    const doc = await fetchC4DocPair(
+      slug,
+      repo,
+      branch,
+      token,
+      `${C4_COMPONENTS_DIR}/${id}`,
+    );
+    if (doc) components[id] = doc;
+
+    const meta = mapDiveMeta.get(id);
+    const nodeIds = resolveGraphNodeIdsForDive(id, graphNodeIds, meta);
+    diveTargets.push({
+      id,
+      label: meta?.label?.trim() || DIVE_LABEL_OVERRIDES[id] || humanizeDiveId(id),
+      graphNodeIds: nodeIds,
+    });
+  }
+
+  const filteredTargets = diveTargets.filter((t) => components[t.id] || mapPath);
+
+  if (
+    !context &&
+    !containers &&
+    Object.keys(components).length === 0 &&
+    filteredTargets.length === 0
+  ) {
+    return undefined;
+  }
+
+  return {
+    ...(mapPath ? { mapPath } : {}),
+    ...(context ? { context } : {}),
+    ...(containers ? { containers } : {}),
+    components,
+    diveTargets: filteredTargets,
+  };
+}
+
 function parseAndValidate(raw: string, slug: string, repo: string): FetchResult {
   let parsed: unknown;
   try {
@@ -394,11 +664,23 @@ async function fetchEntry(
         console.log(`  ${slug.padEnd(20)} graph   ← (none)`);
       }
 
+      const c4 = await resolveC4(slug, repo, branch, token, graphFields.graph);
+      if (c4 && c4.diveTargets.length > 0) {
+        console.log(
+          `  ${slug.padEnd(20)} c4     ← ${c4.diveTargets.length} dive target(s)`,
+        );
+      } else if (c4) {
+        console.log(`  ${slug.padEnd(20)} c4     ← docs (no dive targets)`);
+      } else {
+        console.log(`  ${slug.padEnd(20)} c4     ← (none)`);
+      }
+
       return {
         ...result,
         diagram: {
           ...diagram,
           ...graphFields,
+          ...(c4 ? { c4 } : {}),
           ...(result.yaml.walkthrough && result.yaml.walkthrough.length > 0
             ? { walkthrough: result.yaml.walkthrough }
             : {}),
@@ -447,7 +729,9 @@ function statusNotes(result: FetchResult): string {
       const graphNote = result.diagram?.graph
         ? `graph:${result.diagram.graphSource ?? "yes"}`
         : "graph:none";
-      return `validated (${result.yaml.stack.length} stack items, ${diagramNote}, ${graphNote})`;
+      const c4Count = result.diagram?.c4?.diveTargets.length ?? 0;
+      const c4Note = c4Count > 0 ? `c4:${c4Count}` : "c4:none";
+      return `validated (${result.yaml.stack.length} stack items, ${diagramNote}, ${graphNote}, ${c4Note})`;
     }
     case "missing_yaml":
       return result.message;

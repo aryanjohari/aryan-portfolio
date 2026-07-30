@@ -12,14 +12,32 @@ import {
   defaultShapeForKind,
   resolveArchitectureSkin,
 } from "@/lib/architecture-graph";
-import { JOURNEY_LAYOUT } from "@/lib/architecture-journey";
 import {
   layoutArchitectureGraph,
   type GraphLayoutNode,
   type GraphLayoutResult,
 } from "@/lib/architecture-graph-layout";
 
-const LAYOUT_OPTS = JOURNEY_LAYOUT;
+/** Shared fitted-overview composition. Kept beside the renderer until C4 layout lands. */
+const LAYOUT_OPTS = {
+  rankGap: 248,
+  spineGapMul: 1.28,
+  ranksGapMul: 0.58,
+  laneGap: 56,
+  stackGap: 52,
+  satelliteStackGap: 36,
+  nodeWidth: 152,
+  nodeHeight: 54,
+  padding: 72,
+  groupLabelH: 36,
+  spineScale: 1.14,
+  satelliteScale: 0.86,
+  coreProcessScale: 1.2,
+  staggerX: 14,
+  ingressYBias: -12,
+  coreYBias: 12,
+  egressYBias: 18,
+} as const;
 
 export type ArchitectureGraphViewProps = {
   graph: ArchitectureGraph;
@@ -27,12 +45,9 @@ export type ArchitectureGraphViewProps = {
   /** Extra class on the root SVG (e.g. minimap / overlay). */
   svgClassName?: string;
   ariaLabel?: string;
-  /** When true, skip tour dim defaults (full opacity). */
+  /** Render the graph at full opacity. */
   staticFull?: boolean;
-  /**
-   * Fixed world pixels from layout (camera journey).
-   * Default fits the SVG to its container.
-   */
+  /** Fixed world pixels for specialized consumers. Default fits the container. */
   worldSized?: boolean;
   /** Optional precomputed layout (must match LAYOUT_OPTS). */
   layout?: GraphLayoutResult;
@@ -40,6 +55,12 @@ export type ArchitectureGraphViewProps = {
   slug?: string;
   /** Override resolved skin. */
   skin?: ArchitectureGraphSkin;
+  /** Node ids currently spotlighted (path beat / hover). */
+  highlightedIds?: readonly string[];
+  /** Node ids that open a C3 dive when activated. */
+  diveNodeIds?: readonly string[];
+  /** Called when a dive-capable node is activated. */
+  onNodeActivate?: (nodeId: string) => void;
 };
 
 function pointsToPath(points: { x: number; y: number }[]): string {
@@ -261,7 +282,17 @@ function NodeShape({
   );
 }
 
-function GraphNode({ node }: { node: GraphLayoutNode }) {
+function GraphNode({
+  node,
+  highlighted,
+  diveable,
+  onActivate,
+}: {
+  node: GraphLayoutNode;
+  highlighted?: boolean;
+  diveable?: boolean;
+  onActivate?: (nodeId: string) => void;
+}) {
   const shape = resolveShape(node);
   const kind = node.kind ?? "other";
   const w = node.width;
@@ -273,14 +304,48 @@ function GraphNode({ node }: { node: GraphLayoutNode }) {
   const platePadX = Math.max(5, Math.round(w * 0.04));
   const platePadY = Math.max(4, Math.round(h * 0.08));
 
+  const classes = [
+    "arch-graph-node",
+    `arch-graph-node--${kind}`,
+    `arch-graph-node--${shape}`,
+    `arch-graph-node--weight-${node.weight}`,
+    highlighted ? "is-highlighted" : "",
+    diveable ? "is-diveable" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <g
-      className={`arch-graph-node arch-graph-node--${kind} arch-graph-node--${shape} arch-graph-node--weight-${node.weight}`}
+      className={classes}
       data-node-id={node.id}
       data-diagram-node=""
       data-kind={kind}
       data-shape={shape}
       data-weight={node.weight}
+      data-diveable={diveable ? "1" : undefined}
+      role={diveable ? "button" : undefined}
+      tabIndex={diveable ? 0 : undefined}
+      aria-label={diveable ? `Dive into ${node.label}` : undefined}
+      onClick={
+        diveable && onActivate
+          ? (event) => {
+              event.preventDefault();
+              onActivate(node.id);
+            }
+          : undefined
+      }
+      onKeyDown={
+        diveable && onActivate
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onActivate(node.id);
+              }
+            }
+          : undefined
+      }
+      style={diveable ? { cursor: "pointer" } : undefined}
     >
       <rect
         className="arch-graph-node-plate"
@@ -321,6 +386,9 @@ export function ArchitectureGraphView({
   layout: layoutProp,
   slug,
   skin: skinProp,
+  highlightedIds,
+  diveNodeIds,
+  onNodeActivate,
 }: ArchitectureGraphViewProps) {
   const reactId = useId().replace(/:/g, "");
   const layout = useMemo(
@@ -328,10 +396,18 @@ export function ArchitectureGraphView({
     [graph, layoutProp],
   );
   const skin = skinProp ?? resolveArchitectureSkin(graph, slug);
+  const highlighted = useMemo(
+    () => new Set(highlightedIds ?? []),
+    [highlightedIds],
+  );
+  const diveable = useMemo(() => new Set(diveNodeIds ?? []), [diveNodeIds]);
 
   const label =
     ariaLabel ?? (graph.title ? `How ${graph.title} works` : "Architecture diagram");
   const markerId = `arch-graph-arrow-${reactId}`;
+  const hasHighlight = highlighted.size > 0;
+
+  const hasDiveTargets = diveable.size > 0;
 
   return (
     <div
@@ -339,13 +415,14 @@ export function ArchitectureGraphView({
       data-arch-graph
       data-arch-skin={skin}
       data-world-sized={worldSized ? "1" : undefined}
+      data-has-highlight={hasHighlight ? "1" : undefined}
     >
       <svg
-        className={`project-diagram-svg arch-graph-svg${svgClassName ? ` ${svgClassName}` : ""}${staticFull ? " is-static-full" : ""}${worldSized ? " is-world-sized" : ""}`}
+        className={`project-diagram-svg arch-graph-svg${svgClassName ? ` ${svgClassName}` : ""}${staticFull ? " is-static-full" : ""}${worldSized ? " is-world-sized" : ""}${hasHighlight ? " has-highlight" : ""}`}
         viewBox={`0 0 ${layout.width} ${layout.height}`}
         width={worldSized ? layout.width : undefined}
         height={worldSized ? layout.height : undefined}
-        role="img"
+        role={hasDiveTargets ? "group" : "img"}
         aria-label={label}
         data-layout-mode={layout.mode}
         data-arch-skin={skin}
@@ -385,10 +462,12 @@ export function ArchitectureGraphView({
           {layout.edges.map((edge) => {
             const d = pointsToPath(edge.points);
             const mid = edge.points[Math.floor(edge.points.length / 2)];
+            const edgeLit =
+              highlighted.has(edge.from) && highlighted.has(edge.to);
             return (
               <g
                 key={edge.id}
-                className={`arch-graph-edge${edge.style === "dashed" ? " is-dashed" : ""}${edge.cyclic ? " is-cyclic" : ""}`}
+                className={`arch-graph-edge${edge.style === "dashed" ? " is-dashed" : ""}${edge.cyclic ? " is-cyclic" : ""}${edgeLit ? " is-highlighted" : ""}`}
                 data-edge-id={edge.id}
                 data-diagram-edge=""
                 data-from={edge.from}
@@ -417,7 +496,13 @@ export function ArchitectureGraphView({
 
         <g className="arch-graph-nodes">
           {layout.nodes.map((node) => (
-            <GraphNode key={node.id} node={node} />
+            <GraphNode
+              key={node.id}
+              node={node}
+              highlighted={highlighted.has(node.id)}
+              diveable={diveable.has(node.id)}
+              onActivate={onNodeActivate}
+            />
           ))}
         </g>
       </svg>

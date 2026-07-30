@@ -1,6 +1,5 @@
 /**
- * Void-styled generic flowchart used when no GitHub architecture diagram exists.
- * Paths/rects use data attributes for ScrollTrigger stroke-draw animation.
+ * Static generic flowchart used when no owned architecture graph exists.
  */
 export function buildBaseDiagramSvg(title: string): string {
   const label = escapeXml(truncateLabel(title, 22));

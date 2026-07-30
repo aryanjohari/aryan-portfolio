@@ -37,6 +37,33 @@ export type PortfolioYaml = {
   walkthrough?: PortfolioWalkthroughStep[];
 };
 
+/** One C4 markdown/mermaid document pair fetched from a project repo. */
+export type ProjectC4Doc = {
+  mermaid?: string;
+  markdown?: string;
+  path?: string;
+};
+
+/** Dive target: C3 component zoom linked to overview graph node ids. */
+export type ProjectC4DiveTarget = {
+  /** File stem under docs/c4/3-components/, e.g. "studio-spa". */
+  id: string;
+  /** Visitor-facing label. */
+  label: string;
+  /** Overview IR node ids that open this dive. */
+  graphNodeIds: string[];
+};
+
+/** Normalized C4 artifacts for How it works → Dive. */
+export type ProjectC4Data = {
+  mapPath?: string;
+  context?: ProjectC4Doc;
+  containers?: ProjectC4Doc;
+  /** Component docs keyed by dive id. */
+  components: Record<string, ProjectC4Doc>;
+  diveTargets: ProjectC4DiveTarget[];
+};
+
 export type ProjectDiagramData = {
   source: "github" | "base";
   path?: string;
@@ -51,6 +78,8 @@ export type ProjectDiagramData = {
   graphPath?: string;
   /** Normalized walkthrough from portfolio.yaml when authored */
   walkthrough?: PortfolioWalkthroughStep[];
+  /** Optional C4 context/containers/components for Dive. */
+  c4?: ProjectC4Data;
 };
 
 export type ContentStatus = "ok" | "missing_yaml" | "invalid_yaml" | "fetch_error";

@@ -17,6 +17,9 @@ export type {
   ContentStatus,
   PortfolioLinks,
   PortfolioYaml,
+  ProjectC4Data,
+  ProjectC4DiveTarget,
+  ProjectC4Doc,
   ProjectDiagramData,
   ProjectStatus,
 } from "@/lib/portfolio-schema";
@@ -26,13 +29,16 @@ export type { DemoConfig };
 const BASE_DIAGRAM: ProjectDiagramData = { source: "base" };
 
 /**
- * Prefer portfolio fixtures while rollout owns the IR.
- * Fetched JSON may embed a stale copy; local `*.graph.json` is the live source.
+ * Prefer a validated GitHub graph when present; otherwise fall back to a
+ * portfolio-local fixture so pages still render during rollout.
  */
 function attachLocalGraphIfMissing(
   diagram: ProjectDiagramData,
   slug: string,
 ): ProjectDiagramData {
+  if (diagram.graph && diagram.graphSource === "github") {
+    return diagram;
+  }
   const local = getLocalArchitectureGraph(slug);
   if (!local) return diagram;
   return {
@@ -55,6 +61,8 @@ type PlaceholderContent = {
 export type Project = {
   slug: string;
   repo: string;
+  /** Registry branch used for fetch / GitHub doc links (defaults to main). */
+  branch: string;
   demo?: DemoConfig;
   contentStatus: ContentStatus;
   contentMessage?: string;
@@ -103,6 +111,7 @@ function buildPlaceholder(entry: RegistryEntry, status: ContentStatus, message?:
   return {
     slug: entry.slug,
     repo: entry.repo,
+    branch: entry.branch ?? "main",
     demo: entry.demo,
     contentStatus: status,
     contentMessage: message,
@@ -138,6 +147,7 @@ export function mergeProject(
     ...content,
     slug: entry.slug,
     repo: entry.repo,
+    branch: entry.branch ?? "main",
     demo: entry.demo,
     contentStatus,
     contentMessage,

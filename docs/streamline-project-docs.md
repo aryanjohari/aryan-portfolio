@@ -33,7 +33,10 @@ The portfolio fetches:
    - `graph:` path in yaml if set
    - else `docs/architecture.graph.json`
    - else portfolio-local fixture while rolling out
-4. Else portfolio shows a generic base diagram
+4. Optional C4 Dive artifacts (fail soft):
+   - `docs/c4/portfolio-map.json` (dive targets), else infer `docs/c4/3-components/*.mmd`
+   - `docs/c4/1-context.*`, `docs/c4/2-containers.*`, `docs/c4/3-components/<id>.*`
+5. Else portfolio shows a generic base diagram
 Prefer shipping **`docs/architecture.mmd`** (GitHub) and **`docs/architecture.graph.json`** (portfolio), and set in yaml:
 `diagram: docs/architecture.mmd`
 `graph: docs/architecture.graph.json`

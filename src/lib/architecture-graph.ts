@@ -75,18 +75,13 @@ export type ArchitectureGraphGroup = {
   label: string;
 };
 
-/**
- * Ordered scrub stops. Each entry is a node id or edge id that exists in the graph.
- * Portfolio requires 3–8 stops (4–6 ideal).
- */
+/** Optional ordered caption beats. Each entry references a graph node or edge. */
 export type ArchitectureGraphTourStop = string;
 
 /**
  * Visitor caption for one `tour` stop.
- * Prefer authoring these on fixtures; the journey UI always shows title + body.
- * Use `items` when the stop represents a fan-in/out cluster (group of siblings).
- *
- * @see docs/architecture-graph.md — “Tour captions”
+ * Prefer authoring these in repository graph docs. Use `items` when a beat
+ * summarizes several related containers.
  */
 export type ArchitectureTourCaption = {
   /** Must match a `tour[]` entry (node or edge id). */
@@ -97,15 +92,9 @@ export type ArchitectureTourCaption = {
   body: string;
   /** Optional child pieces when the stop stands for a set (e.g. three inputs). */
   items?: string[];
-  /**
-   * Explicit nodes to highlight for this beat (overview-story mode).
-   * When omitted, cluster/group heuristics apply.
-   */
+  /** Reserved for a future optional overview highlight. */
   spotlightIds?: string[];
 };
-
-/** How the portfolio presents this graph. Default: overview-story (fit map + path captions). */
-export type ArchitectureJourneyMode = "camera" | "overview-story";
 
 export type ArchitectureGraph = {
   version: typeof ARCHITECTURE_GRAPH_VERSION;
@@ -118,11 +107,6 @@ export type ArchitectureGraph = {
    * (collapsed internals, omitted alternate paths, etc.).
    */
   notes?: string;
-  /**
-   * `overview-story` (default): fit whole graph + path captions; dive is optional.
-   * `camera`: legacy per-stop camera framing (used by on-demand dive poses).
-   */
-  journeyMode?: ArchitectureJourneyMode;
   /**
    * Optional skin id for accent / density tokens.
    * When omitted, portfolio resolves from project slug.
@@ -168,8 +152,6 @@ const NODE_SHAPES: GraphNodeShape[] = [
 ];
 
 const EDGE_STYLES: GraphEdgeStyle[] = ["solid", "dashed"];
-
-const JOURNEY_MODES: ArchitectureJourneyMode[] = ["camera", "overview-story"];
 
 const GRAPH_SKINS: ArchitectureGraphSkin[] = [
   "studio",
@@ -265,18 +247,6 @@ export function validateArchitectureGraph(
 
   if (data.notes !== undefined && !isNonEmptyString(data.notes)) {
     issues.push({ path: "notes", message: "notes must be a non-empty string when provided" });
-  }
-
-  if (data.journeyMode !== undefined) {
-    if (
-      !isNonEmptyString(data.journeyMode) ||
-      !JOURNEY_MODES.includes(data.journeyMode as ArchitectureJourneyMode)
-    ) {
-      issues.push({
-        path: "journeyMode",
-        message: `journeyMode must be one of: ${JOURNEY_MODES.join(", ")}`,
-      });
-    }
   }
 
   if (data.skin !== undefined) {
@@ -693,12 +663,6 @@ export function validateArchitectureGraph(
   if (isNonEmptyString(data.title)) graph.title = data.title.trim();
   if (isNonEmptyString(data.summary)) graph.summary = data.summary.trim();
   if (isNonEmptyString(data.notes)) graph.notes = data.notes.trim();
-  if (
-    isNonEmptyString(data.journeyMode) &&
-    JOURNEY_MODES.includes(data.journeyMode as ArchitectureJourneyMode)
-  ) {
-    graph.journeyMode = data.journeyMode as ArchitectureJourneyMode;
-  }
   if (
     isNonEmptyString(data.skin) &&
     GRAPH_SKINS.includes(data.skin as ArchitectureGraphSkin)

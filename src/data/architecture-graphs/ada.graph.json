@@ -3,7 +3,6 @@
   "title": "ADA",
   "summary": "Primary path: chat → orchestrator → allowlisted tools → SQLite. Cron publish and HUD read paths exist but are secondary on this map.",
   "notes": "Chose chat as the portfolio happy path. Cron ingest / graph-lite / daemon→workflow→S3 and HUD→DB are kept as dashed alternate edges so the map stays honest without touring every path.",
-  "journeyMode": "overview-story",
   "skin": "ada",
   "groups": [
     { "id": "ingress", "label": "Operator surfaces" },

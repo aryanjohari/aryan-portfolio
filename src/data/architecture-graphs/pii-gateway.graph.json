@@ -3,7 +3,6 @@
   "title": "PII Gateway",
   "summary": "Callers hit the sanitize API through API-key auth; a shared pipeline runs Presidio and optionally writes cleaned artifacts.",
   "notes": "Portfolio map collapses nested FastAPI internals. Batch inboxes stay as dashed secondary inputs. Path story is five beats along the happy path.",
-  "journeyMode": "overview-story",
   "skin": "pii",
   "groups": [
     { "id": "callers", "label": "Callers" },

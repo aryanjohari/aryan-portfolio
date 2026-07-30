@@ -3,7 +3,6 @@
   "title": "GSTF",
   "summary": "Videos become frame datasets; training phases write checkpoints that evaluation and Grad-CAM / UMAP read back.",
   "notes": "Collapsed FF++/DFDM loader detail and optional joint 6-class branch. CLI / YAML stay on the map but off the tour. Path story folds three training phases into one beat.",
-  "journeyMode": "overview-story",
   "skin": "gstf",
   "nodes": [
     { "id": "videos", "label": "Raw videos (FF++ / DFDM)", "kind": "input", "layout": { "dx": -8 } },
