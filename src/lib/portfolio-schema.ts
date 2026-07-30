@@ -44,24 +44,54 @@ export type ProjectC4Doc = {
   path?: string;
 };
 
-/** Dive target: C3 component zoom linked to overview graph node ids. */
+/** C4 zoom stack levels shown on the project page. */
+export type ProjectC4Level = "context" | "containers" | "components";
+
+/**
+ * Normalized zoom edge from portfolio-map.json `zoom[]`
+ * (Context → Containers → Components).
+ */
+export type ProjectC4ZoomTarget = {
+  id: string;
+  label: string;
+  fromLevel: ProjectC4Level;
+  toLevel: ProjectC4Level;
+  /** Labels / aliases matched against Mermaid SVG text for click zoom. */
+  matchLabels: string[];
+  /**
+   * Component doc id under `components` when `toLevel` is `"components"`.
+   * Derived from `componentsPath` or `componentZooms`.
+   */
+  componentId?: string;
+};
+
+/** Dive target: C3 component zoom (+ optional legacy graph node ids). */
 export type ProjectC4DiveTarget = {
   /** File stem under docs/c4/3-components/, e.g. "studio-spa". */
   id: string;
   /** Visitor-facing label. */
   label: string;
-  /** Overview IR node ids that open this dive. */
+  /** Overview IR node ids that open this dive (legacy graph fallback). */
   graphNodeIds: string[];
+  /** Optional Mermaid label aliases for container → component clicks. */
+  matchLabels?: string[];
+  /** Container zoom ids this component covers (from componentZooms). */
+  coversContainers?: string[];
 };
 
-/** Normalized C4 artifacts for How it works → Dive. */
+/** Normalized C4 artifacts for Context → Containers → Components. */
 export type ProjectC4Data = {
   mapPath?: string;
+  /** Preferred entry level from portfolio-map.json (default: context when present). */
+  defaultLevel?: ProjectC4Level;
   context?: ProjectC4Doc;
   containers?: ProjectC4Doc;
   /** Component docs keyed by dive id. */
   components: Record<string, ProjectC4Doc>;
+  /** C3 targets for the Dive sheet (and legacy graph node mapping). */
   diveTargets: ProjectC4DiveTarget[];
+  /** Zoom edges for Context↔Containers↔Components navigation. */
+  zoomTargets: ProjectC4ZoomTarget[];
 };
 
 export type ProjectDiagramData = {
@@ -78,7 +108,10 @@ export type ProjectDiagramData = {
   graphPath?: string;
   /** Normalized walkthrough from portfolio.yaml when authored */
   walkthrough?: PortfolioWalkthroughStep[];
-  /** Optional C4 context/containers/components for Dive. */
+  /**
+   * Optional C4 context/containers/components.
+   * Prefer over `graph` when context or containers Mermaid is present.
+   */
   c4?: ProjectC4Data;
 };
 

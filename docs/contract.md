@@ -107,29 +107,57 @@ At build time the fetch script resolves a **How it works** diagram for each proj
 3. Else portfolio-local fixture at `src/data/architecture-graphs/<slug>.graph.json`
 4. Else no `graph` — site keeps Mermaid or base template
 
-### C4 / Dive (optional)
+### C4 architecture (preferred when present)
 
-At fetch time the portfolio also pulls C4 artifacts when present (fail soft):
+At fetch time the portfolio pulls C4 artifacts when present (fail soft):
 
-1. `docs/c4/portfolio-map.json` — dive target list (shapes normalized at fetch)
+1. `docs/c4/portfolio-map.json` — zoom map (normalized at fetch)
 2. Else infer stems from `docs/c4/3-components/*.mmd`
-3. Optional: `docs/c4/1-context.{mmd,md}`, `docs/c4/2-containers.{mmd,md}`
-4. Per dive id: `docs/c4/3-components/<id>.{mmd,md}`
+3. `docs/c4/1-context.{mmd,md}`, `docs/c4/2-containers.{mmd,md}`
+4. Per component id: `docs/c4/3-components/<id>.{mmd,md}`
 
 Canonical map shape (preferred in new repos):
 
 ```json
 {
   "version": 1,
-  "diveTargets": [
-    { "id": "audio-engine", "label": "Audio engine", "graphNodeIds": ["audio-engine"] }
+  "defaultLevel": "context",
+  "context": { "path": "docs/c4/1-context.mmd" },
+  "containers": { "path": "docs/c4/2-containers.mmd" },
+  "zoom": [
+    {
+      "id": "system",
+      "label": "My System",
+      "fromLevel": "context",
+      "toLevel": "containers",
+      "matchLabels": ["My System"]
+    },
+    {
+      "id": "api",
+      "label": "API",
+      "fromLevel": "containers",
+      "toLevel": "components",
+      "matchLabels": ["API", "api"],
+      "componentsPath": "docs/c4/3-components/api.mmd"
+    }
+  ],
+  "componentZooms": [
+    {
+      "id": "api",
+      "label": "API",
+      "path": "docs/c4/3-components/api.mmd",
+      "markdownPath": "docs/c4/3-components/api.md",
+      "coversContainers": ["api"]
+    }
   ]
 }
 ```
 
-Legacy keys (`componentDiagrams`, `containersWithComponents`, `containerIdsWithComponents`, nested under `c4`) are still accepted.
+Legacy keys (`diveTargets`, `componentDiagrams`, `containersWithComponents`, `containerIdsWithComponents`, nested under `c4`) are still accepted and normalized into `diveTargets` + `zoomTargets`.
 
-See [architecture-graph.md](./architecture-graph.md) for the IR schema, authoring rules, layout, and tour requirements.
+**Site render order:** C4 Context (default) → Containers → Components dive. Owned `architecture.graph.json` is a fallback when Context/Containers Mermaid are missing.
+
+See [architecture-graph.md](./architecture-graph.md) for the IR schema (fallback) and authoring rules.
 
 Fetched Mermaid source is stored on the ok fetch result; the project page may still render it via a dynamic Mermaid import while IR rollout completes. Missing diagrams never break the page.
 

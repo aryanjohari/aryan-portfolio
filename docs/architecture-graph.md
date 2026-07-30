@@ -17,6 +17,7 @@ Related: [contract.md](./contract.md), [streamline-project-docs.md](./streamline
 - Schema and validation: `src/lib/architecture-graph.ts`
 - Pure rank/lane layout: `src/lib/architecture-graph-layout.ts`
 - SVG renderer: `src/components/ArchitectureGraphView.tsx`
+- C4 Context→Containers→Components UI: `src/components/ArchitectureJourney.tsx`
 - Temporary local fixtures: `src/data/architecture-graphs/<slug>.graph.json`
 - Validation: `npm run validate:graphs`
 
@@ -27,16 +28,19 @@ Local fixtures remain temporary until repository fetches for
 
 Projects should keep:
 
-- `docs/architecture.graph.json` — portfolio/C4 graph data (Containers overview)
+- `docs/c4/` — **preferred** Context / Containers / Components + `portfolio-map.json`
+- `docs/architecture.graph.json` — fallback portfolio map when C4 Mermaid is missing
 - `docs/architecture.mmd` — optional engineer-facing Mermaid
-- `docs/c4/` — optional Context / Containers / Components + `portfolio-map.json` for Dive
 - `portfolio.yaml` entries for `graph` and/or `diagram`
 
-The portfolio fetch pipeline resolves the repository graph first, then falls
-back to the local fixture for the slug when GitHub has no valid graph. Mermaid
-remains in the fetch contract but is not used for the primary overview.
+The portfolio fetch pipeline resolves C4 docs first for the project page
+architecture section. Owned graph IR is kept as a soft fallback while some
+repos lag. Mermaid remains in the fetch contract for GitHub + C4 rendering.
 
-C4 Dive uses `docs/c4/portfolio-map.json` (or inferred `3-components/*.mmd`)
+C4 uses `docs/c4/portfolio-map.json` with either:
+- **new:** `defaultLevel`, `zoom[]`, `componentZooms[]`
+- **legacy:** `diveTargets` / `containersWithComponents`
+
 plus per-container `.mmd` / `.md` pairs. Missing C4 never breaks the page.
 
 ## Minimal JSON shape
@@ -76,10 +80,12 @@ portfolio overview intentionally smaller than the full engineering diagram.
 
 ## Interim rendering order
 
-1. `diagram.graph` → fitted `ArchitectureGraphView` + plain beat list (highlight on beat select).
-2. Missing graph → static Input → Core → Output base SVG.
-3. When `diagram.c4.diveTargets` is present, Dive opens C3 mermaid + caption for a container.
-4. Otherwise Dive stays unavailable (no forced scroll/camera).
+1. `diagram.c4` with Context and/or Containers Mermaid → Context-first zoom UI
+   (See how it’s built → Containers; container zoom → Components dive).
+2. Else `diagram.graph` → fitted `ArchitectureGraphView` + plain beat list.
+3. Missing graph → static Input → Core → Output base SVG.
+4. When `diagram.c4.diveTargets` / component docs exist, Dive opens C3 mermaid.
+5. Otherwise Dive stays unavailable (no forced scroll/camera).
 
 No graph mode may pin the page, scrub a camera, or turn normal scrolling into a
 walkthrough.

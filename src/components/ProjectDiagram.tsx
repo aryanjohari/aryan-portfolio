@@ -12,7 +12,26 @@ type ProjectDiagramProps = {
   branch?: string;
 };
 
+function hasC4Surface(diagram: ProjectDiagramData): boolean {
+  const c4 = diagram.c4;
+  return Boolean(
+    c4?.context?.mermaid ||
+      c4?.context?.markdown ||
+      c4?.containers?.mermaid ||
+      c4?.containers?.markdown,
+  );
+}
+
 function sourceCopy(diagram: ProjectDiagramData): string {
+  if (hasC4Surface(diagram)) {
+    const parts: string[] = [];
+    if (diagram.c4?.context) parts.push("Context");
+    if (diagram.c4?.containers) parts.push("Containers");
+    if (Object.keys(diagram.c4?.components ?? {}).length > 0) parts.push("Components");
+    const map = diagram.c4?.mapPath ? ` (${diagram.c4.mapPath})` : "";
+    return `C4 architecture — ${parts.join(" → ")}${map}`;
+  }
+
   if (diagram.graph) {
     if (diagram.graphSource === "github" && diagram.graphPath) {
       return `Owned architecture map from ${diagram.graphPath}`;
@@ -30,8 +49,8 @@ function sourceCopy(diagram: ProjectDiagramData): string {
 }
 
 /**
- * Prefer the owned architecture IR. Until every repository provides it, render
- * a small static Input → Core → Output fallback with no walkthrough theatre.
+ * Prefer C4 Context/Containers when present; otherwise owned graph IR;
+ * otherwise a static Input → Core → Output fallback.
  */
 export function ProjectDiagram({
   title,
@@ -40,7 +59,7 @@ export function ProjectDiagram({
   githubRepoUrl,
   branch,
 }: ProjectDiagramProps) {
-  if (diagram.graph) {
+  if (hasC4Surface(diagram) || diagram.graph) {
     return (
       <ArchitectureJourney
         title={title}

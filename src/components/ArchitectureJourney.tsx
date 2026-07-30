@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 
-import { ArchitectureDive } from "@/components/ArchitectureDive";
 import { ArchitectureGraphView } from "@/components/ArchitectureGraphView";
+import { C4ArchitectureExplorer } from "@/components/C4ArchitectureExplorer";
 import type { ArchitectureGraph } from "@/lib/architecture-graph";
 import { resolveArchitectureSkin } from "@/lib/architecture-graph";
 import { resolveTourStepsFromGraph } from "@/lib/architecture-walkthrough";
@@ -11,7 +11,8 @@ import type { ProjectC4Data } from "@/lib/portfolio-schema";
 
 type ArchitectureJourneyProps = {
   title: string;
-  graph: ArchitectureGraph;
+  /** Owned graph IR — fallback when C4 Context/Containers are missing. */
+  graph?: ArchitectureGraph;
   sourceNote: string;
   slug?: string;
   c4?: ProjectC4Data;
@@ -19,9 +20,19 @@ type ArchitectureJourneyProps = {
   branch?: string;
 };
 
+function hasC4Surface(c4: ProjectC4Data | undefined): c4 is ProjectC4Data {
+  return Boolean(
+    c4 &&
+      (c4.context?.mermaid ||
+        c4.context?.markdown ||
+        c4.containers?.mermaid ||
+        c4.containers?.markdown),
+  );
+}
+
 /**
- * C4-ready architecture surface: fitted Containers overview + path beats,
- * with an optional user-driven Components dive (no scroll/camera theatre).
+ * C4 is the primary architecture path. The owned graph remains a deliberately
+ * separate fallback for projects that have no C4 context/container documents.
  */
 export function ArchitectureJourney({
   title,
@@ -32,61 +43,65 @@ export function ArchitectureJourney({
   githubRepoUrl,
   branch = "main",
 }: ArchitectureJourneyProps) {
-  const skin = resolveArchitectureSkin(graph, slug);
-  const steps = resolveTourStepsFromGraph(graph);
-  const diveTargets = useMemo(() => c4?.diveTargets ?? [], [c4?.diveTargets]);
-  const canDive = diveTargets.length > 0;
+  if (hasC4Surface(c4)) {
+    return (
+      <C4ArchitectureExplorer
+        title={title}
+        c4={c4}
+        sourceNote={sourceNote}
+        githubRepoUrl={githubRepoUrl}
+        branch={branch}
+      />
+    );
+  }
 
-  const diveNodeIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const target of diveTargets) {
-      for (const nodeId of target.graphNodeIds) ids.add(nodeId);
-    }
-    return [...ids];
-  }, [diveTargets]);
-
-  const nodeToDiveId = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const target of diveTargets) {
-      for (const nodeId of target.graphNodeIds) {
-        if (!map.has(nodeId)) map.set(nodeId, target.id);
-      }
-    }
-    return map;
-  }, [diveTargets]);
-
-  const [activeBeatId, setActiveBeatId] = useState<string | null>(
-    steps[0]?.id ?? null,
+  return (
+    <OwnedArchitectureFallback
+      title={title}
+      graph={graph}
+      sourceNote={sourceNote}
+      slug={slug}
+    />
   );
-  const [diveTargetId, setDiveTargetId] = useState<string | null>(null);
+}
 
+function OwnedArchitectureFallback({
+  title,
+  graph,
+  sourceNote,
+  slug,
+}: Pick<ArchitectureJourneyProps, "title" | "graph" | "sourceNote" | "slug">) {
+  const skin = graph ? resolveArchitectureSkin(graph, slug) : undefined;
+  const steps = useMemo(() => (graph ? resolveTourStepsFromGraph(graph) : []), [graph]);
+  const [activeBeatId, setActiveBeatId] = useState<string | null>(steps[0]?.id ?? null);
   const highlightedIds = useMemo(() => {
-    const step = steps.find((s) => s.id === activeBeatId);
+    const step = steps.find((candidate) => candidate.id === activeBeatId);
     return step?.spotlightIds ?? (activeBeatId ? [activeBeatId] : []);
   }, [steps, activeBeatId]);
 
+  if (!graph) {
+    return (
+      <section
+        className="arch-journey-section"
+        aria-labelledby="architecture-overview-heading"
+        data-exhibit-act="diagram"
+        data-diagram-mode="owned"
+      >
+        <div className="arch-overview-header project-exhibit-rail">
+          <h2 id="architecture-overview-heading" className="project-exhibit-section-title">
+            How it works
+          </h2>
+        </div>
+        <p className="arch-dive-fallback project-exhibit-rail" role="status">
+          Architecture docs are not available for this project yet.
+        </p>
+      </section>
+    );
+  }
+
   const summary =
     graph.summary?.trim() ||
-    (graph.title
-      ? `Here’s how ${graph.title} works end to end.`
-      : "Here’s how the system works end to end.");
-
-  function openDive(targetId?: string) {
-    if (!canDive) return;
-    setDiveTargetId(targetId ?? diveTargets[0]?.id ?? null);
-  }
-
-  function handleNodeActivate(nodeId: string) {
-    const diveId = nodeToDiveId.get(nodeId);
-    if (diveId) openDive(diveId);
-  }
-
-  function handleBeatHover(stepId: string) {
-    // Hover highlight only on fine pointers — avoids sticky hover on touch.
-    if (typeof window === "undefined") return;
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    setActiveBeatId(stepId);
-  }
+    (graph.title ? `Here’s how ${graph.title} works end to end.` : "Here’s how the system works.");
 
   return (
     <section
@@ -106,19 +121,6 @@ export function ArchitectureJourney({
       </div>
 
       <div className="arch-overview-layout">
-        <div className="arch-overview-graph">
-          <ArchitectureGraphView
-            graph={graph}
-            slug={slug}
-            skin={skin}
-            staticFull
-            ariaLabel={`Architecture for ${title}`}
-            highlightedIds={highlightedIds}
-            diveNodeIds={diveNodeIds}
-            onNodeActivate={canDive ? handleNodeActivate : undefined}
-          />
-        </div>
-
         {steps.length > 0 ? (
           <ol className="arch-path-story" aria-label="Architecture path">
             {steps.map((step, index) => {
@@ -130,7 +132,11 @@ export function ArchitectureJourney({
                     className={`arch-path-beat${isActive ? " is-active" : ""}`}
                     aria-current={isActive ? "step" : undefined}
                     onClick={() => setActiveBeatId(step.id)}
-                    onMouseEnter={() => handleBeatHover(step.id)}
+                    onMouseEnter={() => {
+                      if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+                        setActiveBeatId(step.id);
+                      }
+                    }}
                     onFocus={() => setActiveBeatId(step.id)}
                   >
                     <span className="arch-path-beat-index">
@@ -153,39 +159,20 @@ export function ArchitectureJourney({
             })}
           </ol>
         ) : null}
-      </div>
 
-      <div className="arch-overview-actions project-exhibit-rail">
-        <button
-          type="button"
-          className="arch-dive-open"
-          disabled={!canDive}
-          title={
-            canDive
-              ? "Open a component-level architecture dive"
-              : "Component-level architecture dive is not available for this project yet."
-          }
-          onClick={() => openDive()}
-        >
-          {canDive ? "Dive into architecture" : "Dive to components — unavailable"}
-        </button>
-        {canDive ? (
-          <p className="arch-dive-hint">
-            Or click a marked container on the map.
-          </p>
-        ) : null}
+        <div className="arch-overview-stage">
+          <div className="arch-overview-graph">
+            <ArchitectureGraphView
+              graph={graph}
+              slug={slug}
+              skin={skin}
+              staticFull
+              ariaLabel={`Architecture for ${title}`}
+              highlightedIds={highlightedIds}
+            />
+          </div>
+        </div>
       </div>
-
-      {diveTargetId && c4 ? (
-        <ArchitectureDive
-          c4={c4}
-          targetId={diveTargetId}
-          githubRepoUrl={githubRepoUrl}
-          branch={branch}
-          onClose={() => setDiveTargetId(null)}
-          onSelectTarget={setDiveTargetId}
-        />
-      ) : null}
     </section>
   );
 }

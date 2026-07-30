@@ -13,6 +13,8 @@ import type {
   ProjectC4Data,
   ProjectC4Doc,
   ProjectC4DiveTarget,
+  ProjectC4Level,
+  ProjectC4ZoomTarget,
   ProjectDiagramData,
 } from "../src/lib/portfolio-schema";
 import { validatePortfolioYaml } from "../src/lib/portfolio-schema";
@@ -371,47 +373,200 @@ async function fetchC4DocPair(
   return doc.mermaid || doc.markdown ? doc : undefined;
 }
 
-function extractDiveIdsFromMap(raw: unknown): string[] {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return [];
-  const record = raw as Record<string, unknown>;
-  const ids = new Set<string>();
+function componentIdFromPath(path: string | undefined): string | undefined {
+  if (!path?.trim()) return undefined;
+  const base = path.trim().split("/").pop() ?? path.trim();
+  const stem = base.replace(/\.(mmd|md|mermaid)$/i, "").trim();
+  return stem || undefined;
+}
 
-  const takeStringArray = (value: unknown) => {
-    if (!Array.isArray(value)) return;
-    for (const item of value) {
-      if (typeof item === "string" && item.trim()) ids.add(item.trim());
+function asC4Level(value: unknown): ProjectC4Level | undefined {
+  if (value === "context" || value === "containers" || value === "components") {
+    return value;
+  }
+  return undefined;
+}
+
+function takeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    .map((item) => item.trim());
+}
+
+type ParsedC4Map = {
+  defaultLevel?: ProjectC4Level;
+  diveIds: string[];
+  diveMeta: Map<
+    string,
+    {
+      label?: string;
+      graphNodeIds?: unknown;
+      matchLabels?: string[];
+      coversContainers?: string[];
     }
+  >;
+  zoomTargets: ProjectC4ZoomTarget[];
+  /** Extra component file stems referenced only via zoom.componentsPath. */
+  componentPathIds: string[];
+};
+
+function parsePortfolioMap(raw: unknown): ParsedC4Map {
+  const empty: ParsedC4Map = {
+    diveIds: [],
+    diveMeta: new Map(),
+    zoomTargets: [],
+    componentPathIds: [],
   };
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return empty;
 
-  takeStringArray(record.componentDiagrams);
-  takeStringArray(record.containersWithComponents);
-  takeStringArray(record.containerIdsWithComponents);
+  const record = raw as Record<string, unknown>;
+  const diveIds = new Set<string>();
+  const diveMeta = new Map<
+    string,
+    {
+      label?: string;
+      graphNodeIds?: unknown;
+      matchLabels?: string[];
+      coversContainers?: string[];
+    }
+  >();
+  const zoomTargets: ProjectC4ZoomTarget[] = [];
+  const componentPathIds: string[] = [];
+  const defaultLevel = asC4Level(record.defaultLevel);
 
-  const c4 = record.c4;
-  if (c4 && typeof c4 === "object" && !Array.isArray(c4)) {
-    const c4Rec = c4 as Record<string, unknown>;
-    takeStringArray(c4Rec.componentDiagrams);
-    takeStringArray(c4Rec.containersWithComponents);
-    takeStringArray(c4Rec.containerIdsWithComponents);
+  // Legacy: string id lists
+  for (const id of [
+    ...takeStringArray(record.componentDiagrams),
+    ...takeStringArray(record.containersWithComponents),
+    ...takeStringArray(record.containerIdsWithComponents),
+  ]) {
+    diveIds.add(id);
   }
 
+  const nestedC4 = record.c4;
+  if (nestedC4 && typeof nestedC4 === "object" && !Array.isArray(nestedC4)) {
+    const c4Rec = nestedC4 as Record<string, unknown>;
+    for (const id of [
+      ...takeStringArray(c4Rec.componentDiagrams),
+      ...takeStringArray(c4Rec.containersWithComponents),
+      ...takeStringArray(c4Rec.containerIdsWithComponents),
+    ]) {
+      diveIds.add(id);
+    }
+  }
+
+  // Legacy: diveTargets[]
   if (Array.isArray(record.diveTargets)) {
     for (const item of record.diveTargets) {
-      if (typeof item === "string" && item.trim()) ids.add(item.trim());
-      if (item && typeof item === "object" && !Array.isArray(item)) {
-        const id = (item as Record<string, unknown>).id;
-        if (typeof id === "string" && id.trim()) ids.add(id.trim());
+      if (typeof item === "string" && item.trim()) {
+        diveIds.add(item.trim());
+        continue;
       }
+      if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+      const rec = item as Record<string, unknown>;
+      if (typeof rec.id !== "string" || !rec.id.trim()) continue;
+      const id = rec.id.trim();
+      diveIds.add(id);
+      diveMeta.set(id, {
+        label: typeof rec.label === "string" ? rec.label : undefined,
+        graphNodeIds: rec.graphNodeIds,
+        matchLabels: takeStringArray(rec.matchLabels),
+      });
     }
   }
 
-  return [...ids];
+  // New: componentZooms[] — canonical C3 docs
+  if (Array.isArray(record.componentZooms)) {
+    for (const item of record.componentZooms) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+      const rec = item as Record<string, unknown>;
+      const fromPath = componentIdFromPath(
+        typeof rec.path === "string"
+          ? rec.path
+          : typeof rec.markdownPath === "string"
+            ? rec.markdownPath
+            : undefined,
+      );
+      const id =
+        (typeof rec.id === "string" && rec.id.trim()) || fromPath || undefined;
+      if (!id) continue;
+      diveIds.add(id);
+      diveMeta.set(id, {
+        label: typeof rec.label === "string" ? rec.label : diveMeta.get(id)?.label,
+        graphNodeIds: rec.graphNodeIds ?? diveMeta.get(id)?.graphNodeIds,
+        matchLabels: [
+          ...(diveMeta.get(id)?.matchLabels ?? []),
+          ...takeStringArray(rec.matchLabels),
+        ],
+        coversContainers: takeStringArray(rec.coversContainers),
+      });
+    }
+  }
+
+  // New: zoom[] — Context → Containers → Components edges
+  if (Array.isArray(record.zoom)) {
+    for (const item of record.zoom) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+      const rec = item as Record<string, unknown>;
+      if (typeof rec.id !== "string" || !rec.id.trim()) continue;
+      const fromLevel = asC4Level(rec.fromLevel);
+      const toLevel = asC4Level(rec.toLevel);
+      if (!fromLevel || !toLevel) continue;
+
+      const componentsPath =
+        typeof rec.componentsPath === "string" ? rec.componentsPath.trim() : undefined;
+      const componentId =
+        toLevel === "components" ? componentIdFromPath(componentsPath) : undefined;
+      if (componentId) {
+        componentPathIds.push(componentId);
+        diveIds.add(componentId);
+      }
+
+      const matchLabels = takeStringArray(rec.matchLabels);
+      if (typeof rec.label === "string" && rec.label.trim()) {
+        matchLabels.push(rec.label.trim());
+      }
+      matchLabels.push(rec.id.trim());
+
+      zoomTargets.push({
+        id: rec.id.trim(),
+        label:
+          (typeof rec.label === "string" && rec.label.trim()) ||
+          humanizeDiveId(rec.id.trim()),
+        fromLevel,
+        toLevel,
+        matchLabels: [...new Set(matchLabels)],
+        ...(componentId ? { componentId } : {}),
+      });
+    }
+  }
+
+  // Attach container→component match labels onto dive meta via coversContainers / zoom
+  for (const zoom of zoomTargets) {
+    if (zoom.toLevel !== "components" || !zoom.componentId) continue;
+    const existing = diveMeta.get(zoom.componentId) ?? {};
+    diveMeta.set(zoom.componentId, {
+      ...existing,
+      matchLabels: [
+        ...new Set([...(existing.matchLabels ?? []), ...zoom.matchLabels, zoom.id]),
+      ],
+    });
+  }
+
+  return {
+    ...(defaultLevel ? { defaultLevel } : {}),
+    diveIds: [...diveIds],
+    diveMeta,
+    zoomTargets,
+    componentPathIds: [...new Set(componentPathIds)],
+  };
 }
 
 function resolveGraphNodeIdsForDive(
   diveId: string,
   graphNodeIds: Set<string>,
-  mapEntry?: { graphNodeIds?: unknown },
+  mapEntry?: { graphNodeIds?: unknown; coversContainers?: string[] },
 ): string[] {
   if (mapEntry && Array.isArray(mapEntry.graphNodeIds)) {
     const explicit = mapEntry.graphNodeIds.filter(
@@ -422,12 +577,17 @@ function resolveGraphNodeIdsForDive(
     }
   }
 
-  const candidates = DIVE_ID_ALIASES[diveId] ?? [diveId];
-  return candidates.filter((id) => graphNodeIds.has(id));
+  const candidates = new Set<string>(DIVE_ID_ALIASES[diveId] ?? [diveId]);
+  for (const covered of mapEntry?.coversContainers ?? []) {
+    candidates.add(covered);
+    for (const alias of DIVE_ID_ALIASES[covered] ?? []) candidates.add(alias);
+  }
+  return [...candidates].filter((id) => graphNodeIds.has(id));
 }
 
 /**
- * Resolve optional C4 artifacts for Dive. Fail soft — missing C4 never breaks a project.
+ * Resolve optional C4 artifacts. Fail soft — missing C4 never breaks a project.
+ * Normalizes both legacy diveTargets and new defaultLevel/zoom/componentZooms maps.
  */
 async function resolveC4(
   slug: string,
@@ -439,35 +599,24 @@ async function resolveC4(
   const graphNodeIds = new Set(graph?.nodes.map((n) => n.id) ?? []);
 
   let mapPath: string | undefined;
-  let diveIds: string[] = [];
-  const mapDiveMeta = new Map<string, { label?: string; graphNodeIds?: unknown }>();
+  let parsedMap: ParsedC4Map = {
+    diveIds: [],
+    diveMeta: new Map(),
+    zoomTargets: [],
+    componentPathIds: [],
+  };
 
   const mapFile = await fetchRepoFile(repo, branch, C4_MAP_PATH, token);
   if (mapFile.ok) {
     try {
-      const parsed = JSON.parse(mapFile.text) as unknown;
+      parsedMap = parsePortfolioMap(JSON.parse(mapFile.text) as unknown);
       mapPath = C4_MAP_PATH;
-      diveIds = extractDiveIdsFromMap(parsed);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        const diveTargets = (parsed as Record<string, unknown>).diveTargets;
-        if (Array.isArray(diveTargets)) {
-          for (const item of diveTargets) {
-            if (item && typeof item === "object" && !Array.isArray(item)) {
-              const rec = item as Record<string, unknown>;
-              if (typeof rec.id === "string" && rec.id.trim()) {
-                mapDiveMeta.set(rec.id.trim(), {
-                  label: typeof rec.label === "string" ? rec.label : undefined,
-                  graphNodeIds: rec.graphNodeIds,
-                });
-              }
-            }
-          }
-        }
-      }
     } catch {
       console.warn(`  [${slug}] invalid C4 portfolio-map.json — ignoring map`);
     }
   }
+
+  let diveIds = [...parsedMap.diveIds];
 
   if (diveIds.length === 0) {
     const entries = await listRepoDir(repo, branch, C4_COMPONENTS_DIR, token);
@@ -505,16 +654,55 @@ async function resolveC4(
     );
     if (doc) components[id] = doc;
 
-    const meta = mapDiveMeta.get(id);
+    const meta = parsedMap.diveMeta.get(id);
     const nodeIds = resolveGraphNodeIdsForDive(id, graphNodeIds, meta);
     diveTargets.push({
       id,
       label: meta?.label?.trim() || DIVE_LABEL_OVERRIDES[id] || humanizeDiveId(id),
       graphNodeIds: nodeIds,
+      ...(meta?.matchLabels && meta.matchLabels.length > 0
+        ? { matchLabels: [...new Set(meta.matchLabels)] }
+        : {}),
+      ...(meta?.coversContainers && meta.coversContainers.length > 0
+        ? { coversContainers: meta.coversContainers }
+        : {}),
     });
   }
 
+  // Prefer component docs that actually fetched; keep map-only stubs only when map exists.
   const filteredTargets = diveTargets.filter((t) => components[t.id] || mapPath);
+
+  // Synthesize legacy-compatible zoom when map only had diveTargets.
+  let zoomTargets = parsedMap.zoomTargets;
+  if (zoomTargets.length === 0 && (context || containers)) {
+    if (context && containers) {
+      zoomTargets = [
+        {
+          id: slug,
+          label: humanizeDiveId(slug),
+          fromLevel: "context",
+          toLevel: "containers",
+          matchLabels: [humanizeDiveId(slug)],
+        },
+      ];
+    }
+    for (const target of filteredTargets) {
+      if (!components[target.id]) continue;
+      zoomTargets.push({
+        id: target.id,
+        label: target.label,
+        fromLevel: "containers",
+        toLevel: "components",
+        matchLabels: [
+          target.label,
+          target.id,
+          ...(target.matchLabels ?? []),
+          ...target.graphNodeIds,
+        ],
+        componentId: target.id,
+      });
+    }
+  }
 
   if (
     !context &&
@@ -525,12 +713,22 @@ async function resolveC4(
     return undefined;
   }
 
+  const defaultLevel =
+    parsedMap.defaultLevel ??
+    (context?.mermaid || context?.markdown
+      ? "context"
+      : containers?.mermaid || containers?.markdown
+        ? "containers"
+        : undefined);
+
   return {
     ...(mapPath ? { mapPath } : {}),
+    ...(defaultLevel ? { defaultLevel } : {}),
     ...(context ? { context } : {}),
     ...(containers ? { containers } : {}),
     components,
     diveTargets: filteredTargets,
+    zoomTargets,
   };
 }
 
@@ -665,12 +863,21 @@ async function fetchEntry(
       }
 
       const c4 = await resolveC4(slug, repo, branch, token, graphFields.graph);
-      if (c4 && c4.diveTargets.length > 0) {
+      if (c4) {
+        const levels = [
+          c4.context ? "C1" : null,
+          c4.containers ? "C2" : null,
+          Object.keys(c4.components).length > 0
+            ? `C3×${Object.keys(c4.components).length}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join("+");
+        const zoomNote =
+          c4.zoomTargets.length > 0 ? `, zoom:${c4.zoomTargets.length}` : "";
         console.log(
-          `  ${slug.padEnd(20)} c4     ← ${c4.diveTargets.length} dive target(s)`,
+          `  ${slug.padEnd(20)} c4     ← ${levels || "map"}${zoomNote}`,
         );
-      } else if (c4) {
-        console.log(`  ${slug.padEnd(20)} c4     ← docs (no dive targets)`);
       } else {
         console.log(`  ${slug.padEnd(20)} c4     ← (none)`);
       }
@@ -729,8 +936,18 @@ function statusNotes(result: FetchResult): string {
       const graphNote = result.diagram?.graph
         ? `graph:${result.diagram.graphSource ?? "yes"}`
         : "graph:none";
-      const c4Count = result.diagram?.c4?.diveTargets.length ?? 0;
-      const c4Note = c4Count > 0 ? `c4:${c4Count}` : "c4:none";
+      const c4 = result.diagram?.c4;
+      const c4Note = c4
+        ? `c4:${[
+            c4.context ? "C1" : null,
+            c4.containers ? "C2" : null,
+            Object.keys(c4.components).length
+              ? `C3×${Object.keys(c4.components).length}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join("+") || "map"}`
+        : "c4:none";
       return `validated (${result.yaml.stack.length} stack items, ${diagramNote}, ${graphNote}, ${c4Note})`;
     }
     case "missing_yaml":

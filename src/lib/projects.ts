@@ -20,6 +20,8 @@ export type {
   ProjectC4Data,
   ProjectC4DiveTarget,
   ProjectC4Doc,
+  ProjectC4Level,
+  ProjectC4ZoomTarget,
   ProjectDiagramData,
   ProjectStatus,
 } from "@/lib/portfolio-schema";

@@ -306,11 +306,12 @@ Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **
 | `ProjectGallery` | `src/components/ProjectGallery.tsx` | Workshop Three.js edge-glow tablet carousel (drag/snap; DOM a11y + fallback) |
 | `WorkshopCarousel` | `src/components/motion/WorkshopCarousel.ts` | Page-local transparent WebGL factory for edge-glow tablets — Fresnel plates / type / rim (dispose on unmount) |
 | `ProjectExhibit` | `src/components/ProjectExhibit.tsx` | Project exhibit: hero, How it works, stack, details |
-| `ProjectDiagram` | `src/components/ProjectDiagram.tsx` | How it works — owned fitted graph or static base SVG |
-| `ArchitectureJourney` | `src/components/ArchitectureJourney.tsx` | Containers overview + beats + Dive entry |
-| `ArchitectureGraphView` | `src/components/ArchitectureGraphView.tsx` | Owned IR → SVG (highlight / dive nodes) |
-| `ArchitectureDive` | `src/components/ArchitectureDive.tsx` | C3 sheet/modal (mermaid + caption) |
-| `MermaidDiagram` | `src/components/MermaidDiagram.tsx` | Client Mermaid renderer for Dive only |
+| `ProjectDiagram` | `src/components/ProjectDiagram.tsx` | How it works — C4 explorer, owned fitted graph, or static base SVG |
+| `ArchitectureJourney` | `src/components/ArchitectureJourney.tsx` | Selects the unified C4 path or owned-graph fallback |
+| `C4ArchitectureExplorer` | `src/components/C4ArchitectureExplorer.tsx` | Full-bleed C1 → C2 → C3 state and navigation |
+| `C4DiagramViewer` | `src/components/C4DiagramViewer.tsx` | Live C4 SVG fit, pan, touch pinch, zoom, and fullscreen |
+| `ArchitectureGraphView` | `src/components/ArchitectureGraphView.tsx` | Owned IR → SVG fallback with highlighted path |
+| `MermaidDiagram` | `src/components/MermaidDiagram.tsx` | Client Mermaid renderer with normalized C4 zoom activators |
 | `DemoPanel` | `src/components/DemoPanel.tsx` | Exhibit sandbox (and unused iframe helper) |
 
 ## Responsive rules

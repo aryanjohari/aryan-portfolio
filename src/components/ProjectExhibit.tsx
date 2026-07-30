@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import type { Project } from "@/lib/projects";
-import { contentNoticeHeading } from "@/lib/projects";
+import { contentNoticeHeading, getAllProjects } from "@/lib/projects";
 
 import { DemoPanel } from "@/components/DemoPanel";
 import { ProjectDiagram } from "@/components/ProjectDiagram";
@@ -62,21 +62,17 @@ function StackTags({ stack }: { stack: string[] }) {
   );
 }
 
-/**
- * Project case study shell (first draft):
- * 1. Hero — badge, title, description, CTAs (scrolls away naturally)
- * 2. How it works — path story + full owned graph (via ProjectDiagram)
- * 3. Dive — optional, inside ArchitectureJourney (not scroll-forced)
- * 4. Stack + details
- *
- * Motion polish / showcase handoffs deferred.
- */
+/** Project case study shell: hero → strip → architecture → proof → coda. */
 export function ProjectExhibit({ project }: ProjectExhibitProps) {
   const hasContent = project.contentStatus === "ok";
   const liveDemoUrl = resolveLiveDemoUrl(project);
   const badge = resolveBadge(project);
-  const showExhibitStage = project.demo?.type === "exhibit";
+  const showProofStage = Boolean(project.demo);
   const visual = isVisualProject(liveDemoUrl);
+  const projects = getAllProjects();
+  const projectIndex = projects.findIndex((item) => item.slug === project.slug);
+  const nextProject =
+    projectIndex >= 0 ? projects[(projectIndex + 1) % projects.length] : undefined;
 
   return (
     <ProjectExhibitMotion>
@@ -130,14 +126,37 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
                 Docs
               </a>
             )}
-            <Link href="/workshop" className="project-exhibit-action project-exhibit-action--quiet">
-              ← Back to workshop
-            </Link>
           </nav>
           <p className="project-exhibit-lede" data-exhibit-hero-lede>
             {exhibitDescription(project)}
           </p>
         </header>
+
+        <section className="project-exhibit-strip" aria-label="Project summary">
+          <p className="project-exhibit-strip-status">
+            <span>Status</span>
+            <strong>{project.status}</strong>
+          </p>
+          <div className="project-exhibit-strip-stack">
+            <span className="project-exhibit-strip-label">Stack</span>
+            <StackTags stack={project.stack} />
+          </div>
+          <nav className="project-exhibit-strip-links" aria-label="Key project links">
+            {liveDemoUrl ? (
+              <a href={liveDemoUrl} target="_blank" rel="noopener noreferrer">
+                Demo ↗
+              </a>
+            ) : null}
+            <a href={project.links.github} target="_blank" rel="noopener noreferrer">
+              GitHub ↗
+            </a>
+            {project.links.docs ? (
+              <a href={project.links.docs} target="_blank" rel="noopener noreferrer">
+                Docs ↗
+              </a>
+            ) : null}
+          </nav>
+        </section>
 
         <div className="project-exhibit-how" data-exhibit-act="how">
           <ProjectDiagram
@@ -149,46 +168,24 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
           />
         </div>
 
-        <div className="project-exhibit-rest project-exhibit-rail" data-exhibit-rest>
-          {showExhibitStage && (
-            <section className="project-exhibit-stage" aria-label="Exhibit" data-exhibit-act="stage">
-              <DemoPanel demo={project.demo} />
-            </section>
-          )}
-
+        <div className="project-exhibit-rest" data-exhibit-rest>
           <section
-            className="project-exhibit-skills"
-            aria-labelledby="project-skills-heading"
-            data-exhibit-act="skills"
+            className={`project-exhibit-proof${showProofStage ? " project-exhibit-proof--stage" : ""}`}
+            aria-labelledby="project-proof-heading"
+            data-exhibit-act="stage"
           >
-            <div className="project-exhibit-skills-head" data-exhibit-skills-item>
-              <h2 id="project-skills-heading" className="project-exhibit-section-title">
-                Stack
+            <div className="project-exhibit-proof-heading project-exhibit-rail">
+              <h2 id="project-proof-heading" className="project-exhibit-section-title">
+                Proof
               </h2>
-              <p className="project-exhibit-skills-status" data-exhibit-skills-item>
-                <span className="visually-hidden">Status: </span>
-                {project.status}
-              </p>
             </div>
-            <div data-exhibit-skills-item>
-              <StackTags stack={project.stack} />
-            </div>
-          </section>
 
-          <section
-            className="project-exhibit-coda"
-            aria-labelledby="project-coda-heading"
-            data-exhibit-act="coda"
-          >
-            <h2 id="project-coda-heading" className="project-exhibit-section-title" data-exhibit-coda-item>
-              Details
-            </h2>
-            {!hasContent && (
-              <aside className="content-notice" role="status" data-exhibit-coda-item>
+            {!hasContent ? (
+              <aside className="content-notice project-exhibit-rail" role="status">
                 <p className="content-notice-heading">{contentNoticeHeading(project.contentStatus)}</p>
-                {project.contentMessage && (
+                {project.contentMessage ? (
                   <p className="content-notice-message">{project.contentMessage}</p>
-                )}
+                ) : null}
                 <a
                   href={`https://github.com/${project.repo}`}
                   target="_blank"
@@ -198,41 +195,48 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
                   View repository on GitHub
                 </a>
               </aside>
+            ) : null}
+
+            {showProofStage ? (
+              <div className="project-exhibit-stage" aria-label="Project proof">
+              <DemoPanel demo={project.demo} />
+              </div>
+            ) : (
+              <div className="project-exhibit-proof-note">
+                <p className="project-exhibit-proof-kicker">Result</p>
+                <p>{project.summary}</p>
+              </div>
             )}
-            <dl className="project-details-list">
-              <div className="project-details-row" data-exhibit-coda-item>
-                <dt>Status</dt>
-                <dd className="project-details-value">{project.status}</dd>
-              </div>
-              <div className="project-details-row" data-exhibit-coda-item>
-                <dt>Repository</dt>
-                <dd className="project-details-value">
-                  <a href={project.links.github} target="_blank" rel="noopener noreferrer">
-                    {project.links.github.replace("https://github.com/", "")}
+          </section>
+
+          <section
+            className="project-exhibit-coda project-exhibit-rail"
+            aria-labelledby="project-coda-heading"
+            data-exhibit-act="coda"
+          >
+            <h2 id="project-coda-heading" className="project-exhibit-section-title" data-exhibit-coda-item>
+              Continue
+            </h2>
+            <div className="project-exhibit-coda-links">
+              <div className="project-exhibit-coda-resources">
+                <a href={project.links.github} target="_blank" rel="noopener noreferrer">
+                  GitHub ↗
+                </a>
+                {project.links.docs ? (
+                  <a href={project.links.docs} target="_blank" rel="noopener noreferrer">
+                    Docs ↗
                   </a>
-                </dd>
+                ) : null}
               </div>
-              {project.links.docs && (
-                <div className="project-details-row" data-exhibit-coda-item>
-                  <dt>Docs</dt>
-                  <dd className="project-details-value">
-                    <a href={project.links.docs} target="_blank" rel="noopener noreferrer">
-                      Documentation
-                    </a>
-                  </dd>
-                </div>
-              )}
-              {liveDemoUrl && (
-                <div className="project-details-row" data-exhibit-coda-item>
-                  <dt>Live demo</dt>
-                  <dd className="project-details-value">
-                    <a href={liveDemoUrl} target="_blank" rel="noopener noreferrer">
-                      {liveDemoUrl.replace(/^https?:\/\//, "")}
-                    </a>
-                  </dd>
-                </div>
-              )}
-            </dl>
+              <nav className="project-exhibit-coda-nav" aria-label="Project navigation">
+                <Link href="/workshop">← Back to workshop</Link>
+                {nextProject && nextProject.slug !== project.slug ? (
+                  <Link href={`/projects/${nextProject.slug}`}>
+                    Next: {nextProject.title} →
+                  </Link>
+                ) : null}
+              </nav>
+            </div>
           </section>
         </div>
       </article>

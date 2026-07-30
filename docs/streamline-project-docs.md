@@ -33,11 +33,13 @@ The portfolio fetches:
    - `graph:` path in yaml if set
    - else `docs/architecture.graph.json`
    - else portfolio-local fixture while rolling out
-4. Optional C4 Dive artifacts (fail soft):
-   - `docs/c4/portfolio-map.json` (dive targets), else infer `docs/c4/3-components/*.mmd`
+4. Optional C4 architecture (fail soft; preferred over graph IR when present):
+   - `docs/c4/portfolio-map.json` (`defaultLevel` / `zoom` / `componentZooms`, or legacy `diveTargets`)
    - `docs/c4/1-context.*`, `docs/c4/2-containers.*`, `docs/c4/3-components/<id>.*`
-5. Else portfolio shows a generic base diagram
-Prefer shipping **`docs/architecture.mmd`** (GitHub) and **`docs/architecture.graph.json`** (portfolio), and set in yaml:
+   - else infer `docs/c4/3-components/*.mmd`
+5. Else portfolio shows owned graph IR, then a generic base diagram
+Prefer shipping **`docs/c4/`** (Context → Containers → Components) for the site,
+plus **`docs/architecture.mmd`** (GitHub). Owned graph IR is optional fallback:
 `diagram: docs/architecture.mmd`
 `graph: docs/architecture.graph.json`
 ### portfolio.yaml schema

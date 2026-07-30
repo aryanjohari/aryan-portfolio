@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-30T05:09:03.928Z",
+  "fetchedAt": "2026-07-30T09:30:45.174Z",
   "results": [
     {
       "slug": "background-studio",
@@ -16,174 +16,156 @@
           "React Three Fiber",
           "GLSL",
           "Zustand",
-          "Tailwind CSS",
-          "GSAP"
+          "Tailwind CSS"
         ],
         "status": "active",
         "links": {
           "github": "https://github.com/aryanjohari/web-image-editor",
           "demo": "https://image.arkhives.nz",
-          "docs": "https://github.com/aryanjohari/web-image-editor/blob/main/src/lib/preset/PORTING.md"
+          "docs": "https://github.com/aryanjohari/web-image-editor/blob/main/docs/c4/README.md"
         },
         "slug": "background-studio",
-        "diagram": "docs/architecture.mmd",
-        "graph": "docs/architecture.graph.json"
+        "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-07-30T05:08:51.864Z",
+      "fetchedAt": "2026-07-30T09:30:38.969Z",
       "diagram": {
         "source": "github",
-        "path": "docs/architecture.mmd",
-        "mermaid": "flowchart TB\n  subgraph inputs [Inputs]\n    Upload[Hero / overlay upload]\n    Looks[Catalog looks + mood]\n    Tune[Intensity / Motion / Grit]\n  end\n\n  subgraph core [Core]\n    Spa[Studio SPA + Zustand]\n    Shader[Single-pass GLSL compositor]\n    MoodApi[Mood API optional]\n    OpenAI[OpenAI optional]\n  end\n\n  subgraph outputs [Outputs]\n    JSON[Preset JSON]\n    Media[WebM / PNG]\n    Embed[Your site embed]\n  end\n\n  Upload --> Spa\n  Looks --> Spa\n  Tune --> Spa\n  Spa --> Shader\n  Spa -.->|POST /api/mood| MoodApi\n  MoodApi -.-> OpenAI\n  Shader --> JSON\n  Shader --> Media\n  JSON --> Embed",
+        "path": "docs/c4/2-containers.mmd",
+        "mermaid": "%% C4 Containers — Background Studio\n%% IDs: studio-spa (Container spa), mood-api (Container moodApi)\n%% If your Mermaid renderer lacks C4Container, use the flowchart block at the bottom (uncomment it / paste into a viewer).\n\nC4Container\n  title Containers — Background Studio\n  Person(designer, \"Designer\", \"Uploads textures, tunes looks, exports\")\n\n  System_Boundary(studio, \"Background Studio\") {\n    Container(spa, \"Background Studio SPA\", \"Vite, React, R3F, GLSL, Zustand\", \"Routes, scene store, single-pass WebGL compositor, preset / mood / export client\")\n    Container(moodApi, \"Mood API\", \"Vercel serverless\", \"Optional POST /api/mood → OpenAI → validated basePresetId + patch\")\n  }\n\n  System_Ext(openai, \"OpenAI API\", \"Chat Completions\")\n  System_Ext(embedSite, \"Your production site\", \"Consumes preset JSON\")\n\n  Rel(designer, spa, \"Uses in the browser\")\n  Rel(spa, embedSite, \"Exports preset JSON\")\n  Rel(spa, designer, \"Optional WebM / PNG\")\n  Rel(spa, moodApi, \"POST /api/mood when AI enabled (gets basePresetId + patch)\", \"HTTPS\")\n  Rel(moodApi, openai, \"Chat completions\", \"HTTPS\")\n\n%% flowchart equivalent (same topology):\n%% flowchart TB\n%%   designer[Designer]\n%%   subgraph browser [Browser]\n%%     spa[\"studio-spa — Background Studio SPA\"]\n%%   end\n%%   moodApi[\"mood-api — Mood API on Vercel\"]\n%%   openai[OpenAI API]\n%%   embed[Your production site]\n%%   designer -->|uploads and tunes| spa\n%%   spa -->|exports preset JSON| embed\n%%   spa -->|optional WebM / PNG| designer\n%%   spa -.->|POST /api/mood when AI enabled| moodApi\n%%   moodApi -.->|chat completions| openai\n%%   moodApi -.->|basePresetId + optional patch| spa",
         "graph": {
           "version": 1,
           "nodes": [
             {
               "id": "upload",
-              "label": "Hero / overlay upload",
+              "label": "Hero & overlay",
               "kind": "input",
-              "shape": "rounded",
-              "groupId": "inputs"
+              "groupId": "inputs",
+              "layout": {
+                "dx": -8
+              }
             },
             {
-              "id": "looks-mood",
-              "label": "Catalog looks + mood",
+              "id": "looks",
+              "label": "14 looks + mood",
               "kind": "input",
-              "shape": "rounded",
-              "groupId": "inputs"
+              "groupId": "inputs",
+              "layout": {
+                "dx": 10
+              }
             },
             {
               "id": "tune",
-              "label": "Intensity / Motion / Grit",
+              "label": "Intensity · Motion · Grit",
               "kind": "input",
-              "shape": "rounded",
-              "groupId": "inputs"
+              "groupId": "inputs",
+              "layout": {
+                "dx": -4
+              }
             },
             {
-              "id": "spa",
-              "label": "Studio SPA + Zustand",
+              "id": "store",
+              "label": "Scene state",
+              "kind": "store",
+              "shape": "cylinder",
+              "groupId": "core",
+              "layout": {
+                "scale": 1.06,
+                "weight": "normal"
+              }
+            },
+            {
+              "id": "look",
+              "label": "Look engine",
               "kind": "process",
-              "shape": "rect",
-              "groupId": "core"
+              "groupId": "core",
+              "layout": {
+                "scale": 1.26,
+                "weight": "spine"
+              }
             },
             {
-              "id": "shader",
-              "label": "Single-pass GLSL compositor",
+              "id": "pass",
+              "label": "One GPU pass",
               "kind": "process",
-              "shape": "rect",
-              "groupId": "core"
+              "groupId": "core",
+              "layout": {
+                "scale": 1.2,
+                "weight": "spine"
+              }
             },
             {
-              "id": "mood-api",
-              "label": "Mood API (optional)",
-              "kind": "process",
-              "shape": "stadium",
-              "groupId": "core"
-            },
-            {
-              "id": "openai",
-              "label": "OpenAI (optional)",
-              "kind": "other",
-              "shape": "ticket",
-              "groupId": "core"
-            },
-            {
-              "id": "preset-json",
+              "id": "json",
               "label": "Preset JSON",
               "kind": "output",
-              "shape": "rounded",
-              "groupId": "outputs"
+              "groupId": "exports",
+              "layout": {
+                "dx": 8
+              }
             },
             {
               "id": "media",
               "label": "WebM / PNG",
               "kind": "output",
-              "shape": "rounded",
-              "groupId": "outputs"
+              "groupId": "exports",
+              "layout": {
+                "dx": -6
+              }
             },
             {
-              "id": "embed",
-              "label": "Your site (embed)",
+              "id": "site",
+              "label": "Site embed",
               "kind": "output",
-              "shape": "rect",
-              "groupId": "outputs"
+              "groupId": "exports",
+              "layout": {
+                "dx": 12,
+                "dy": 10
+              }
             }
           ],
           "edges": [
             {
               "from": "upload",
-              "to": "spa",
-              "id": "e-upload-spa",
-              "label": "textures",
-              "style": "solid"
+              "to": "store"
             },
             {
-              "from": "looks-mood",
-              "to": "spa",
-              "id": "e-looks-spa",
-              "label": "look or prompt",
-              "style": "solid"
+              "from": "looks",
+              "to": "store"
             },
             {
               "from": "tune",
-              "to": "spa",
-              "id": "e-tune-spa",
-              "label": "patch",
-              "style": "solid"
+              "to": "store"
             },
             {
-              "from": "spa",
-              "to": "shader",
-              "id": "e-spa-shader",
-              "label": "uniforms",
-              "style": "solid"
+              "from": "store",
+              "to": "look"
             },
             {
-              "from": "spa",
-              "to": "mood-api",
-              "id": "e-spa-mood",
-              "label": "POST /api/mood",
-              "style": "dashed"
+              "from": "look",
+              "to": "pass"
             },
             {
-              "from": "mood-api",
-              "to": "openai",
-              "id": "e-mood-openai",
-              "label": "chat completions",
-              "style": "dashed"
+              "from": "pass",
+              "to": "json"
             },
             {
-              "from": "shader",
-              "to": "preset-json",
-              "id": "e-shader-json",
-              "label": "coefficients",
-              "style": "solid"
+              "from": "pass",
+              "to": "media"
             },
             {
-              "from": "shader",
-              "to": "media",
-              "id": "e-shader-media",
-              "label": "capture",
-              "style": "solid"
-            },
-            {
-              "from": "preset-json",
-              "to": "embed",
-              "id": "e-json-embed",
-              "label": "reuse look",
-              "style": "solid"
+              "from": "json",
+              "to": "site"
             }
           ],
           "tour": [
             "upload",
-            "looks-mood",
-            "tune",
-            "shader",
-            "preset-json"
+            "store",
+            "pass",
+            "json"
           ],
           "title": "Background Studio",
-          "summary": "Upload a hero, pick a look or mood, tune sliders, and export reusable preset JSON from one WebGL pass. Optional AI mood runs through a small Vercel API.",
-          "notes": "C2-derived portfolio map. Collapses SPA internals (shells, SynthMaterial, preset lib) into spa + shader; keyword mood is inside the SPA. Preset JSON is built from Zustand (not pixels from the GPU)—the shader edge is the visitor happy path. Dashed edges are optional AI. Full C4: docs/c4/.",
-          "skin": "default",
+          "summary": "Upload, looks, and knobs pack into one look engine, render in a single GPU pass, then fan out into exports.",
+          "notes": "Portfolio map folds Mermaid Material + Shader into one look-engine node, and L0 / L1 / preview-text into one GPU-pass node.",
+          "skin": "studio",
           "groups": [
             {
               "id": "inputs",
@@ -194,105 +176,141 @@
               "label": "Core"
             },
             {
-              "id": "outputs",
-              "label": "Outputs"
+              "id": "exports",
+              "label": "Exports"
             }
           ],
           "captions": [
             {
               "id": "upload",
-              "title": "Optional hero",
-              "body": "Upload a hero texture (and optional overlay) so the canvas has something to grade.",
-              "spotlightIds": [
-                "upload",
-                "spa"
-              ]
-            },
-            {
-              "id": "looks-mood",
-              "title": "Pick a look",
-              "body": "Choose one of fourteen catalog looks, or describe a mood—keywords always work; AI is optional.",
-              "spotlightIds": [
-                "looks-mood",
-                "spa",
-                "mood-api"
-              ]
-            },
-            {
-              "id": "tune",
-              "title": "Tune the feel",
-              "body": "Intensity, Motion, and Grit map onto background-layer shader fields without exposing every uniform.",
-              "spotlightIds": [
-                "tune",
-                "spa"
-              ]
-            },
-            {
-              "id": "shader",
-              "title": "One GPU pass",
-              "body": "A single fragment program warps, samples, shades, and composites hero, overlay, and preview text.",
-              "spotlightIds": [
-                "spa",
-                "shader"
-              ]
-            },
-            {
-              "id": "preset-json",
-              "title": "Export coefficients",
-              "body": "Download or copy preset JSON to reuse the same look on your site; WebM and PNG are optional extras.",
+              "title": "Inputs",
+              "body": "Upload, looks, and knobs land in scene state.",
               "items": [
-                "Primary output is preset JSON",
-                "WebM / PNG need a hero texture",
-                "Embed guide: src/lib/preset/PORTING.md"
+                "Upload a hero or overlay image",
+                "Pick a look or mood",
+                "Tune intensity, motion, and grit"
               ],
               "spotlightIds": [
-                "preset-json",
+                "upload",
+                "looks",
+                "tune",
+                "store"
+              ]
+            },
+            {
+              "id": "store",
+              "title": "Core",
+              "body": "Scene state packs into one look engine — uniforms and a GLSL program.",
+              "spotlightIds": [
+                "store",
+                "look"
+              ]
+            },
+            {
+              "id": "pass",
+              "title": "GPU pass",
+              "body": "Layers and text compose together in a single pass.",
+              "spotlightIds": [
+                "pass"
+              ]
+            },
+            {
+              "id": "json",
+              "title": "Exports",
+              "body": "The same look fans out into things you can take away.",
+              "items": [
+                "Preset JSON",
+                "WebM loop or PNG still",
+                "Embed behind your site"
+              ],
+              "spotlightIds": [
+                "pass",
+                "json",
                 "media",
-                "embed"
+                "site"
               ]
             }
           ]
         },
-        "graphSource": "github",
-        "graphPath": "docs/architecture.graph.json",
+        "graphSource": "local",
+        "graphPath": "src/data/architecture-graphs/background-studio.graph.json",
         "c4": {
           "mapPath": "docs/c4/portfolio-map.json",
+          "defaultLevel": "context",
           "context": {
-            "mermaid": "C4Context\n  title System Context — Background Studio\n  Person(designer, \"Designer\", \"Tunes hero looks in the browser and exports presets\")\n  System(studio, \"Background Studio\", \"Live WebGL hero-background designer and preset exporter\")\n  System_Ext(openai, \"OpenAI API\", \"Optional chat completions for AI mood\")\n  System_Ext(embedSite, \"Your production site\", \"Embeds exported preset JSON behind HTML\")\n\n  Rel(designer, studio, \"Uploads textures, picks looks, exports JSON / WebM / PNG\")\n  Rel(studio, openai, \"Optional AI mood (when enabled)\", \"HTTPS\")\n  Rel(studio, embedSite, \"Exports reusable preset coefficients\")",
+            "mermaid": "C4Context\n  title System Context — Background Studio\n  Person(designer, \"Designer\", \"Tunes animated hero looks in the browser and exports presets\")\n  System(studio, \"Background Studio\", \"Live WebGL hero-background designer and preset exporter\")\n  System_Ext(openai, \"OpenAI API\", \"Optional Chat Completions for AI mood\")\n  System_Ext(embedSite, \"Your production site\", \"Embeds exported preset JSON behind HTML\")\n\n  Rel(designer, studio, \"Uploads textures, picks looks, exports JSON / WebM / PNG\")\n  Rel(studio, openai, \"Optional AI mood when enabled\", \"HTTPS\")\n  Rel(studio, embedSite, \"Exports reusable preset coefficients\")",
             "path": "docs/c4/1-context.mmd",
-            "markdown": "# C1 — System context\n\n**Background Studio** is one product: a browser tool for designing animated full-viewport hero backgrounds and exporting **preset JSON** (plus optional WebM/PNG).\n\n## Elements\n\n| ID | Type | Role |\n|----|------|------|\n| `designer` | Person | Uses `/`, `/lab`, `/story` to author looks |\n| `studio` | Software system | This repository’s deployable product |\n| `openai` | External system | Optional upstream for AI mood (`POST` chat completions) |\n| `embedSite` | External system | A site that reuses exported preset coefficients (not part of this deploy) |\n\n## Notes\n\n- Keyword mood runs entirely in the browser; AI mood is optional and needs the Mood API + `OPENAI_API_KEY`.\n- There is no hosted database or multi-tenant backend in this system.\n- Diagram source: [`1-context.mmd`](1-context.mmd). Zoom: [`2-containers.md`](2-containers.md)."
+            "markdown": "# C1 — System context\n\n**Background Studio** is one product: a browser tool for designing animated full-viewport hero backgrounds and exporting **preset JSON** (plus optional WebM/PNG).\n\n## Elements\n\n| ID | Type | Role | Evidence |\n|----|------|------|----------|\n| `designer` | Person | Authors looks on `/`, `/lab`, `/story` | `src/App.tsx`, shells |\n| `studio` | Software system | This repository’s product (SPA ± optional Mood API) | whole repo |\n| `openai` | External system | Optional upstream for AI mood | `api/mood.ts` → `api.openai.com/v1/chat/completions` |\n| `embedSite` | External system | A site that reuses exported preset coefficients (not part of this deploy) | `src/lib/preset/PORTING.md` |\n\n## Notes\n\n- Keyword mood runs entirely in the browser; AI mood is optional and needs the Mood API + `OPENAI_API_KEY` (see C2).\n- No hosted database, no multi-tenant backend, no Docker/workers.\n- Browser WebGL / `MediaRecorder` / `localStorage` are **platform capabilities of the SPA**, not separate software systems on this diagram.\n- Diagram: [`1-context.mmd`](1-context.mmd). Zoom → [`2-containers.md`](2-containers.md)."
           },
           "containers": {
-            "mermaid": "flowchart TB\n  designer[Designer]\n\n  subgraph browser [Browser]\n    spa[\"studio-spa<br/>Background Studio SPA\"]\n  end\n\n  moodApi[\"mood-api<br/>Mood API on Vercel\"]\n  openai[OpenAI API]\n  embed[Your production site]\n\n  designer -->|uploads and tunes| spa\n  spa -->|exports preset JSON| embed\n  spa -->|optional WebM / PNG| designer\n  spa -.->|POST /api/mood when AI enabled| moodApi\n  moodApi -.->|chat completions| openai\n  moodApi -.->|basePresetId + optional patch| spa",
+            "mermaid": "%% C4 Containers — Background Studio\n%% IDs: studio-spa (Container spa), mood-api (Container moodApi)\n%% If your Mermaid renderer lacks C4Container, use the flowchart block at the bottom (uncomment it / paste into a viewer).\n\nC4Container\n  title Containers — Background Studio\n  Person(designer, \"Designer\", \"Uploads textures, tunes looks, exports\")\n\n  System_Boundary(studio, \"Background Studio\") {\n    Container(spa, \"Background Studio SPA\", \"Vite, React, R3F, GLSL, Zustand\", \"Routes, scene store, single-pass WebGL compositor, preset / mood / export client\")\n    Container(moodApi, \"Mood API\", \"Vercel serverless\", \"Optional POST /api/mood → OpenAI → validated basePresetId + patch\")\n  }\n\n  System_Ext(openai, \"OpenAI API\", \"Chat Completions\")\n  System_Ext(embedSite, \"Your production site\", \"Consumes preset JSON\")\n\n  Rel(designer, spa, \"Uses in the browser\")\n  Rel(spa, embedSite, \"Exports preset JSON\")\n  Rel(spa, designer, \"Optional WebM / PNG\")\n  Rel(spa, moodApi, \"POST /api/mood when AI enabled (gets basePresetId + patch)\", \"HTTPS\")\n  Rel(moodApi, openai, \"Chat completions\", \"HTTPS\")\n\n%% flowchart equivalent (same topology):\n%% flowchart TB\n%%   designer[Designer]\n%%   subgraph browser [Browser]\n%%     spa[\"studio-spa — Background Studio SPA\"]\n%%   end\n%%   moodApi[\"mood-api — Mood API on Vercel\"]\n%%   openai[OpenAI API]\n%%   embed[Your production site]\n%%   designer -->|uploads and tunes| spa\n%%   spa -->|exports preset JSON| embed\n%%   spa -->|optional WebM / PNG| designer\n%%   spa -.->|POST /api/mood when AI enabled| moodApi\n%%   moodApi -.->|chat completions| openai\n%%   moodApi -.->|basePresetId + optional patch| spa",
             "path": "docs/c4/2-containers.mmd",
-            "markdown": "# C2 — Containers\n\nDefault architecture map for GitHub visitors and the portfolio graph.\n\n## Containers\n\n| ID | Technology | Responsibility |\n|----|------------|----------------|\n| `studio-spa` | Vite + React + R3F / GLSL in the browser | Routes, Zustand scene state, single-pass WebGL compositor, preset/mood/export client logic |\n| `mood-api` | Vercel serverless (`api/mood.ts`) | Optional `POST /api/mood` → OpenAI → validated `{ basePresetId, patch? }` |\n\n## External systems\n\n| Label | Role |\n|-------|------|\n| OpenAI API | Chat Completions when AI mood is configured |\n| Your production site | Consumes exported preset JSON (see `src/lib/preset/PORTING.md`) |\n\n## Honest omissions\n\n- **No server database.** Zustand lives in the SPA process (in-memory). The only client persistence is a small localStorage preference for “preserve text on apply.”\n- **No workers / Docker / CLIs.** Static SPA + one optional API route.\n- Keyword mood is **inside** `studio-spa`, not a separate container.\n\n## Relationships\n\n- Designer → SPA: upload hero/overlay, catalog/mood, semantic tune, export.\n- SPA → Mood API (dashed): only when `VITE_MOOD_AI_ENABLED=true` and the API is deployed.\n- Mood API → OpenAI (dashed): requires `OPENAI_API_KEY`.\n- SPA → production site: primary output is preset JSON coefficients.\n\nDiagram: [`2-containers.mmd`](2-containers.mmd). Component zooms: [`3-components/studio-spa.md`](3-components/studio-spa.md), [`3-components/mood-api.md`](3-components/mood-api.md)."
+            "markdown": "# C2 — Containers\n\nRunnable pieces that exist in this repo. Machine IDs: `studio-spa`, `mood-api`.\n\n## Containers\n\n| ID | Technology | Responsibility | Evidence |\n|----|------------|----------------|----------|\n| `studio-spa` | Vite + React + R3F / Three / GLSL + Zustand in the browser | Routes, in-memory scene state, single-pass WebGL compositor, preset/mood/export client | `src/main.tsx`, `src/App.tsx`, `src/webgl/*`, `src/store/*`, `src/lib/*`, `vite.config.ts`, `vercel.json` SPA rewrite, `public/_redirects` |\n| `mood-api` | Vercel serverless | Optional `POST /api/mood` → OpenAI → validated `{ basePresetId, patch? }` | `api/mood.ts`; Vite proxies `/api/mood` → `vercel dev` in `vite.config.ts` |\n\n## External systems\n\n| Label | Role | Evidence |\n|-------|------|----------|\n| OpenAI API | Chat Completions when AI mood is configured | `api/mood.ts` (`OPENAI_API_KEY`, `OPENAI_MODEL` default `gpt-4o-mini`) |\n| Your production site | Consumes exported preset JSON | `src/lib/preset/PORTING.md`, export via `buildPreset` |\n\n## Honest omissions / collapsed notes\n\n- **No server database.** Zustand is in-memory in the SPA. The only client persistence found is `localStorage` for “preserve text on apply” (`src/lib/preset/presetApplyPreference.ts`).\n- **No workers / Docker / CLIs / CI workflows** in this repo.\n- **Keyword mood is inside `studio-spa`**, not a container (`src/lib/mood/mapMoodToPreset.ts`).\n- **Netlify static** can host the SPA (`public/_redirects`) but has no `mood-api` — keyword mood only.\n- SPA internals (shader banks, apply modes, export clock) are collapsed here; see C3 `studio-spa`.\n\n## Relationships\n\n- Designer → SPA: upload hero/overlay, catalog/mood, semantic tune, export.\n- SPA → Mood API (optional): only when `VITE_MOOD_AI_ENABLED=true` at build and the API is deployed.\n- Mood API → OpenAI (optional): requires `OPENAI_API_KEY`.\n- SPA → production site: primary output is preset **coefficients** from Zustand (`buildPreset`), not pixels from the GPU. WebM/PNG are canvas captures.\n\nDiagram: [`2-containers.mmd`](2-containers.mmd). Components: [`3-components/studio-spa.md`](3-components/studio-spa.md), [`3-components/mood-api.md`](3-components/mood-api.md)."
           },
           "components": {
             "studio-spa": {
-              "mermaid": "flowchart TB\n  subgraph shells [Route shells]\n    landing[LandingShell /]\n    lab[LabShell /lab]\n    story[StoryShell /story]\n  end\n\n  store[Zustand scene store]\n  preset[Preset lib apply / build / validate]\n  moodClient[Mood client keywords + optional AI]\n  semantic[Semantic sliders Intensity Motion Grit]\n  material[SynthMaterial uniforms]\n  shader[GLSL fragment compositor L0 L1 T0-T3]\n  exportLib[Export JSON WebM PNG]\n\n  landing --> store\n  lab --> store\n  story --> store\n  moodClient --> preset\n  semantic --> preset\n  preset --> store\n  store --> material\n  material --> shader\n  store --> exportLib\n  shader --> exportLib",
+              "mermaid": "%% C3 Components — studio-spa (Background Studio SPA)\n%% Prefer C4Component when the viewer supports it; flowchart below is the accurate fallback topology.\n\nC4Component\n  title Components — Background Studio SPA\n  Container_Boundary(spa, \"studio-spa\") {\n    Component(shells, \"Route shells\", \"React Router\", \"/ · /lab · /story\")\n    Component(store, \"Zustand scene store\", \"Zustand\", \"Textures, layer effect maps, UI tabs — in-memory\")\n    Component(catalog, \"Preset catalog\", \"TypeScript data\", \"14 looks (7 featured + 7 legacy)\")\n    Component(preset, \"Preset lib\", \"TypeScript\", \"Build, validate, hydrate, apply modes, share URLs\")\n    Component(moodClient, \"Mood client\", \"TypeScript\", \"Keywords always; optional POST /api/mood then fallback\")\n    Component(semantic, \"Semantic sliders\", \"TypeScript\", \"Intensity / Motion / Grit → PresetPatch\")\n    Component(decal, \"Decal pipeline\", \"Canvas / Three\", \"Processed overlay texture from upload\")\n    Component(canvasHost, \"R3F canvas host\", \"R3F + drei\", \"Orthographic camera, one full-screen quad, preserveDrawingBuffer\")\n    Component(material, \"SynthMaterial\", \"Three ShaderMaterial\", \"Each frame: store → uniforms; text CanvasTextures; export clock\")\n    Component(shader, \"GLSL fragment compositor\", \"GLSL\", \"Warp → sample → shade → composite L0 / L1 / T0–T3\")\n    Component(exportLib, \"Export\", \"TypeScript + MediaRecorder\", \"Preset JSON from store; WebM/PNG from canvas\")\n  }\n\n  Rel(shells, store, \"Reads / writes\")\n  Rel(moodClient, preset, \"Applies style + optional patch\")\n  Rel(semantic, preset, \"Applies patch\")\n  Rel(catalog, preset, \"Supplies looks\")\n  Rel(decal, store, \"setDecalTexture\")\n  Rel(preset, store, \"Hydrates coefficients\")\n  Rel(store, material, \"getState each frame\")\n  Rel(canvasHost, material, \"Hosts mesh\")\n  Rel(material, shader, \"Uniforms + samplers\")\n  Rel(store, exportLib, \"buildPreset\")\n  Rel(canvasHost, exportLib, \"Canvas capture\")\n\n%% flowchart equivalent:\n%% flowchart TB\n%%   subgraph shells [Route shells]\n%%     landing[LandingShell /]\n%%     lab[LabShell /lab]\n%%     story[StoryShell /story]\n%%   end\n%%   store[Zustand scene store]\n%%   catalog[Preset catalog 14 looks]\n%%   preset[Preset lib apply / build / validate]\n%%   moodClient[Mood client keywords + optional AI]\n%%   semantic[Semantic sliders]\n%%   decal[Decal pipeline]\n%%   canvasHost[R3F canvas host]\n%%   material[SynthMaterial uniforms + text raster]\n%%   shader[GLSL fragment compositor L0 L1 T0-T3]\n%%   exportLib[Export JSON WebM PNG]\n%%   landing --> store\n%%   lab --> store\n%%   story --> store\n%%   catalog --> preset\n%%   moodClient --> preset\n%%   semantic --> preset\n%%   decal --> store\n%%   preset --> store\n%%   store --> material\n%%   canvasHost --> material\n%%   material --> shader\n%%   store --> exportLib\n%%   canvasHost --> exportLib",
               "path": "docs/c4/3-components/studio-spa.mmd",
-              "markdown": "# C3 — studio-spa\n\nInternals of the Background Studio SPA (browser). Shared Zustand + one WebGL canvas across routes.\n\n## Components\n\n| Label | Evidence | Role |\n|-------|----------|------|\n| Route shells | `src/shells/*`, `src/App.tsx` | `/` living demo, `/lab` studio, `/story` case study |\n| Zustand scene store | `src/store/useSynthStore.ts`, `layerEffects.ts`, `textLayers.ts` | Textures, layer effect maps, UI tabs — in-memory |\n| Preset lib | `src/lib/preset/*` | Build, validate, hydrate, apply (v1/v2), share `?preset=` |\n| Mood client | `src/lib/mood/*` | Keyword map always; optional `POST /api/mood` then fallback |\n| Semantic sliders | `src/lib/semantic/mapSemanticSliders.ts` | Intensity / Motion / Grit → `PresetPatch` |\n| SynthMaterial | `src/webgl/materials/SynthMaterial.tsx` | Each frame: store → uniforms |\n| GLSL compositor | `src/webgl/shaders/fragment.glsl` | Warp → sample → shade → alpha-composite (`L0` / `L1` / `T0–T3`) |\n| Export | `src/lib/export/*`, `src/lib/preset/buildPreset.ts` | Preset JSON; WebM/PNG from canvas |\n\n## Notes\n\n- Canvas wiring: `SynthCanvas.tsx` + `SynthCanvasView.tsx` (one full-screen quad).\n- Catalog of 14 looks: `src/data/presetCatalog.ts`.\n- Diagram: [`studio-spa.mmd`](studio-spa.mmd). Parent: [`../2-containers.md`](../2-containers.md)."
+              "markdown": "# C3 — studio-spa\n\nInternals of the Background Studio SPA (browser). Shared Zustand + one WebGL canvas across routes.\n\n## Components\n\n| ID / label | Evidence | Role |\n|------------|----------|------|\n| Route shells | `src/shells/*`, `src/App.tsx` | `/` living demo, `/lab` studio drawer, `/story` case study; unknown → `/` |\n| Zustand scene store | `src/store/useSynthStore.ts`, `layerEffects.ts`, `textLayers.ts` | Textures, global synth params, per-layer effect maps, UI tabs — in-memory |\n| Preset catalog | `src/data/presetCatalog.ts` (+ builders / background / demo idea modules) | **14** looks: 7 featured ambient + 7 legacy |\n| Preset lib | `src/lib/preset/*` | Build (`buildPreset`), validate, hydrate, apply modes (effects-only / style / full / patch), `?preset=` share URLs, preserve-text preference (`localStorage`) |\n| Mood client | `src/lib/mood/*` | Keyword map always; optional `fetch('/api/mood')` then keyword fallback on any failure |\n| Semantic sliders | `src/lib/semantic/mapSemanticSliders.ts` | Intensity / Motion / Grit → background-layer `PresetPatch` |\n| Decal pipeline | `src/utils/decalTexture.ts`, `UploadButton.tsx` | Overlay processing → `setDecalTexture` |\n| R3F canvas host | `src/components/SynthCanvasView.tsx`, `src/webgl/SynthCanvas.tsx` | Orthographic camera, one `planeGeometry(2,2)`, `preserveDrawingBuffer: true`, pointer drag for overlay/text |\n| SynthMaterial | `src/webgl/materials/SynthMaterial.tsx` | `useFrame`: store → uniforms; rasterizes preview text to `CanvasTexture`s; respects `window.__SYNTH_EXPORT_TIME__` |\n| GLSL fragment compositor | `src/webgl/shaders/fragment.glsl` (+ `vertex.glsl`) | Contain-letterbox hero UVs; `layerWarp` then `layerShade` per prefix; alpha-composite `L0` / `L1` / `T0–T3` in **one** pass |\n| Export | `src/lib/export/*`, `src/lib/preset/buildPreset.ts`, `ExportActions.tsx` | JSON from Zustand; WebM via `MediaRecorder` + export-time hijack; PNG from canvas |\n\n## Notes (distinctive effort, not collapsed)\n\n- **Presets are coefficients, not frames** — JSON is built from the store; the GPU path is how you *preview* and capture media.\n- **Apply modes** — effects-only can keep preview text; full import may embed assets (`hydrate` / `assets`).\n- **Export clock** — `exportLoopWebm` sets `__SYNTH_EXPORT_TIME__` so layer `u_*_t` follow a deterministic timeline, then clears it.\n- Lab UI chrome (`ControlsDrawer` / `StackPanel`) sits on the shells; omitted as separate C3 boxes to avoid UI-widget noise.\n\nDiagram: [`studio-spa.mmd`](studio-spa.mmd). Parent: [`../2-containers.md`](../2-containers.md)."
             },
             "mood-api": {
-              "mermaid": "flowchart LR\n  post[POST /api/mood]\n  handler[Vercel handler]\n  prompt[System prompt builder]\n  openai[OpenAI Chat Completions]\n  parse[Parse and validate response]\n  json[\"JSON basePresetId + optional patch\"]\n\n  post --> handler\n  handler --> prompt\n  handler --> openai\n  openai --> parse\n  parse --> json",
+              "mermaid": "%% C3 Components — mood-api (optional Vercel serverless)\n\nC4Component\n  title Components — Mood API\n  Container_Boundary(mood, \"mood-api\") {\n    Component(handler, \"Vercel handler\", \"api/mood.ts\", \"POST only; env gate; upstream fetch\")\n    Component(prompt, \"System prompt builder\", \"src/lib/mood/buildAiMoodSystemPrompt.ts\", \"Catalog-aware director prompt\")\n    Component(parse, \"Parse and validate\", \"src/lib/mood/parseAiMoodResponse.ts\", \"basePresetId + optional patch or 422\")\n  }\n\n  System_Ext(openai, \"OpenAI Chat Completions\", \"Upstream HTTPS\")\n\n  Rel(handler, prompt, \"Builds system message\")\n  Rel(handler, openai, \"chat/completions\", \"HTTPS\")\n  Rel(handler, parse, \"Validates model JSON\")\n\n%% flowchart equivalent:\n%% flowchart LR\n%%   post[POST /api/mood]\n%%   handler[Vercel handler]\n%%   prompt[System prompt builder]\n%%   openai[OpenAI Chat Completions]\n%%   parse[Parse and validate]\n%%   json[\"JSON basePresetId + optional patch\"]\n%%   post --> handler\n%%   handler --> prompt\n%%   handler --> openai\n%%   openai --> parse\n%%   parse --> json",
               "path": "docs/c4/3-components/mood-api.mmd",
-              "markdown": "# C3 — mood-api\n\nOptional Vercel serverless function for AI mood. Keyword mood does **not** live here — it runs in the SPA (`src/lib/mood/mapMoodToPreset.ts`).\n\n## Components\n\n| Label | Evidence | Role |\n|-------|----------|------|\n| Vercel handler | `api/mood.ts` | `POST` only; requires `OPENAI_API_KEY` |\n| System prompt builder | `src/lib/mood/buildAiMoodSystemPrompt.ts` | Catalog-aware director prompt |\n| OpenAI Chat Completions | upstream HTTPS | Model from `OPENAI_MODEL` or `gpt-4o-mini` |\n| Parse / validate | `src/lib/mood/parseAiMoodResponse.ts` | `{ basePresetId, patch? }` or 422 |\n\n## Contract\n\n- Request body: `{ prompt: string }`\n- Success: `{ basePresetId }` or `{ basePresetId, patch }`\n- Failures: 400 / 405 / 422 / 502 / 503 as implemented in `api/mood.ts`\n\n## Notes\n\n- Client enables the call only when `VITE_MOOD_AI_ENABLED=true` (build-time). Local Vite proxies `/api/mood` to `vercel dev`.\n- Netlify static deploys have no this container — keyword mood only.\n- Diagram: [`mood-api.mmd`](mood-api.mmd). Parent: [`../2-containers.md`](../2-containers.md)."
+              "markdown": "# C3 — mood-api\n\nOptional Vercel serverless function for AI mood. Keyword mood does **not** live here — it runs in the SPA (`src/lib/mood/mapMoodToPreset.ts` via `applyMood.ts`).\n\n## Components\n\n| Label | Evidence | Role |\n|-------|----------|------|\n| Vercel handler | `api/mood.ts` | `POST` only; 405 otherwise; requires `OPENAI_API_KEY` (503 if missing) |\n| System prompt builder | `src/lib/mood/buildAiMoodSystemPrompt.ts` | Catalog-aware director prompt (bundled into the function) |\n| Parse / validate | `src/lib/mood/parseAiMoodResponse.ts` | `{ basePresetId, patch? }` or 422 |\n| OpenAI Chat Completions | upstream | Model from `OPENAI_MODEL` or default `gpt-4o-mini`; `response_format: json_object` |\n\n## Contract (from `api/mood.ts`)\n\n- Request body: `{ prompt: string }`\n- Success `200`: `{ basePresetId }` or `{ basePresetId, patch }`\n- Failures: `400` / `405` / `422` / `502` / `503` as implemented\n\n## Notes\n\n- Client enables the call only when `VITE_MOOD_AI_ENABLED=true` (build-time). Local: Vite proxies `/api/mood` → `vercel dev` (`vite.config.ts`).\n- Netlify-only static deploys have **no** this container — keyword mood only.\n- Diagram: [`mood-api.mmd`](mood-api.mmd). Parent: [`../2-containers.md`](../2-containers.md)."
             }
           },
           "diveTargets": [
             {
               "id": "studio-spa",
-              "label": "Studio SPA",
-              "graphNodeIds": [
-                "spa"
+              "label": "Background Studio SPA",
+              "graphNodeIds": [],
+              "matchLabels": [
+                "Background Studio SPA",
+                "studio-spa"
               ]
             },
             {
               "id": "mood-api",
               "label": "Mood API",
-              "graphNodeIds": [
+              "graphNodeIds": [],
+              "matchLabels": [
+                "Mood API",
                 "mood-api"
               ]
+            }
+          ],
+          "zoomTargets": [
+            {
+              "id": "background-studio",
+              "label": "Background Studio",
+              "fromLevel": "context",
+              "toLevel": "containers",
+              "matchLabels": [
+                "Background Studio",
+                "background-studio"
+              ]
+            },
+            {
+              "id": "studio-spa",
+              "label": "Background Studio SPA",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "Background Studio SPA",
+                "studio-spa"
+              ],
+              "componentId": "studio-spa"
+            },
+            {
+              "id": "mood-api",
+              "label": "Mood API",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "Mood API",
+                "mood-api"
+              ],
+              "componentId": "mood-api"
             }
           ]
         }
@@ -317,302 +335,396 @@
         "status": "active",
         "links": {
           "github": "https://github.com/aryanjohari/sound-visualiser",
-          "demo": "https://music.arkhives.nz"
+          "demo": "https://music.arkhives.nz",
+          "docs": "https://github.com/aryanjohari/sound-visualiser/blob/main/docs/c4/README.md"
         },
-        "diagram": "docs/architecture.mmd",
-        "graph": "docs/architecture.graph.json"
+        "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-07-30T05:08:53.595Z",
+      "fetchedAt": "2026-07-30T09:30:39.759Z",
       "diagram": {
         "source": "github",
-        "path": "docs/architecture.mmd",
-        "mermaid": "flowchart TD\n  SOURCES[\"Audio sources<br/>mic, local file, or demo track\"] --> ENGINE\n  ENGINE[\"Audio engine<br/>loudness, bass / mid / treble,<br/>and how fast the sound is changing\"]\n  ENGINE --> INTERP[\"Interpretation<br/>energy, mood, beat confidence\"]\n  INTERP --> ROUTER{\"VJ scene<br/>which visual mode?\"}\n\n  CAM[\"Webcam<br/>Live and Acid only\"] -.-> LIVE\n  CAM -.-> ACID\n\n  ROUTER -->|Cinematic| SCENE[\"Cinematic 3D<br/>fluid sky, particle knot,<br/>reactive lights, roaming camera\"]\n  ROUTER -->|Live| LIVE[\"Live webcam<br/>zoom, melt, colour split, glitch\"]\n  ROUTER -->|Acid| ACID[\"Acid feedback<br/>kaleidoscope, hue drift,<br/>last frame folded back in\"]\n\n  SCENE --> POST[\"Colour-split post effect\"]\n  POST --> CANVAS[\"Full-screen canvas\"]\n  LIVE --> CANVAS\n  ACID --> CANVAS",
+        "path": "docs/c4/2-containers.mmd",
+        "mermaid": "%% Prefer Mermaid C4Container. If a renderer rejects C4 syntax, use the flowchart\n%% equivalent at the bottom (uncomment that block).\n\nC4Container\n  title Containers — Sound Visualiser (single browser SPA)\n\n  Person(operator, \"Operator\", \"Chooses sources, modes, and sync\")\n\n  System_Boundary(spa, \"Sound Visualiser — one static SPA in the browser tab\") {\n    Container(glassUi, \"Glass controls\", \"TypeScript / DOM\", \"Source buttons, mode and sync, status line\")\n    ContainerDb(demoAsset, \"Bundled demo track\", \"static mp3\", \"Shipped /freetibet.mp3 with the build\")\n    Container(audioEngine, \"Audio engine\", \"Web Audio + Meyda\", \"Mic / file / URL sources, RMS, bands, spectral flux\")\n    ContainerDb(featureSnapshot, \"Latest audio snapshot\", \"in-memory struct\", \"Pull-model handoff; overwritten, never queued\")\n    Container(interpretation, \"Interpretation ladder\", \"TypeScript\", \"Energy, mood weights, beat / confidence\")\n    Container(renderLoop, \"Frame loop\", \"requestAnimationFrame\", \"Orders analysers, camera impulses, scene update + render\")\n    Container(videoCapture, \"Webcam capture\", \"getUserMedia\", \"Hidden video to Three.js VideoTexture (Live / Acid only)\")\n    Container(vjScene, \"VJ scene\", \"Three.js + GLSL\", \"Mode routing and visual layers\")\n    Container(webglCanvas, \"Full-screen canvas\", \"HTML canvas #webgl\", \"Display output\")\n  }\n\n  Rel(operator, glassUi, \"Uses\")\n  Rel(glassUi, audioEngine, \"Starts mic, file, or demo\")\n  Rel(demoAsset, audioEngine, \"Played as /freetibet.mp3\")\n  Rel(glassUi, renderLoop, \"Sets visual mode and sync\")\n  Rel(glassUi, videoCapture, \"Starts camera for Live / Acid\")\n  Rel(audioEngine, featureSnapshot, \"Overwrites latest features\")\n  Rel(renderLoop, featureSnapshot, \"Reads snapshot each frame\")\n  Rel(featureSnapshot, interpretation, \"Feeds analysers\")\n  Rel(interpretation, renderLoop, \"Assembles VJState\")\n  Rel(renderLoop, vjScene, \"update + render\")\n  Rel(videoCapture, vjScene, \"Attaches VideoTexture when Live / Acid\")\n  Rel(vjScene, webglCanvas, \"Draws WebGL\")\n\n%% --- flowchart equivalent (same shape; uncomment if C4Container fails) ---\n%% flowchart TB\n%%   subgraph inputs [Inputs]\n%%     glassUi2[\"glass-ui — Glass controls\"]\n%%     demoAsset2[\"demo-asset — Bundled demo track\"]\n%%     videoCapture2[\"video-capture — Webcam capture\"]\n%%   end\n%%   subgraph core [Core]\n%%     audioEngine2[\"audio-engine — Audio engine\"]\n%%     featureSnapshot2[(\"feature-snapshot — Latest audio snapshot\")]\n%%     interpretation2[\"interpretation — Interpretation ladder\"]\n%%     renderLoop2[\"render-loop — Frame loop\"]\n%%   end\n%%   subgraph visuals [Visuals]\n%%     vjScene2[\"vj-scene — VJ scene\"]\n%%   end\n%%   subgraph output [Output]\n%%     webglCanvas2[\"webgl-canvas — Full-screen canvas\"]\n%%   end\n%%   glassUi2 -->|\"starts mic, file, or demo\"| audioEngine2\n%%   demoAsset2 -->|\"plays /freetibet.mp3\"| audioEngine2\n%%   glassUi2 -->|\"sets mode and sync\"| renderLoop2\n%%   glassUi2 -.->|\"Live / Acid only\"| videoCapture2\n%%   audioEngine2 -->|\"overwrites latest features\"| featureSnapshot2\n%%   renderLoop2 -->|\"reads snapshot each frame\"| featureSnapshot2\n%%   featureSnapshot2 -->|\"feeds analysers\"| interpretation2\n%%   interpretation2 -->|\"assembles VJState\"| renderLoop2\n%%   renderLoop2 -->|\"update + render\"| vjScene2\n%%   videoCapture2 -.->|\"attaches VideoTexture\"| vjScene2\n%%   vjScene2 -->|\"draws WebGL\"| webglCanvas2",
         "graph": {
           "version": 1,
           "nodes": [
             {
-              "id": "audio-sources",
-              "label": "Audio sources",
+              "id": "mic",
+              "label": "Microphone",
               "kind": "input",
-              "shape": "stadium",
-              "groupId": "inputs"
+              "groupId": "audio-in",
+              "layout": {
+                "dx": -6
+              }
+            },
+            {
+              "id": "file",
+              "label": "Your own audio file",
+              "kind": "input",
+              "groupId": "audio-in",
+              "layout": {
+                "dx": 8
+              }
+            },
+            {
+              "id": "demo",
+              "label": "Built-in demo track",
+              "kind": "input",
+              "groupId": "audio-in",
+              "layout": {
+                "dx": -4
+              }
+            },
+            {
+              "id": "engine",
+              "label": "Audio engine + frame snapshot",
+              "kind": "process",
+              "groupId": "core",
+              "layout": {
+                "scale": 1.05,
+                "weight": "normal"
+              }
+            },
+            {
+              "id": "analyzers",
+              "label": "Energy · mood · beat trackers",
+              "kind": "process",
+              "groupId": "core",
+              "layout": {
+                "scale": 1.18,
+                "weight": "spine"
+              }
+            },
+            {
+              "id": "state",
+              "label": "Scene state for this frame",
+              "kind": "store",
+              "groupId": "core"
             },
             {
               "id": "webcam",
-              "label": "Webcam",
+              "label": "Webcam texture (Live & Acid)",
               "kind": "input",
-              "shape": "stadium",
-              "groupId": "inputs"
+              "groupId": "core",
+              "layout": {
+                "dx": 14,
+                "scale": 0.82,
+                "weight": "satellite"
+              }
             },
             {
-              "id": "audio-engine",
-              "label": "Audio engine",
-              "kind": "process",
-              "shape": "rounded",
-              "groupId": "core"
-            },
-            {
-              "id": "interpretation",
-              "label": "Interpretation",
-              "kind": "process",
-              "shape": "rounded",
-              "groupId": "core"
-            },
-            {
-              "id": "vj-scene",
-              "label": "VJ scene",
+              "id": "router",
+              "label": "Which visual mode?",
               "kind": "decision",
               "shape": "diamond",
-              "groupId": "visuals"
+              "groupId": "core",
+              "layout": {
+                "scale": 1.16,
+                "weight": "spine"
+              }
             },
             {
               "id": "cinematic",
-              "label": "Cinematic 3D",
+              "label": "Cinematic 3D scene",
               "kind": "process",
-              "shape": "rounded",
-              "groupId": "visuals"
+              "groupId": "modes",
+              "layout": {
+                "dx": -4,
+                "scale": 1,
+                "weight": "normal"
+              }
             },
             {
-              "id": "live-feed",
-              "label": "Live webcam",
+              "id": "live",
+              "label": "Webcam shader",
               "kind": "process",
-              "shape": "rounded",
-              "groupId": "visuals"
+              "groupId": "modes",
+              "layout": {
+                "dx": 8,
+                "scale": 0.96,
+                "weight": "normal"
+              }
             },
             {
-              "id": "acid-feed",
-              "label": "Acid feedback",
+              "id": "acid",
+              "label": "Acid shader (+ frame feedback)",
               "kind": "process",
-              "shape": "rounded",
-              "groupId": "visuals"
+              "groupId": "modes",
+              "layout": {
+                "dx": -6,
+                "scale": 0.96,
+                "weight": "normal"
+              }
             },
             {
               "id": "canvas",
               "label": "Full-screen canvas",
               "kind": "output",
-              "shape": "rect",
-              "groupId": "output"
+              "groupId": "out",
+              "layout": {
+                "scale": 1.12,
+                "weight": "spine"
+              }
             }
           ],
           "edges": [
             {
-              "from": "audio-sources",
-              "to": "audio-engine",
-              "id": "e-sources-engine",
-              "label": "mic, file, or demo",
-              "style": "solid"
+              "from": "mic",
+              "to": "engine"
             },
             {
-              "from": "audio-engine",
-              "to": "interpretation",
-              "id": "e-engine-interp",
-              "label": "loudness, bands, flux",
-              "style": "solid"
+              "from": "file",
+              "to": "engine"
             },
             {
-              "from": "interpretation",
-              "to": "vj-scene",
-              "id": "e-interp-scene",
-              "label": "energy, mood, beat",
-              "style": "solid"
+              "from": "demo",
+              "to": "engine"
             },
             {
-              "from": "vj-scene",
+              "from": "engine",
+              "to": "analyzers"
+            },
+            {
+              "from": "analyzers",
+              "to": "state"
+            },
+            {
+              "from": "state",
+              "to": "router"
+            },
+            {
+              "from": "webcam",
+              "to": "router",
+              "style": "dashed"
+            },
+            {
+              "from": "router",
               "to": "cinematic",
-              "id": "e-scene-cine",
-              "label": "Cinematic",
-              "style": "solid"
+              "id": "e-cinematic",
+              "label": "Cinematic"
             },
             {
-              "from": "vj-scene",
-              "to": "live-feed",
-              "id": "e-scene-live",
-              "label": "Live",
-              "style": "solid"
+              "from": "router",
+              "to": "live",
+              "id": "e-live",
+              "label": "Live"
             },
             {
-              "from": "vj-scene",
-              "to": "acid-feed",
-              "id": "e-scene-acid",
-              "label": "Acid",
-              "style": "solid"
-            },
-            {
-              "from": "webcam",
-              "to": "live-feed",
-              "id": "e-webcam-live",
-              "label": "video texture",
-              "style": "dashed"
-            },
-            {
-              "from": "webcam",
-              "to": "acid-feed",
-              "id": "e-webcam-acid",
-              "label": "video texture",
-              "style": "dashed"
+              "from": "router",
+              "to": "acid",
+              "id": "e-acid",
+              "label": "Acid"
             },
             {
               "from": "cinematic",
-              "to": "canvas",
-              "id": "e-cine-canvas",
-              "style": "solid"
+              "to": "canvas"
             },
             {
-              "from": "live-feed",
-              "to": "canvas",
-              "id": "e-live-canvas",
-              "style": "solid"
+              "from": "live",
+              "to": "canvas"
             },
             {
-              "from": "acid-feed",
-              "to": "canvas",
-              "id": "e-acid-canvas",
-              "style": "solid"
+              "from": "acid",
+              "to": "canvas"
             }
           ],
           "tour": [
-            "audio-sources",
-            "audio-engine",
-            "interpretation",
-            "vj-scene",
+            "mic",
+            "analyzers",
+            "router",
+            "cinematic",
             "canvas"
           ],
           "title": "Sound Visualiser",
-          "summary": "Audio from mic, file, or demo is interpreted into energy, mood, and beat, then drives Cinematic, Live, or Acid WebGL visuals — all in the browser, nothing uploaded.",
-          "notes": "Collapsed from C2 containers: energy/mood/beat are one interpretation node; cinematic layer stack and Acid FBO ping-pong are captions only. Full maps: docs/c4/. Dive: docs/c4/portfolio-map.json (component zooms for audio-engine, interpretation, vj-scene).",
-          "skin": "default",
+          "summary": "Audio sources feed analyzers into scene state; a mode router picks the look and paints the full-screen canvas.",
+          "notes": "Collapsed loudness / mood / beat into one analyzers node. Webcam is a dashed secondary input into the router. Path story is five beats: audio in → hear → route → modes → canvas.",
+          "skin": "sound",
           "groups": [
             {
-              "id": "inputs",
-              "label": "Inputs"
+              "id": "audio-in",
+              "label": "Audio in"
             },
             {
               "id": "core",
-              "label": "Core"
+              "label": "Hear & route"
             },
             {
-              "id": "visuals",
-              "label": "Visuals"
+              "id": "modes",
+              "label": "Visual modes"
             },
             {
-              "id": "output",
+              "id": "out",
               "label": "Output"
             }
           ],
           "captions": [
             {
-              "id": "audio-sources",
-              "title": "Pick a sound",
-              "body": "Use the microphone, upload a local audio file, or play the bundled demo track.",
+              "id": "mic",
+              "title": "Audio in",
+              "body": "Three ways sound enters the visualiser.",
               "items": [
                 "Microphone",
-                "Local file",
-                "Demo: /freetibet.mp3"
+                "Your own audio file",
+                "Built-in demo track"
               ],
               "spotlightIds": [
-                "audio-sources"
+                "mic",
+                "file",
+                "demo"
               ]
             },
             {
-              "id": "audio-engine",
-              "title": "Measure the signal",
-              "body": "The audio engine tracks loudness, bass / mid / treble, and how fast the spectrum is changing.",
-              "spotlightIds": [
-                "audio-engine"
-              ]
-            },
-            {
-              "id": "interpretation",
-              "title": "Describe the music",
-              "body": "Energy, mood (calm / groove / intense), and a beat clock with confidence turn raw features into a musical description.",
+              "id": "analyzers",
+              "title": "Hear the signal",
+              "body": "Each frame is snapshotted, analyzed, and stored.",
               "items": [
-                "Energy blend",
-                "Mood weights",
-                "BPM and confidence"
+                "Audio engine + frame snapshot",
+                "Energy · mood · beat",
+                "Scene state"
               ],
               "spotlightIds": [
-                "interpretation"
+                "engine",
+                "analyzers",
+                "state"
               ]
             },
             {
-              "id": "vj-scene",
-              "title": "Choose a look",
-              "body": "Cinematic builds a reactive 3D scene; Live and Acid warp the webcam — Acid folds each frame back into the next for trails.",
+              "id": "router",
+              "title": "Pick a mode",
+              "body": "A router chooses which visual look runs.",
+              "spotlightIds": [
+                "router"
+              ]
+            },
+            {
+              "id": "cinematic",
+              "title": "Visual modes",
+              "body": "Three looks share the same canvas.",
               "items": [
                 "Cinematic 3D",
-                "Live webcam",
-                "Acid feedback"
+                "Webcam shader",
+                "Acid shader"
               ],
               "spotlightIds": [
-                "vj-scene",
                 "cinematic",
-                "live-feed",
-                "acid-feed",
-                "webcam"
+                "live",
+                "acid"
               ]
             },
             {
               "id": "canvas",
-              "title": "Draw full screen",
-              "body": "Everything stays in your browser tab: capture, analysis, and WebGL rendering — nothing is uploaded.",
+              "title": "Canvas",
+              "body": "The chosen mode paints full-screen.",
               "spotlightIds": [
                 "canvas"
               ]
             }
           ]
         },
-        "graphSource": "github",
-        "graphPath": "docs/architecture.graph.json",
+        "graphSource": "local",
+        "graphPath": "src/data/architecture-graphs/sound-visualiser.graph.json",
         "c4": {
           "mapPath": "docs/c4/portfolio-map.json",
+          "defaultLevel": "context",
           "context": {
-            "mermaid": "C4Context\n  title System Context — Sound Visualiser\n\n  Person(operator, \"Operator\", \"Plays a track, uses the mic, or points a webcam at the room\")\n\n  System(sv, \"Sound Visualiser\", \"Browser VJ rig: interprets audio into energy, mood, and beat, then drives WebGL visuals. Nothing is uploaded.\")\n\n  System_Ext(webAudio, \"Web Audio API\", \"Browser audio graph and analysis clock\")\n  System_Ext(media, \"getUserMedia\", \"Browser mic and camera permission + streams\")\n  System_Ext(webgl, \"WebGL\", \"GPU canvas rendering at display refresh rate\")\n  System_Ext(host, \"Static demo host\", \"Serves the built SPA and bundled demo track (music.arkhives.nz)\")\n  System_Ext(github, \"GitHub\", \"Source repository\")\n\n  Rel(operator, sv, \"Chooses audio source, visual mode, and beat sync\")\n  Rel(sv, webAudio, \"Analyses loudness, bands, and spectral change\")\n  Rel(sv, media, \"Captures microphone and optional webcam\")\n  Rel(sv, webgl, \"Draws the full-screen scene\")\n  Rel(operator, host, \"Opens the live demo in a browser\")\n  Rel(host, sv, \"Delivers static build and /freetibet.mp3\")\n  Rel(operator, github, \"Reads source and docs\")",
+            "mermaid": "C4Context\n  title System Context — Sound Visualiser\n\n  Person(operator, \"Operator\", \"Plays a track, uses the mic, or points a webcam at the room\")\n\n  System(sv, \"Sound Visualiser\", \"Browser VJ rig: interprets audio into energy, mood, and beat, then drives WebGL visuals. Nothing is uploaded.\")\n\n  System_Ext(webAudio, \"Web Audio API\", \"Browser audio graph and analysis clock\")\n  System_Ext(media, \"getUserMedia\", \"Browser mic and camera permission + streams\")\n  System_Ext(webgl, \"WebGL\", \"GPU canvas rendering at display refresh rate\")\n  System_Ext(host, \"Static demo host\", \"Serves the built SPA and bundled demo track\")\n  System_Ext(github, \"GitHub\", \"Source repository and docs\")\n\n  Rel(operator, sv, \"Chooses audio source, visual mode, and beat sync\")\n  Rel(sv, webAudio, \"Analyses loudness, bands, and spectral change\")\n  Rel(sv, media, \"Captures microphone and optional webcam\")\n  Rel(sv, webgl, \"Draws the full-screen scene\")\n  Rel(operator, host, \"Opens the live demo in a browser\")\n  Rel(host, sv, \"Delivers static build and /freetibet.mp3\")\n  Rel(operator, github, \"Reads source and architecture docs\")",
             "path": "docs/c4/1-context.mmd",
-            "markdown": "# C1 — System context\n\nSound Visualiser is one system: a static web app that runs entirely in the operator’s\nbrowser tab. There is no application server, database, or account.\n\n## People\n\n- **Operator** — picks an audio source (mic, local file, or bundled demo), optional webcam,\n  visual mode (Cinematic / Live / Acid), and beat-sync Auto/Off.\n\n## This system\n\n- **Sound Visualiser** — captures audio (and optionally video), interprets features into\n  energy / mood / beat, and renders a full-screen WebGL scene. Capture, analysis, and\n  rendering stay client-side.\n\n## External systems (browser + delivery)\n\n| External | Role |\n| --- | --- |\n| Web Audio API | Audio graph, mic/element sources, Meyda analysis clock |\n| `getUserMedia` | Microphone and webcam streams (secure context + permission) |\n| WebGL | Three.js renderer and custom GLSL |\n| Static demo host | Serves the built SPA and `/freetibet.mp3` at music.arkhives.nz |\n| GitHub | Source and architecture docs |\n\nHosting vendor for the demo domain is not configured in this repository.\n\nDiagram: [`1-context.mmd`](./1-context.mmd). Next level: [`2-containers`](./2-containers.md)."
+            "markdown": "# C1 — System context\n\nSound Visualiser is one system: a static web app that runs entirely in the operator’s\nbrowser tab. There is no application server, database, auth, or telemetry.\n\n## People\n\n- **Operator** — picks an audio source (mic, local file, or bundled demo), optional webcam,\n  visual mode (Cinematic / Live / Acid), and beat-sync Auto/Off.\n\n## This system\n\n- **Sound Visualiser** — captures audio (and optionally video), interprets features into\n  energy / mood / beat, and renders a full-screen WebGL scene. Capture, analysis, and\n  rendering stay client-side.\n\n## External systems (browser + delivery)\n\n| External | Role | Evidence |\n| --- | --- | --- |\n| Web Audio API | Audio graph, mic/element sources, Meyda analysis clock | `src/audio/AudioEngine.ts` |\n| `getUserMedia` | Microphone and webcam streams (secure context + permission) | `AudioEngine`, `VideoCapture` |\n| WebGL | Three.js renderer and custom GLSL | `main.ts`, `src/webgl/*`, `src/shaders/*` |\n| Static demo host | Serves the built SPA and `/freetibet.mp3` | `portfolio.yaml` `demo:`, `public/freetibet.mp3` |\n| GitHub | Source and architecture docs | `portfolio.yaml` `links.github` |\n\n### Notes / UNVERIFIED\n\n- Live demo URL in `portfolio.yaml` / README: `https://music.arkhives.nz`.\n- **Hosting vendor** for that domain is not configured in this repository (`UNVERIFIED`).\n- Libraries (Three.js, Meyda, GSAP, Vite) are **inside** the SPA bundle, not external systems.\n\nDiagram: [`1-context.mmd`](./1-context.mmd). Next level: [`2-containers`](./2-containers.md)."
           },
           "containers": {
-            "mermaid": "flowchart TB\n  subgraph inputs [Inputs]\n    glassUi[\"glass-ui<br/>Glass controls\"]\n    demoAsset[\"demo-asset<br/>Bundled demo track\"]\n    videoCapture[\"video-capture<br/>Webcam capture\"]\n  end\n\n  subgraph core [Core]\n    audioEngine[\"audio-engine<br/>Audio engine\"]\n    featureSnapshot[(\"feature-snapshot<br/>Latest audio snapshot\")]\n    interpretation[\"interpretation<br/>Interpretation ladder\"]\n    renderLoop[\"render-loop<br/>Frame loop\"]\n  end\n\n  subgraph visuals [Visuals]\n    vjScene[\"vj-scene<br/>VJ scene\"]\n  end\n\n  subgraph output [Output]\n    webglCanvas[\"webgl-canvas<br/>Full-screen canvas\"]\n  end\n\n  glassUi -->|\"starts mic, file, or demo\"| audioEngine\n  demoAsset -->|\"plays /freetibet.mp3\"| audioEngine\n  glassUi -->|\"sets mode and sync\"| renderLoop\n  glassUi -.->|\"Live / Acid only\"| videoCapture\n\n  audioEngine -->|\"overwrites latest features\"| featureSnapshot\n  renderLoop -->|\"reads snapshot each frame\"| featureSnapshot\n  featureSnapshot -->|\"feeds analysers\"| interpretation\n  interpretation -->|\"assembles VJState\"| renderLoop\n  renderLoop -->|\"update + render\"| vjScene\n\n  videoCapture -.->|\"attaches VideoTexture\"| vjScene\n  vjScene -->|\"draws WebGL\"| webglCanvas",
+            "mermaid": "%% Prefer Mermaid C4Container. If a renderer rejects C4 syntax, use the flowchart\n%% equivalent at the bottom (uncomment that block).\n\nC4Container\n  title Containers — Sound Visualiser (single browser SPA)\n\n  Person(operator, \"Operator\", \"Chooses sources, modes, and sync\")\n\n  System_Boundary(spa, \"Sound Visualiser — one static SPA in the browser tab\") {\n    Container(glassUi, \"Glass controls\", \"TypeScript / DOM\", \"Source buttons, mode and sync, status line\")\n    ContainerDb(demoAsset, \"Bundled demo track\", \"static mp3\", \"Shipped /freetibet.mp3 with the build\")\n    Container(audioEngine, \"Audio engine\", \"Web Audio + Meyda\", \"Mic / file / URL sources, RMS, bands, spectral flux\")\n    ContainerDb(featureSnapshot, \"Latest audio snapshot\", \"in-memory struct\", \"Pull-model handoff; overwritten, never queued\")\n    Container(interpretation, \"Interpretation ladder\", \"TypeScript\", \"Energy, mood weights, beat / confidence\")\n    Container(renderLoop, \"Frame loop\", \"requestAnimationFrame\", \"Orders analysers, camera impulses, scene update + render\")\n    Container(videoCapture, \"Webcam capture\", \"getUserMedia\", \"Hidden video to Three.js VideoTexture (Live / Acid only)\")\n    Container(vjScene, \"VJ scene\", \"Three.js + GLSL\", \"Mode routing and visual layers\")\n    Container(webglCanvas, \"Full-screen canvas\", \"HTML canvas #webgl\", \"Display output\")\n  }\n\n  Rel(operator, glassUi, \"Uses\")\n  Rel(glassUi, audioEngine, \"Starts mic, file, or demo\")\n  Rel(demoAsset, audioEngine, \"Played as /freetibet.mp3\")\n  Rel(glassUi, renderLoop, \"Sets visual mode and sync\")\n  Rel(glassUi, videoCapture, \"Starts camera for Live / Acid\")\n  Rel(audioEngine, featureSnapshot, \"Overwrites latest features\")\n  Rel(renderLoop, featureSnapshot, \"Reads snapshot each frame\")\n  Rel(featureSnapshot, interpretation, \"Feeds analysers\")\n  Rel(interpretation, renderLoop, \"Assembles VJState\")\n  Rel(renderLoop, vjScene, \"update + render\")\n  Rel(videoCapture, vjScene, \"Attaches VideoTexture when Live / Acid\")\n  Rel(vjScene, webglCanvas, \"Draws WebGL\")\n\n%% --- flowchart equivalent (same shape; uncomment if C4Container fails) ---\n%% flowchart TB\n%%   subgraph inputs [Inputs]\n%%     glassUi2[\"glass-ui — Glass controls\"]\n%%     demoAsset2[\"demo-asset — Bundled demo track\"]\n%%     videoCapture2[\"video-capture — Webcam capture\"]\n%%   end\n%%   subgraph core [Core]\n%%     audioEngine2[\"audio-engine — Audio engine\"]\n%%     featureSnapshot2[(\"feature-snapshot — Latest audio snapshot\")]\n%%     interpretation2[\"interpretation — Interpretation ladder\"]\n%%     renderLoop2[\"render-loop — Frame loop\"]\n%%   end\n%%   subgraph visuals [Visuals]\n%%     vjScene2[\"vj-scene — VJ scene\"]\n%%   end\n%%   subgraph output [Output]\n%%     webglCanvas2[\"webgl-canvas — Full-screen canvas\"]\n%%   end\n%%   glassUi2 -->|\"starts mic, file, or demo\"| audioEngine2\n%%   demoAsset2 -->|\"plays /freetibet.mp3\"| audioEngine2\n%%   glassUi2 -->|\"sets mode and sync\"| renderLoop2\n%%   glassUi2 -.->|\"Live / Acid only\"| videoCapture2\n%%   audioEngine2 -->|\"overwrites latest features\"| featureSnapshot2\n%%   renderLoop2 -->|\"reads snapshot each frame\"| featureSnapshot2\n%%   featureSnapshot2 -->|\"feeds analysers\"| interpretation2\n%%   interpretation2 -->|\"assembles VJState\"| renderLoop2\n%%   renderLoop2 -->|\"update + render\"| vjScene2\n%%   videoCapture2 -.->|\"attaches VideoTexture\"| vjScene2\n%%   vjScene2 -->|\"draws WebGL\"| webglCanvas2",
             "path": "docs/c4/2-containers.mmd",
-            "markdown": "# C2 — Containers\n\nThese are the major **logical** runtime pieces inside the single browser SPA. There is only\none deployable artifact (`npm run build` → static `dist/`); the boxes below are how that\ntab is structured, not separate services.\n\n| Id | Visitor label | Responsibility | Evidence |\n| --- | --- | --- | --- |\n| `glass-ui` | Glass controls | Source buttons, mode / sync, status line | `src/main.ts`, `index.html` |\n| `demo-asset` | Bundled demo track | Shipped `/freetibet.mp3` | `public/freetibet.mp3` |\n| `audio-engine` | Audio engine | Web Audio sources, Meyda, band energy, spectral flux | `src/audio/AudioEngine.ts` |\n| `feature-snapshot` | Latest audio snapshot | Pull-model “latest features” struct (no queue) | `AudioEngine` → `Loop` |\n| `interpretation` | Interpretation ladder | Energy, mood weights, beat / confidence | `StateManager`, `MoodAnalyzer`, `BeatSync` |\n| `render-loop` | Frame loop | `requestAnimationFrame` driver; orders analysers then scene | `src/webgl/Loop.ts` |\n| `video-capture` | Webcam capture | `getUserMedia` → `THREE.VideoTexture` (Live / Acid) | `src/camera/VideoCapture.ts` |\n| `vj-scene` | VJ scene | Mode routing and visual layers | `src/webgl/Scene.ts` + `layers/` |\n| `webgl-canvas` | Full-screen canvas | `#webgl` Three.js output | `index.html`, `main.ts` |\n\nDashed edges are secondary: webcam is only used in Live and Acid modes.\n\n**C3 zooms:** [`audio-engine`](./3-components/audio-engine.md), [`interpretation`](./3-components/interpretation.md), [`vj-scene`](./3-components/vj-scene.md).\n\nDiagram: [`2-containers.mmd`](./2-containers.mmd). Portfolio map IR is collapsed from this level into [`../architecture.graph.json`](../architecture.graph.json)."
+            "markdown": "# C2 — Containers\n\nThere is **one deployable**: `npm run build` → static `dist/` (Vite SPA). No Docker, no\nAPI process, no database. The boxes below are the major **in-tab runtime partitions** of\nthat SPA — not separate hosts. Collapsing them would hide the distinctive pull-model\nanalysis ↔ render split and the interpretation ladder.\n\n| Id | Visitor label | Responsibility | Evidence |\n| --- | --- | --- | --- |\n| `glass-ui` | Glass controls | Source buttons, mode / sync, status line | `src/main.ts`, `index.html`, `src/styles.css` |\n| `demo-asset` | Bundled demo track | Shipped `/freetibet.mp3` | `public/freetibet.mp3` |\n| `audio-engine` | Audio engine | Web Audio sources, Meyda, band energy, hand-rolled spectral flux | `src/audio/AudioEngine.ts` |\n| `feature-snapshot` | Latest audio snapshot | Pull-model “latest features” struct (no queue) | `AudioEngine.latest` → `Loop` |\n| `interpretation` | Interpretation ladder | Energy, mood weights, beat / confidence | `StateManager`, `MoodAnalyzer`, `BeatSync` |\n| `render-loop` | Frame loop | `requestAnimationFrame` driver; orders analysers then scene | `src/webgl/Loop.ts` |\n| `video-capture` | Webcam capture | `getUserMedia` → `THREE.VideoTexture` (Live / Acid) | `src/camera/VideoCapture.ts` |\n| `vj-scene` | VJ scene | Mode routing and visual layers | `src/webgl/Scene.ts` + `layers/` + `shaders/` |\n| `webgl-canvas` | Full-screen canvas | `#webgl` Three.js output | `index.html`, `main.ts` |\n\nDashed edges: webcam is only used in Live and Acid modes.\n\n### Notes\n\n- `interpretation` is a **logical** grouping: `StateManager` is constructed in `main.ts`;\n  `MoodAnalyzer` and `BeatSync` are owned by `Loop`. Same per-frame ladder either way.\n- Second demo button requests `/huzur.mp3`, which is **not** in `public/` (`UNVERIFIED` as a\n  shipped asset — only `freetibet.mp3` is).\n- `VoidLayer` / `voidFog` exist on disk but are **not** a container (not wired into `Scene`).\n\n**C3 zooms:** [`audio-engine`](./3-components/audio-engine.md), [`interpretation`](./3-components/interpretation.md), [`vj-scene`](./3-components/vj-scene.md).\n\nDiagram: [`2-containers.mmd`](./2-containers.mmd). Zoom index: [`portfolio-map.json`](./portfolio-map.json)."
           },
           "components": {
             "audio-engine": {
-              "mermaid": "flowchart TB\n  subgraph sources [Sources]\n    mic[\"Microphone stream\"]\n    element[\"Audio element<br/>file or demo URL\"]\n  end\n\n  ctx[\"AudioContext\"]\n  meyda[\"Meyda analyzer<br/>rms + powerSpectrum\"]\n  flux[\"Hand-rolled spectral flux<br/>positive bin deltas\"]\n  bands[\"Band energies<br/>lowpass / bass / mid / high\"]\n  latest[(\"Latest AudioFeatures<br/>overwritten each callback\")]\n\n  mic --> ctx\n  element --> ctx\n  ctx --> meyda\n  meyda --> flux\n  meyda --> bands\n  flux --> latest\n  bands --> latest\n  meyda -->|\"rms\"| latest",
+              "mermaid": "%% Prefer C4Component. Flowchart equivalent follows as comments.\n\nC4Component\n  title Components — Audio engine\n\n  Container_Boundary(ae, \"audio-engine\") {\n    Component(srcMic, \"Microphone source\", \"MediaStreamAudioSourceNode\", \"getUserMedia audio track\")\n    Component(srcEl, \"Element source\", \"MediaElementAudioSourceNode\", \"Local file blob URL or demo / URL\")\n    Component(ctx, \"AudioContext lifecycle\", \"Web Audio\", \"Create, resume, suspend; teardown tracks and blob URLs\")\n    Component(meyda, \"Meyda analyzer\", \"rms + powerSpectrum\", \"bufferSize 512, hopSize 256\")\n    Component(flux, \"Spectral flux\", \"hand-rolled\", \"Positive per-bin deltas, log10 compress — Meyda spectralFlux avoided\")\n    Component(bands, \"Band energies\", \"TypeScript\", \"lowpass / bass / mid / high via hzPerBin\")\n    ComponentDb(latest, \"Latest AudioFeatures\", \"in-memory\", \"Overwritten each Meyda callback; no queue\")\n  }\n\n  Rel(srcMic, ctx, \"Feeds\")\n  Rel(srcEl, ctx, \"Feeds\")\n  Rel(ctx, meyda, \"Attaches analyzer\")\n  Rel(meyda, flux, \"powerSpectrum frames\")\n  Rel(meyda, bands, \"powerSpectrum frames\")\n  Rel(meyda, latest, \"rms\")\n  Rel(flux, latest, \"spectralFlux\")\n  Rel(bands, latest, \"band fields\")\n\n%% flowchart TB\n%%   mic[\"Microphone stream\"] --> ctx2[\"AudioContext\"]\n%%   element[\"Audio element — file or demo URL\"] --> ctx2\n%%   ctx2 --> meyda2[\"Meyda analyzer — rms + powerSpectrum\"]\n%%   meyda2 --> flux2[\"Hand-rolled spectral flux\"]\n%%   meyda2 --> bands2[\"Band energies\"]\n%%   meyda2 -->|\"rms\"| latest2[(\"Latest AudioFeatures\")]\n%%   flux2 --> latest2\n%%   bands2 --> latest2",
               "path": "docs/c4/3-components/audio-engine.mmd",
-              "markdown": "# C3 — audio-engine\n\nZoom of container `audio-engine` (`src/audio/AudioEngine.ts`).\n\n## What it does\n\nOwns the `AudioContext` and source lifecycle: microphone via `MediaStreamAudioSourceNode`,\nor an `<audio>` element via `MediaElementAudioSourceNode` (local file blob URL or demo\npath). Attaches Meyda with `bufferSize` 512 and `hopSize` 256, extractors `rms` and\n`powerSpectrum`.\n\nOn each analysis callback it:\n\n1. Computes **spectral flux** from consecutive spectra (positive per-bin deltas only —\n   Meyda’s own `spectralFlux` is avoided because it crashes in this web build).\n2. Sums **band energies** (lowpass 0–220 Hz, bass 20–140, mid 200–2000, high 4–12 kHz) and\n   log-compresses them.\n3. **Overwrites** a latest-features struct. Nothing is queued; the render loop pulls\n   whatever is there.\n\n## Boundaries\n\n- Upstream: glass UI starts mic / file / demo; bundled demo is `/freetibet.mp3`.\n- Downstream: `render-loop` reads the snapshot each frame and feeds `interpretation`.\n\nDiagram: [`audio-engine.mmd`](./audio-engine.mmd)."
+              "markdown": "# C3 — audio-engine\n\nZoom of container `audio-engine` (`src/audio/AudioEngine.ts`).\n\n## Components\n\n| Id | Role | Evidence |\n| --- | --- | --- |\n| Microphone / element sources | Mutually exclusive source modes | `startMicrophone`, `startUrl`, `startFile` |\n| AudioContext lifecycle | Create, resume, suspend; stop tracks; revoke blob URLs | `teardown` |\n| Meyda analyzer | `rms` + `powerSpectrum` only | `createAnalyzerAndStart` — `bufferSize` 512, `hopSize` 256 |\n| Spectral flux | Positive bin deltas + `log10(1 + sum)` | Callback; Meyda’s own `spectralFlux` skipped (crashes in this web build) |\n| Band energies | lowpass 0–220, bass 20–140, mid 200–2000, high 4–12 kHz Hz | `bandEnergy` + `hzPerBin = sampleRate / bufferSize` |\n| Latest AudioFeatures | Overwrite-only publish | `this.latest` / `getFeatures()` |\n\n## Boundaries\n\n- Upstream: glass UI starts mic / file / demo; bundled demo is `/freetibet.mp3`.\n- Downstream: `render-loop` reads the snapshot each frame and feeds `interpretation`.\n\nFile playback also connects the element source to `audioContext.destination` so the operator\nhears the track; the mic path analyses only (no destination connect).\n\nDiagram: [`audio-engine.mmd`](./audio-engine.mmd)."
             },
             "interpretation": {
-              "mermaid": "flowchart LR\n  snap[\"Latest audio snapshot\"] --> sm[\"StateManager<br/>rave to cinematic energy<br/>+ lightningFlash\"]\n  sm --> mood[\"MoodAnalyzer<br/>calm / groove / intense<br/>weights sum to 1\"]\n  snap --> mood\n  snap --> beat[\"BeatSync<br/>onset, BPM vote,<br/>phase, confidence\"]\n  sm --> beat\n  sm --> state[\"VJState for this frame\"]\n  mood --> state\n  beat --> state\n  loop[\"Loop<br/>orders the three stages\"] -.-> sm\n  loop -.-> mood\n  loop -.-> beat",
+              "mermaid": "%% Prefer C4Component. Flowchart equivalent follows as comments.\n\nC4Component\n  title Components — Interpretation ladder\n\n  Container_Boundary(interp, \"interpretation\") {\n    Component(loop, \"Loop sequencer\", \"src/webgl/Loop.ts\", \"Fixed per-frame order; owns MoodAnalyzer + BeatSync\")\n    Component(sm, \"StateManager\", \"src/webgl/StateManager.ts\", \"rave to cinematic energy + lightningFlash; peak-relative EMAs\")\n    Component(mood, \"MoodAnalyzer\", \"src/webgl/MoodAnalyzer.ts\", \"calm / groove / intense weights (partition of unity)\")\n    Component(beat, \"BeatSync\", \"src/webgl/BeatSync.ts\", \"Onset pick, 60-180 BPM vote, PLL phase, confidence\")\n    ComponentDb(vjstate, \"VJState\", \"per frame\", \"Merged energy + mood + beat for the scene\")\n  }\n\n  Rel(loop, sm, \"1. update(features, dt)\")\n  Rel(loop, mood, \"2. update(features, baseState, dt)\")\n  Rel(loop, beat, \"3. update(features, baseState, dt, syncMode)\")\n  Rel(sm, mood, \"Passes rave / averages / lightningFlash\")\n  Rel(sm, beat, \"Passes rmsAvg for silence gate\")\n  Rel(sm, vjstate, \"Energy fields\")\n  Rel(mood, vjstate, \"mood + moodWeights\")\n  Rel(beat, vjstate, \"beat\")\n  Rel(loop, vjstate, \"Assembles and publishes\")\n\n%% flowchart LR\n%%   snap[\"Latest audio snapshot\"] --> sm2[\"StateManager\"]\n%%   sm2 --> mood2[\"MoodAnalyzer\"]\n%%   snap --> mood2\n%%   snap --> beat2[\"BeatSync\"]\n%%   sm2 --> beat2\n%%   sm2 --> state2[\"VJState\"]\n%%   mood2 --> state2\n%%   beat2 --> state2\n%%   loop2[\"Loop orders the three stages\"] -.-> sm2\n%%   loop2 -.-> mood2\n%%   loop2 -.-> beat2",
               "path": "docs/c4/3-components/interpretation.mmd",
-              "markdown": "# C3 — interpretation\n\nZoom of container `interpretation`. The frame loop (`src/webgl/Loop.ts`) runs three\nanalysers in a fixed order each `requestAnimationFrame`, then merges them into one\n`VJState`.\n\n| Component | File | Role |\n| --- | --- | --- |\n| `StateManager` | `src/webgl/StateManager.ts` | Frame-rate-independent smoothing into `rave` ↔ `cinematic` plus fast `lightningFlash` |\n| `MoodAnalyzer` | `src/webgl/MoodAnalyzer.ts` | calm / groove / intense as a normalized weight vector (partition of unity) |\n| `BeatSync` | `src/webgl/BeatSync.ts` | Onset pick, 60–180 BPM vote, PLL phase, confidence blend weight |\n\n## Design notes (evidence in ARCHITECTURE)\n\n- Mood is blended continuously — not a hard preset switch.\n- Beat sync never hard-gates most parameters: `final = unsynced + (synced − unsynced) * confidence`.\n- Peak-relative normalization lives in these consumers (and layers), not as absolute gain.\n\n## Boundaries\n\n- Upstream: latest features from `audio-engine`.\n- Downstream: `VJState` drives `vj-scene` (and camera impulses in `Loop`).\n\nDiagram: [`interpretation.mmd`](./interpretation.mmd)."
+              "markdown": "# C3 — interpretation\n\nZoom of container `interpretation`. Each `requestAnimationFrame`, `Loop`\n(`src/webgl/Loop.ts`) runs three analysers in a fixed order, then merges them into one\n`VJState`.\n\n| Component | File | Role |\n| --- | --- | --- |\n| Loop sequencer | `src/webgl/Loop.ts` | Owns `MoodAnalyzer` + `BeatSync`; also arbitrates camera Z-dolly punches (downbeat vs flux) |\n| StateManager | `src/webgl/StateManager.ts` | Frame-rate-independent smoothing into `rave` ↔ `cinematic` plus fast `lightningFlash` |\n| MoodAnalyzer | `src/webgl/MoodAnalyzer.ts` | calm / groove / intense as a normalized weight vector (partition of unity) |\n| BeatSync | `src/webgl/BeatSync.ts` | Onset pick, 60–180 BPM vote (+ octave tiebreak), PLL phase, product-form confidence |\n\n## Design notes (evidence in ARCHITECTURE)\n\n- Mood is blended continuously — not a hard preset switch.\n- Beat sync never hard-gates most parameters:\n  `final = unsynced + (synced − unsynced) * confidence` (applied in visual layers).\n- Peak-relative normalization lives in these consumers (and layers), not as absolute gain.\n- `CONFIDENCE_THRESHOLD` (0.45) only sets `syncActive` for discrete events (e.g. downbeat\n  dolly); continuous blend still uses the raw confidence score.\n\n## Ownership note\n\n`StateManager` is constructed in `main.ts` and injected into `Loop`; mood and beat live\ninside `Loop`. Treated as one container because they form one per-frame ladder.\n\n## Boundaries\n\n- Upstream: latest features from `audio-engine`.\n- Downstream: `VJState` drives `vj-scene` (and camera impulses in `Loop`).\n\nDiagram: [`interpretation.mmd`](./interpretation.mmd)."
             },
             "vj-scene": {
-              "mermaid": "flowchart TB\n  state[\"VJState\"] --> router{\"Visual mode\"}\n  video[\"VideoTexture<br/>from video-capture\"] -.-> live\n  video -.-> acid\n\n  router -->|Cinematic| env[\"EnvironmentLayers<br/>fluid sphere\"]\n  router -->|Cinematic| anchor[\"AnchorLayer<br/>torus-knot particles\"]\n  router -->|Cinematic| lights[\"LightingLayer\"]\n  router -->|Cinematic| director[\"Director<br/>GSAP camera\"]\n  env --> post[\"PostProcessing<br/>chromatic aberration\"]\n  anchor --> post\n  lights --> post\n  director --> post\n\n  router -->|Live| live[\"LiveFeedLayer<br/>webcam shader\"]\n  router -->|Acid| acid[\"AcidFeedLayer<br/>warp-aligned feedback\"]\n  acid <--> fbo[(\"Ping-pong FBOs\")]\n\n  post --> canvas[\"webgl-canvas\"]\n  live --> canvas\n  acid --> canvas",
+              "mermaid": "%% Prefer C4Component. Flowchart equivalent follows as comments.\n\nC4Component\n  title Components — VJ scene\n\n  Container_Boundary(scene, \"vj-scene\") {\n    Component(router, \"VJScene mode router\", \"src/webgl/Scene.ts\", \"Serialises mode changes; webcam attach/detach\")\n    Component(env, \"EnvironmentLayers\", \"fluid sphere GLSL\", \"Bass warp + high lightning\")\n    Component(anchor, \"AnchorLayer\", \"torus-knot particles\", \"Curl-noise deformation\")\n    Component(lights, \"LightingLayer\", \"Three.js lights\", \"Centre flash from lightningFlash\")\n    Component(director, \"Director\", \"GSAP camera\", \"Orbit, FOV, kick shake, Z-dolly punch\")\n    Component(post, \"PostProcessing\", \"EffectComposer\", \"Custom chromatic aberration — Cinematic only\")\n    Component(live, \"LiveFeedLayer\", \"webcam shader\", \"Frozen reference look; direct canvas blit\")\n    Component(acid, \"AcidFeedLayer\", \"FBO feedback\", \"header + liveFeedCommon + body; warp-aligned trails\")\n    ComponentDb(fbo, \"Ping-pong FBOs\", \"WebGLRenderTarget A/B\", \"Acid feedback buffers\")\n  }\n\n  Rel(router, env, \"Always updates 3D layers\")\n  Rel(router, anchor, \"Always updates 3D layers\")\n  Rel(router, lights, \"Always updates 3D layers\")\n  Rel(router, director, \"Always updates 3D layers\")\n  Rel(router, post, \"Cinematic render path\")\n  Rel(router, live, \"Live mode render\")\n  Rel(router, acid, \"Acid mode render\")\n  Rel(acid, fbo, \"Read / write alternate\")\n  Rel(fbo, acid, \"Previous frame sample\")\n\n%% flowchart TB\n%%   state[\"VJState\"] --> router2{\"Visual mode\"}\n%%   video[\"VideoTexture\"] -.-> live2\n%%   video -.-> acid2\n%%   router2 -->|Cinematic| env2[\"EnvironmentLayers\"]\n%%   router2 -->|Cinematic| anchor2[\"AnchorLayer\"]\n%%   router2 -->|Cinematic| lights2[\"LightingLayer\"]\n%%   router2 -->|Cinematic| director2[\"Director\"]\n%%   env2 --> post2[\"PostProcessing\"]\n%%   anchor2 --> post2\n%%   lights2 --> post2\n%%   director2 --> post2\n%%   router2 -->|Live| live2[\"LiveFeedLayer\"]\n%%   router2 -->|Acid| acid2[\"AcidFeedLayer\"]\n%%   acid2 <--> fbo2[(\"Ping-pong FBOs\")]\n%%   post2 --> canvas[\"webgl-canvas\"]\n%%   live2 --> canvas\n%%   acid2 --> canvas",
               "path": "docs/c4/3-components/vj-scene.mmd",
-              "markdown": "# C3 — vj-scene\n\nZoom of container `vj-scene` (`src/webgl/Scene.ts` and `src/webgl/layers/`).\n\n## Mode routing\n\n`VJScene` serialises mode changes and owns webcam attach/detach. Three modes:\n\n| Mode | What draws | Notes |\n| --- | --- | --- |\n| **Cinematic** | 3D layers + `EffectComposer` chromatic aberration | Fluid sphere, particle knot, lights, GSAP camera (`Director`) |\n| **Live** | `LiveFeedLayer` fullscreen quad | Frozen reference webcam look; no composer |\n| **Acid** | `AcidFeedLayer` + ping-pong FBOs | Shared helpers from `liveFeedCommon.glsl`; warp-aligned feedback |\n\n3D layers still update while Live/Acid are on screen so switching back to Cinematic is\ninstant (documented tradeoff: extra CPU).\n\n## Webcam\n\nEntering Live or Acid starts `VideoCapture` and shares one `VideoTexture` with both feed\nlayers. Returning to Cinematic stops tracks and clears feedback. Live ↔ Acid keeps the\ncamera and only clears FBO smear.\n\n## Not on the diagram\n\n`VoidLayer` / `voidFog` exist under `layers/` and `shaders/` but are not wired into\n`Scene.ts` (dead path; see ARCHITECTURE tradeoffs).\n\nDiagram: [`vj-scene.mmd`](./vj-scene.mmd)."
+              "markdown": "# C3 — vj-scene\n\nZoom of container `vj-scene` (`src/webgl/Scene.ts` and `src/webgl/layers/`).\n\n## Mode routing\n\n`VJScene` serialises mode changes and owns webcam attach/detach. Three modes:\n\n| Mode | What draws | Notes |\n| --- | --- | --- |\n| **Cinematic** | 3D layers + `EffectComposer` chromatic aberration | Fluid sphere, particle knot, lights, GSAP camera (`Director`) |\n| **Live** | `LiveFeedLayer` fullscreen quad | Frozen reference webcam look; no composer |\n| **Acid** | `AcidFeedLayer` + ping-pong FBOs | Assembled as `acidFeedHeader + liveFeedCommon + acidFeedBody`; warp-aligned feedback |\n\n3D layers still **update** while Live/Acid are on screen so switching back to Cinematic is\ninstant (documented tradeoff: extra CPU).\n\n## Webcam\n\nEntering Live or Acid starts `VideoCapture` (sibling container) and shares one\n`VideoTexture` with both feed layers. Returning to Cinematic stops tracks and clears\nfeedback. Live ↔ Acid keeps the camera and only clears FBO smear.\n\n## Post-processing note\n\n`PostProcessing` imports `EffectComposer` from `three/examples/jsm/postprocessing/`. The\nnpm package `postprocessing` is listed in `package.json` but **not imported** by source\n(`UNVERIFIED` whether intentional leftover).\n\n## Not on the diagram\n\n`VoidLayer` / `voidFog` exist under `layers/` and `shaders/` but are not wired into\n`Scene.ts` (dead path; see ARCHITECTURE tradeoffs).\n\nDiagram: [`vj-scene.mmd`](./vj-scene.mmd)."
             }
           },
           "diveTargets": [
             {
               "id": "audio-engine",
               "label": "Audio engine",
-              "graphNodeIds": [
+              "graphNodeIds": [],
+              "matchLabels": [
+                "Audio engine",
                 "audio-engine"
               ]
             },
             {
               "id": "interpretation",
-              "label": "Interpretation",
-              "graphNodeIds": [
+              "label": "Interpretation ladder",
+              "graphNodeIds": [],
+              "matchLabels": [
+                "Interpretation ladder",
                 "interpretation"
               ]
             },
             {
               "id": "vj-scene",
               "label": "VJ scene",
-              "graphNodeIds": [
+              "graphNodeIds": [],
+              "matchLabels": [
+                "VJ scene",
                 "vj-scene"
               ]
+            }
+          ],
+          "zoomTargets": [
+            {
+              "id": "sound-visualiser",
+              "label": "Sound Visualiser",
+              "fromLevel": "context",
+              "toLevel": "containers",
+              "matchLabels": [
+                "Sound Visualiser",
+                "sound-visualiser"
+              ]
+            },
+            {
+              "id": "audio-engine",
+              "label": "Audio engine",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "Audio engine",
+                "audio-engine"
+              ],
+              "componentId": "audio-engine"
+            },
+            {
+              "id": "interpretation",
+              "label": "Interpretation ladder",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "Interpretation ladder",
+                "interpretation"
+              ],
+              "componentId": "interpretation"
+            },
+            {
+              "id": "vj-scene",
+              "label": "VJ scene",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "VJ scene",
+                "vj-scene"
+              ],
+              "componentId": "vj-scene"
             }
           ]
         }
@@ -635,274 +747,300 @@
         ],
         "status": "active",
         "links": {
-          "github": "https://github.com/aryanjohari/pii-gateway"
+          "github": "https://github.com/aryanjohari/pii-gateway",
+          "docs": "https://github.com/aryanjohari/pii-gateway/blob/main/docs/c4/README.md"
         },
-        "diagram": "docs/architecture.mmd",
-        "graph": "docs/architecture.graph.json"
+        "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-07-30T05:08:55.519Z",
+      "fetchedAt": "2026-07-30T09:30:40.506Z",
       "diagram": {
         "source": "github",
-        "path": "docs/architecture.mmd",
-        "mermaid": "%% PII Gateway — portfolio / How it works diagram (aligned with C2)\n%% Canonical Mermaid source. Keep in sync with docs/c4/2-containers.* and architecture.graph.json.\n%% View: https://mermaid.live  |  local: open docs/view-architecture.html\n\nflowchart TB\n  subgraph inputs[\"Inputs\"]\n    APP[Apps / scripts]\n    AUTO[Automation]\n    PG[(PostgreSQL)]\n    INBOX[CSV / JSON inbox]\n  end\n\n  subgraph core[\"PII Gateway — single FastAPI container\"]\n    SAN[Sanitize API<br/>POST /v1/sanitize]\n    JOBS[Batch jobs<br/>POST /internal/jobs/*]\n    HZ[GET /healthz]\n    POL[Policy file]\n    PIPE[Sanitize pipeline]\n    PR[Presidio engines]\n  end\n\n  subgraph outputs[\"Outputs\"]\n    RESP[Cleaned response]\n    ART[(Artifacts<br/>local or S3)]\n  end\n\n  APP -->|JSON + X-API-Key| SAN\n  AUTO -.->|internal key| JOBS\n  PG -.->|named SQL| JOBS\n  INBOX -.->|local or S3| JOBS\n  SAN --> PIPE\n  JOBS -.-> PIPE\n  POL --> PIPE\n  PIPE --> PR\n  PIPE --> RESP\n  PIPE -.->|optional raw / cleaned| ART\n  HZ -.-> core",
+        "path": "docs/c4/2-containers.mmd",
+        "mermaid": "%% C2 Containers — PII Gateway\n%% Evidence: Dockerfile, docker-compose*.yml, main.py, settings.py, storage/, state_store.py\n%% View: https://mermaid.live\n%% Prefer C4Container; flowchart equivalent commented below if your renderer lacks C4.\n\nC4Container\n  title Containers — PII Gateway\n\n  Person(integrator, \"App integrator\", \"HTTP sanitize callers\")\n  Person(automator, \"Automation\", \"Internal job triggers or cron-like clients\")\n  Person(operator, \"Operator\", \"Policy mount + env\")\n\n  System_Boundary(sys, \"PII Gateway deployment\") {\n    Container(gw, \"pii-gateway\", \"FastAPI / Uvicorn\", \"POST /v1/sanitize, POST /internal/jobs/*, GET /healthz; optional APScheduler; Presidio at lifespan\")\n    ContainerDb(policy, \"policy-file\", \"YAML/JSON mount\", \"Entities, field rules, named SQL, inbox config — non-secret\")\n    ContainerDb(local, \"local-volume\", \"Filesystem\", \"Artifacts + GATEWAY_STATE_DIR cursors/index\")\n  }\n\n  System_Ext(postgres, \"PostgreSQL\", \"Optional batch source\")\n  System_Ext(s3, \"S3-compatible\", \"Optional inbox + outbound artifacts\")\n\n  Rel(integrator, gw, \"Uploads JSON/text\", \"POST /v1/sanitize + X-API-Key\")\n  Rel(automator, gw, \"Triggers batch/file jobs\", \"POST /internal/jobs/* + X-Internal-Job-Key\")\n  Rel(operator, policy, \"Reviews and mounts policy\")\n  Rel(gw, policy, \"Reads policy at startup\")\n  Rel(gw, postgres, \"Optional named SQL reads\")\n  Rel(gw, s3, \"Optional inbox scan / artifact put\")\n  Rel(gw, local, \"Optional artifacts + state writes\")\n\n%% --- Flowchart equivalent (uncomment if C4Container unsupported) ---\n%% flowchart TB\n%%   integrator[App integrator]\n%%   automator[Automation]\n%%   operator[Operator]\n%%   subgraph deployment[\"PII Gateway deployment\"]\n%%     gw[pii-gateway<br/>FastAPI / Uvicorn]\n%%     policy[(policy-file)]\n%%     local[(local-volume)]\n%%   end\n%%   postgres[(PostgreSQL)]\n%%   s3[(S3-compatible)]\n%%   integrator -->|POST /v1/sanitize| gw\n%%   automator -->|POST /internal/jobs/*| gw\n%%   operator --> policy\n%%   gw --> policy\n%%   gw -.-> postgres\n%%   gw -.-> s3\n%%   gw --> local",
         "graph": {
           "version": 1,
           "nodes": [
             {
               "id": "apps",
-              "label": "Apps / scripts",
+              "label": "Apps / workers / scripts",
               "kind": "input",
-              "shape": "rounded",
-              "groupId": "inputs"
+              "groupId": "callers",
+              "layout": {
+                "dx": -6
+              }
             },
             {
-              "id": "automation",
-              "label": "Automation",
+              "id": "auto",
+              "label": "Cron or internal automation",
               "kind": "input",
-              "shape": "rounded",
-              "groupId": "inputs"
+              "groupId": "callers",
+              "layout": {
+                "dx": 8
+              }
             },
             {
-              "id": "postgres",
-              "label": "PostgreSQL",
-              "kind": "store",
-              "shape": "cylinder",
-              "groupId": "inputs"
-            },
-            {
-              "id": "inbox",
-              "label": "CSV / JSON inbox",
-              "kind": "store",
-              "shape": "cylinder",
-              "groupId": "inputs"
-            },
-            {
-              "id": "sanitize-api",
-              "label": "Sanitize API",
+              "id": "sanitize",
+              "label": "POST /v1/sanitize",
               "kind": "process",
-              "shape": "rect",
-              "groupId": "core"
+              "groupId": "gateway",
+              "layout": {
+                "scale": 1.16,
+                "weight": "spine"
+              }
             },
             {
-              "id": "batch-jobs",
-              "label": "Batch jobs",
+              "id": "auth",
+              "label": "API-key auth + correlation ID",
               "kind": "process",
-              "shape": "rect",
-              "groupId": "core"
+              "groupId": "gateway"
             },
             {
               "id": "policy",
-              "label": "Policy file",
-              "kind": "other",
-              "shape": "ticket",
-              "groupId": "core"
+              "label": "Mounted policy YAML/JSON",
+              "kind": "store",
+              "shape": "cylinder",
+              "groupId": "gateway",
+              "layout": {
+                "dx": -12,
+                "scale": 0.88,
+                "weight": "satellite"
+              }
             },
             {
-              "id": "sanitize-pipeline",
+              "id": "pipeline",
               "label": "Sanitize pipeline",
               "kind": "process",
-              "shape": "rect",
-              "groupId": "core"
+              "groupId": "gateway",
+              "layout": {
+                "scale": 1.22,
+                "weight": "spine"
+              }
             },
             {
               "id": "presidio",
-              "label": "Presidio",
+              "label": "Presidio engines",
               "kind": "process",
-              "shape": "rounded",
-              "groupId": "core"
+              "groupId": "gateway",
+              "layout": {
+                "scale": 1.14,
+                "weight": "spine"
+              }
             },
             {
-              "id": "cleaned-response",
-              "label": "Cleaned response",
-              "kind": "output",
-              "shape": "stadium",
-              "groupId": "outputs"
+              "id": "postgres",
+              "label": "PostgreSQL exports",
+              "kind": "input",
+              "shape": "cylinder",
+              "groupId": "batch",
+              "layout": {
+                "dx": 6,
+                "scale": 0.84,
+                "weight": "satellite"
+              }
+            },
+            {
+              "id": "inbox",
+              "label": "CSV / JSON / S3 inbox",
+              "kind": "input",
+              "groupId": "batch",
+              "layout": {
+                "dx": -4,
+                "scale": 0.84,
+                "weight": "satellite"
+              }
             },
             {
               "id": "artifacts",
-              "label": "Artifacts",
-              "kind": "output",
+              "label": "Artifact storage (disk / S3)",
+              "kind": "store",
               "shape": "cylinder",
-              "groupId": "outputs"
+              "layout": {
+                "dy": 12,
+                "scale": 1.1,
+                "weight": "spine"
+              }
             }
           ],
           "edges": [
             {
               "from": "apps",
-              "to": "sanitize-api",
-              "id": "e-apps-api",
-              "label": "POST /v1/sanitize",
-              "style": "solid"
+              "to": "sanitize",
+              "label": "JSON + API key"
             },
             {
-              "from": "automation",
-              "to": "batch-jobs",
-              "id": "e-auto-batch",
-              "label": "POST /internal/jobs/*",
+              "from": "auto",
+              "to": "sanitize",
+              "label": "internal key",
               "style": "dashed"
             },
             {
+              "from": "sanitize",
+              "to": "auth"
+            },
+            {
+              "from": "auth",
+              "to": "pipeline"
+            },
+            {
+              "from": "policy",
+              "to": "pipeline"
+            },
+            {
+              "from": "pipeline",
+              "to": "presidio"
+            },
+            {
               "from": "postgres",
-              "to": "batch-jobs",
-              "id": "e-pg-batch",
-              "label": "named SQL",
+              "to": "pipeline",
               "style": "dashed"
             },
             {
               "from": "inbox",
-              "to": "batch-jobs",
-              "id": "e-inbox-batch",
-              "label": "local or S3",
+              "to": "pipeline",
               "style": "dashed"
             },
             {
-              "from": "sanitize-api",
-              "to": "sanitize-pipeline",
-              "id": "e-api-pipe",
-              "label": "after API key",
-              "style": "solid"
-            },
-            {
-              "from": "batch-jobs",
-              "to": "sanitize-pipeline",
-              "id": "e-batch-pipe",
-              "label": "same core",
-              "style": "dashed"
-            },
-            {
-              "from": "policy",
-              "to": "sanitize-pipeline",
-              "id": "e-policy-pipe",
-              "label": "rules",
-              "style": "solid"
-            },
-            {
-              "from": "sanitize-pipeline",
-              "to": "presidio",
-              "id": "e-pipe-presidio",
-              "label": "analyze / redact",
-              "style": "solid"
-            },
-            {
-              "from": "sanitize-pipeline",
-              "to": "cleaned-response",
-              "id": "e-pipe-resp",
-              "label": "JSON result",
-              "style": "solid"
-            },
-            {
-              "from": "sanitize-pipeline",
+              "from": "pipeline",
               "to": "artifacts",
-              "id": "e-pipe-art",
-              "label": "optional raw/cleaned",
-              "style": "dashed"
+              "label": "optional raw / cleaned"
             }
           ],
           "tour": [
             "apps",
-            "sanitize-api",
-            "policy",
-            "sanitize-pipeline",
-            "cleaned-response"
+            "sanitize",
+            "pipeline",
+            "presidio",
+            "artifacts"
           ],
           "title": "PII Gateway",
-          "summary": "Callers send JSON or text to POST /v1/sanitize; a mounted policy plus Presidio redact PII and return a cleaned payload. Optional batch jobs pull Postgres or inbox files and can write artifacts.",
-          "notes": "Simplified from C2 containers: the single FastAPI process is shown as API + pipeline + Presidio nodes. Batch sources, automation, and artifact storage are optional (dashed). Full C4: docs/c4/. C3 zoom only for pii-gateway.",
-          "skin": "default",
+          "summary": "Callers hit the sanitize API through API-key auth; a shared pipeline runs Presidio and optionally writes cleaned artifacts.",
+          "notes": "Portfolio map collapses nested FastAPI internals. Batch inboxes stay as dashed secondary inputs. Path story is five beats along the happy path.",
+          "skin": "pii",
           "groups": [
             {
-              "id": "inputs",
-              "label": "Inputs"
+              "id": "callers",
+              "label": "Callers"
             },
             {
-              "id": "core",
-              "label": "Core"
+              "id": "gateway",
+              "label": "PII Gateway"
             },
             {
-              "id": "outputs",
-              "label": "Outputs"
+              "id": "batch",
+              "label": "Batch sources"
             }
           ],
           "captions": [
             {
               "id": "apps",
-              "title": "Caller",
-              "body": "An app, worker, or script sends free text and/or nested JSON that may contain personal data.",
+              "title": "Callers",
+              "body": "Apps and workers send text to sanitize.",
+              "items": [
+                "Apps / workers / scripts",
+                "Cron or internal automation"
+              ],
               "spotlightIds": [
-                "apps"
+                "apps",
+                "auto"
               ]
             },
             {
-              "id": "sanitize-api",
-              "title": "Sanitize endpoint",
-              "body": "POST /v1/sanitize authenticates with X-API-Key, then hands the body to the shared pipeline.",
+              "id": "sanitize",
+              "title": "Enter the gateway",
+              "body": "Requests hit one POST endpoint, then an API-key gate.",
+              "items": [
+                "POST /v1/sanitize",
+                "API-key auth + correlation ID"
+              ],
               "spotlightIds": [
-                "sanitize-api"
+                "sanitize",
+                "auth"
               ]
             },
             {
-              "id": "policy",
-              "title": "Mounted policy",
-              "body": "A YAML or JSON file sets entity types and per-field rules; secrets stay in environment variables.",
+              "id": "pipeline",
+              "title": "Sanitize pipeline",
+              "body": "Shared steps prepare text using the mounted policy.",
               "spotlightIds": [
+                "pipeline",
                 "policy"
               ]
             },
             {
-              "id": "sanitize-pipeline",
-              "title": "Redact",
-              "body": "The pipeline applies field rules and runs undeclared strings through Presidio so nothing slips through by default.",
-              "items": [
-                "Structured redact / tokenize / mask when declared",
-                "Presidio NLP on free text and undeclared strings"
-              ],
+              "id": "presidio",
+              "title": "Presidio",
+              "body": "Engines find and redact personal data.",
               "spotlightIds": [
-                "sanitize-pipeline",
                 "presidio"
               ]
             },
             {
-              "id": "cleaned-response",
-              "title": "Cleaned payload",
-              "body": "The response returns cleaned data plus counts-only entity summary—no raw spans or values in meta.",
+              "id": "artifacts",
+              "title": "Artifacts",
+              "body": "Optionally write cleaned results to storage.",
               "spotlightIds": [
-                "cleaned-response"
+                "artifacts"
               ]
             }
           ]
         },
-        "graphSource": "github",
-        "graphPath": "docs/architecture.graph.json",
+        "graphSource": "local",
+        "graphPath": "src/data/architecture-graphs/pii-gateway.graph.json",
         "c4": {
           "mapPath": "docs/c4/portfolio-map.json",
+          "defaultLevel": "context",
           "context": {
-            "mermaid": "%% C1 System Context — PII Gateway\n%% View: https://mermaid.live\n\nC4Context\n  title System Context — PII Gateway\n\n  Person(integrator, \"App integrator\", \"Builds apps, workers, or scripts that call the sanitize API\")\n  Person(operator, \"Operator\", \"Mounts policy file, sets env secrets, runs Compose\")\n  Person(automator, \"Automation caller\", \"Triggers internal jobs via HTTP or relies on in-process scheduler\")\n\n  System(gw, \"PII Gateway\", \"Single FastAPI container: redact text/JSON via Presidio + policy; optional batch and artifacts\")\n\n  System_Ext(postgres, \"PostgreSQL\", \"Optional read-only exports via named SQL in policy\")\n  System_Ext(s3, \"S3-compatible storage\", \"Optional file inbox and/or outbound artifacts (MinIO, R2, AWS S3)\")\n  System_Ext(disk, \"Local volume\", \"Default artifact root and gateway state (cursors, processed-file index)\")\n\n  Rel(integrator, gw, \"POST /v1/sanitize with X-API-Key\")\n  Rel(automator, gw, \"POST /internal/jobs/* with X-Internal-Job-Key\")\n  Rel(operator, gw, \"Deploys container; mounts policy; configures env\")\n  Rel(gw, postgres, \"Optional named SQL batch reads\")\n  Rel(gw, s3, \"Optional inbox list/get and artifact put\")\n  Rel(gw, disk, \"Optional raw/cleaned writes; state JSON\")",
+            "mermaid": "%% C1 System Context — PII Gateway\n%% Evidence: src/pii_gateway/main.py, docker-compose*.yml, settings.py, routes_*.py\n%% View: https://mermaid.live\n\nC4Context\n  title System Context — PII Gateway\n\n  Person(integrator, \"App integrator\", \"Builds apps, workers, or scripts that call the sanitize API\")\n  Person(operator, \"Operator\", \"Mounts policy file, sets env secrets, runs Compose\")\n  Person(automator, \"Automation caller\", \"Triggers internal jobs via HTTP or relies on in-process scheduler\")\n\n  System(gw, \"PII Gateway\", \"Self-hosted FastAPI service: redact text/JSON via Presidio + policy; optional batch and artifacts\")\n\n  System_Ext(postgres, \"PostgreSQL\", \"Optional read-only exports via named SQL in policy\")\n  System_Ext(s3, \"S3-compatible storage\", \"Optional file inbox and/or outbound artifacts (MinIO, R2, AWS S3)\")\n  System_Ext(disk, \"Local volume\", \"Default artifact root and gateway state (cursors, processed-file index)\")\n\n  Rel(integrator, gw, \"Sends text/JSON to sanitize\", \"POST /v1/sanitize + X-API-Key\")\n  Rel(automator, gw, \"Triggers batch/file jobs\", \"POST /internal/jobs/* + X-Internal-Job-Key\")\n  Rel(operator, gw, \"Deploys container; mounts policy; configures env\")\n  Rel(gw, postgres, \"Optional named SQL batch reads\")\n  Rel(gw, s3, \"Optional inbox list/get and artifact put\")\n  Rel(gw, disk, \"Optional raw/cleaned writes; state JSON\")\n\n%% --- Flowchart equivalent (uncomment if C4Context unsupported) ---\n%% flowchart LR\n%%   integrator[App integrator]\n%%   operator[Operator]\n%%   automator[Automation caller]\n%%   gw[PII Gateway]\n%%   postgres[(PostgreSQL)]\n%%   s3[(S3-compatible)]\n%%   disk[(Local volume)]\n%%   integrator -->|POST /v1/sanitize| gw\n%%   automator -->|POST /internal/jobs/*| gw\n%%   operator -->|deploy + policy + env| gw\n%%   gw -.->|named SQL| postgres\n%%   gw -.->|inbox / artifacts| s3\n%%   gw -->|artifacts + state| disk",
             "path": "docs/c4/1-context.mmd",
-            "markdown": "# C1 — System Context\n\n**System:** PII Gateway — one self-hosted service that redacts personal data from free text and nested JSON before downstream use.\n\n**People**\n\n- **App integrator** — Calls `POST /v1/sanitize` with an API key.\n- **Automation caller** — Hits `/internal/jobs/*` or depends on the optional in-process APScheduler.\n- **Operator** — Runs Docker Compose, mounts the policy YAML/JSON, sets secrets in env.\n\n**External systems (optional unless noted)**\n\n- **PostgreSQL** — Named, parameterized batch SQL from the policy file only.\n- **S3-compatible storage** — Inbox files and/or outbound artifacts.\n- **Local volume** — Default storage backend and `GATEWAY_STATE_DIR` state files.\n\nPresidio and spaCy run **inside** the gateway process (libraries), not as separate services.\n\nDiagram: [1-context.mmd](1-context.mmd). Next: [2-containers](2-containers.md)."
+            "markdown": "# C1 — System Context\n\n**System:** PII Gateway — one self-hosted service that redacts personal data from free text and nested JSON before downstream use.\n\n**People (evidence)**\n\n| Label | Role | Evidence |\n|-------|------|----------|\n| App integrator | Calls realtime sanitize | `api/routes_sanitize.py` — `POST /v1/sanitize`, `X-API-Key` |\n| Automation caller | Triggers jobs or relies on scheduler | `api/routes_internal.py`; `jobs/scheduler.py` |\n| Operator | Compose, policy mount, env secrets | `docker-compose.yml`, `settings.py`, `PII_GATEWAY_CONFIG_PATH` |\n\n**External systems (optional unless noted)**\n\n| Label | Role | Evidence |\n|-------|------|----------|\n| PostgreSQL | Named, parameterized batch SQL from policy | `connectors/batch_postgres_sqlalchemy.py`, `POSTGRES_BATCH_DSN` |\n| S3-compatible storage | Inbox objects and/or outbound artifacts | `connectors/s3_inbox.py`, `storage/s3_compatible_backend.py` |\n| Local volume | Default outbound + `GATEWAY_STATE_DIR` | `storage/local_volume_backend.py`, `state_store.py` |\n\n**Notes**\n\n- Presidio and spaCy run **inside** the gateway process (libraries), not as separate context systems.\n- No public demo URL or hosted multi-tenant control plane in this repo.\n- Compose default (`docker-compose.yml`) is gateway-only; Postgres + MinIO appear in `docker-compose.example.yml`.\n\nDiagram: [1-context.mmd](1-context.mmd). Next: [2-containers](2-containers.md)."
           },
           "containers": {
-            "mermaid": "%% C2 Containers — PII Gateway (default portfolio map)\n%% View: https://mermaid.live\n%% Prefer C4Container; if your renderer lacks C4, use the flowchart below the comment block.\n\nC4Container\n  title Containers — PII Gateway\n\n  Person(integrator, \"App integrator\", \"HTTP sanitize callers\")\n  Person(automator, \"Automation\", \"Internal job triggers or cron-like clients\")\n  Person(operator, \"Operator\", \"Policy mount + env\")\n\n  System_Boundary(sys, \"PII Gateway deployment\") {\n    Container(gw, \"pii-gateway\", \"FastAPI / Uvicorn\", \"POST /v1/sanitize, POST /internal/jobs/*, GET /healthz; optional APScheduler; Presidio at lifespan\")\n    ContainerDb(policy, \"policy-file\", \"YAML/JSON mount\", \"Entities, field rules, named SQL, inbox config — non-secret\")\n    ContainerDb(local, \"local-volume\", \"Filesystem\", \"Artifacts + GATEWAY_STATE_DIR cursors/index\")\n  }\n\n  System_Ext(postgres, \"PostgreSQL\", \"Optional batch source\")\n  System_Ext(s3, \"S3-compatible\", \"Optional inbox + outbound artifacts\")\n\n  Rel(integrator, gw, \"Uploads JSON/text\", \"POST /v1/sanitize + X-API-Key\")\n  Rel(automator, gw, \"Triggers batch/file jobs\", \"POST /internal/jobs/* + X-Internal-Job-Key\")\n  Rel(operator, policy, \"Reviews and mounts policy\")\n  Rel(gw, policy, \"Reads policy at startup\")\n  Rel(gw, postgres, \"Optional named SQL reads\")\n  Rel(gw, s3, \"Optional inbox scan / artifact put\")\n  Rel(gw, local, \"Optional artifacts + state writes\")",
+            "mermaid": "%% C2 Containers — PII Gateway\n%% Evidence: Dockerfile, docker-compose*.yml, main.py, settings.py, storage/, state_store.py\n%% View: https://mermaid.live\n%% Prefer C4Container; flowchart equivalent commented below if your renderer lacks C4.\n\nC4Container\n  title Containers — PII Gateway\n\n  Person(integrator, \"App integrator\", \"HTTP sanitize callers\")\n  Person(automator, \"Automation\", \"Internal job triggers or cron-like clients\")\n  Person(operator, \"Operator\", \"Policy mount + env\")\n\n  System_Boundary(sys, \"PII Gateway deployment\") {\n    Container(gw, \"pii-gateway\", \"FastAPI / Uvicorn\", \"POST /v1/sanitize, POST /internal/jobs/*, GET /healthz; optional APScheduler; Presidio at lifespan\")\n    ContainerDb(policy, \"policy-file\", \"YAML/JSON mount\", \"Entities, field rules, named SQL, inbox config — non-secret\")\n    ContainerDb(local, \"local-volume\", \"Filesystem\", \"Artifacts + GATEWAY_STATE_DIR cursors/index\")\n  }\n\n  System_Ext(postgres, \"PostgreSQL\", \"Optional batch source\")\n  System_Ext(s3, \"S3-compatible\", \"Optional inbox + outbound artifacts\")\n\n  Rel(integrator, gw, \"Uploads JSON/text\", \"POST /v1/sanitize + X-API-Key\")\n  Rel(automator, gw, \"Triggers batch/file jobs\", \"POST /internal/jobs/* + X-Internal-Job-Key\")\n  Rel(operator, policy, \"Reviews and mounts policy\")\n  Rel(gw, policy, \"Reads policy at startup\")\n  Rel(gw, postgres, \"Optional named SQL reads\")\n  Rel(gw, s3, \"Optional inbox scan / artifact put\")\n  Rel(gw, local, \"Optional artifacts + state writes\")\n\n%% --- Flowchart equivalent (uncomment if C4Container unsupported) ---\n%% flowchart TB\n%%   integrator[App integrator]\n%%   automator[Automation]\n%%   operator[Operator]\n%%   subgraph deployment[\"PII Gateway deployment\"]\n%%     gw[pii-gateway<br/>FastAPI / Uvicorn]\n%%     policy[(policy-file)]\n%%     local[(local-volume)]\n%%   end\n%%   postgres[(PostgreSQL)]\n%%   s3[(S3-compatible)]\n%%   integrator -->|POST /v1/sanitize| gw\n%%   automator -->|POST /internal/jobs/*| gw\n%%   operator --> policy\n%%   gw --> policy\n%%   gw -.-> postgres\n%%   gw -.-> s3\n%%   gw --> local",
             "path": "docs/c4/2-containers.mmd",
-            "markdown": "# C2 — Containers\n\nDeployable and mountable pieces. This is the **default map** for the portfolio graph ([../architecture.graph.json](../architecture.graph.json)).\n\n| ID | What runs | Role |\n|----|-----------|------|\n| `pii-gateway` | FastAPI + Uvicorn in one Docker service | HTTP sanitize, internal job triggers, `/healthz`, optional in-process APScheduler, Presidio engines |\n| `policy-file` | Mounted YAML/JSON | Non-secret redaction rules, named SQL, inbox paths |\n| `local-volume` | Docker volume / host path | Default outbound artifacts + gateway state JSON |\n| `postgres` | Optional external DB | Read-only named SQL exports (Compose example) |\n| `s3-compatible` | Optional MinIO / R2 / AWS S3 | Inbox objects and/or outbound `put_object` |\n\n**Not separate containers:** Presidio, spaCy, APScheduler, connectors — all in-process inside `pii-gateway`. There is no worker CLI.\n\nCompose: [`docker-compose.yml`](../../docker-compose.yml) (app only); optional PG + MinIO in [`docker-compose.example.yml`](../../docker-compose.example.yml).\n\nDiagram: [2-containers.mmd](2-containers.mmd). Zoom: [3-components/pii-gateway.md](3-components/pii-gateway.md)."
+            "markdown": "# C2 — Containers\n\nDeployable and mountable pieces. **Canonical** container diagram for portfolio (`portfolio.yaml` → `diagram:`). Zoom index: [portfolio-map.json](portfolio-map.json).\n\n| ID | What runs | Role | Evidence |\n|----|-----------|------|----------|\n| `pii-gateway` | FastAPI + Uvicorn in one Docker service | HTTP sanitize, internal job triggers, `/healthz`, optional in-process APScheduler, Presidio engines | `Dockerfile`, `main.py`, `docker-compose.yml` |\n| `policy-file` | Mounted YAML/JSON | Non-secret redaction rules, named SQL, inbox paths | `config_loader.py`, `policy_schema.py`, Compose volume mount |\n| `local-volume` | Docker volume / host path | Default outbound artifacts + gateway state JSON | `STORAGE_LOCAL_PATH`, `GATEWAY_STATE_DIR`, `storage/local_volume_backend.py` |\n| `postgres` | Optional external DB | Read-only named SQL exports | `POSTGRES_BATCH_DSN`, `docker-compose.example.yml` |\n| `s3-compatible` | Optional MinIO / R2 / AWS S3 | Inbox objects and/or outbound `put_object` | `STORAGE_BACKEND=s3`, `inbox_s3_*`, example MinIO service |\n\n**Collapsed into `pii-gateway` (see C3, not separate containers):** Presidio, spaCy, APScheduler, connectors, sanitize pipeline, auth helpers, correlation middleware. There is no worker CLI or second process.\n\n**Notes**\n\n- Default Compose runs **only** `pii-gateway` + a data volume; Postgres/MinIO are optional via the example overlay.\n- When `STORAGE_BACKEND=s3`, outbound artifacts leave the local volume path; state files still use `GATEWAY_STATE_DIR` on disk.\n\nDiagram: [2-containers.mmd](2-containers.mmd). Zoom: [3-components/pii-gateway.md](3-components/pii-gateway.md)."
           },
           "components": {
             "pii-gateway": {
-              "mermaid": "%% C3 Components — pii-gateway container\n%% View: https://mermaid.live\n\nC4Component\n  title Components — pii-gateway\n\n  Container_Boundary(gw, \"pii-gateway\") {\n    Component(sanitize_api, \"Sanitize API\", \"POST /v1/sanitize\", \"Realtime text + structured JSON\")\n    Component(internal_jobs, \"Internal jobs API\", \"POST /internal/jobs/*\", \"postgres-batch, file-ingest\")\n    Component(healthz, \"Healthz\", \"GET /healthz\", \"Liveness\")\n    Component(auth_mw, \"Auth + correlation\", \"middleware / auth\", \"API keys; X-Correlation-ID\")\n    Component(policy_loader, \"Policy loader\", \"config_loader\", \"Loads mounted YAML/JSON at startup\")\n    Component(pipeline, \"Sanitize pipeline\", \"core/sanitize_*\", \"Field rules + NLP walk\")\n    Component(presidio, \"Presidio engines\", \"Analyzer + Anonymizer\", \"Lifespan singleton\")\n    Component(connectors, \"Connectors\", \"connectors/\", \"Postgres stream, CSV/JSON, S3 inbox\")\n    Component(jobs_sched, \"Jobs + scheduler\", \"jobs/\", \"Batch runners; optional APScheduler\")\n    Component(storage_state, \"Storage + state\", \"storage/ + state_store\", \"Local or S3 outbound; cursors/index\")\n  }\n\n  Rel(sanitize_api, auth_mw, \"Requires X-API-Key\")\n  Rel(internal_jobs, auth_mw, \"Requires X-Internal-Job-Key\")\n  Rel(auth_mw, pipeline, \"Authorized request\")\n  Rel(policy_loader, pipeline, \"Policy rules\")\n  Rel(pipeline, presidio, \"Analyze / anonymize\")\n  Rel(internal_jobs, jobs_sched, \"Triggers job\")\n  Rel(jobs_sched, connectors, \"Loads rows/files\")\n  Rel(jobs_sched, pipeline, \"Sanitizes batch\")\n  Rel(pipeline, storage_state, \"Optional raw/cleaned artifacts\")\n  Rel(jobs_sched, storage_state, \"NDJSON + cursor/index\")",
+              "mermaid": "%% C3 Components — pii-gateway container\n%% Evidence: src/pii_gateway/** (see companion .md)\n%% View: https://mermaid.live\n\nC4Component\n  title Components — pii-gateway\n\n  Container_Boundary(gw, \"pii-gateway\") {\n    Component(sanitize_api, \"Sanitize API\", \"api/routes_sanitize.py\", \"POST /v1/sanitize — realtime text + structured JSON\")\n    Component(internal_jobs, \"Internal jobs API\", \"api/routes_internal.py\", \"POST /internal/jobs/postgres-batch and file-ingest\")\n    Component(healthz, \"Healthz\", \"main.py\", \"GET /healthz liveness\")\n    Component(correlation, \"Correlation middleware\", \"api/middleware.py\", \"X-Correlation-ID on every request\")\n    Component(auth, \"API key auth\", \"api/auth.py\", \"X-API-Key and X-Internal-Job-Key helpers\")\n    Component(settings_env, \"Settings\", \"settings.py\", \"12-factor env: secrets, DSNs, storage, scheduler flags\")\n    Component(policy_loader, \"Policy loader\", \"config_loader + policy_schema\", \"Mounted YAML/JSON validated at startup\")\n    Component(pipeline, \"Sanitize pipeline\", \"core/sanitize_*\", \"Field rules + fail-closed NLP walk; counts-only summary\")\n    Component(presidio, \"Presidio engines\", \"lifespan in main.py\", \"Analyzer + Anonymizer singleton per process\")\n    Component(connectors, \"Connectors\", \"connectors/\", \"Postgres stream, CSV/JSON parsers, S3 inbox list/get\")\n    Component(jobs_sched, \"Jobs + scheduler\", \"jobs/\", \"Batch runners; optional AsyncIOScheduler\")\n    Component(storage_state, \"Storage + state\", \"storage/ + state_store\", \"Local or S3 outbound; cursors + processed-file index\")\n    Component(logging, \"Structured logging\", \"logging_config.py\", \"Stdout JSON; allow-listed fields only\")\n  }\n\n  Rel(sanitize_api, auth, \"verify_http_auth\")\n  Rel(internal_jobs, auth, \"verify_internal_job\")\n  Rel(sanitize_api, pipeline, \"sanitize_payload\")\n  Rel(policy_loader, pipeline, \"GatewayPolicy rules\")\n  Rel(settings_env, policy_loader, \"PII_GATEWAY_CONFIG_PATH\")\n  Rel(pipeline, presidio, \"analyze / anonymize\")\n  Rel(sanitize_api, storage_state, \"Optional raw/cleaned artifacts\")\n  Rel(internal_jobs, jobs_sched, \"Triggers job runners\")\n  Rel(jobs_sched, connectors, \"Loads rows/files\")\n  Rel(jobs_sched, pipeline, \"Sanitizes batch rows\")\n  Rel(jobs_sched, storage_state, \"NDJSON + cursor/index\")\n  Rel(correlation, sanitize_api, \"Attaches correlation_id\")\n  Rel(sanitize_api, logging, \"sanitize_complete events\")\n\n%% --- Flowchart equivalent (uncomment if C4Component unsupported) ---\n%% flowchart TB\n%%   subgraph api[\"HTTP surface\"]\n%%     sanitize_api[Sanitize API]\n%%     internal_jobs[Internal jobs API]\n%%     healthz[Healthz]\n%%     correlation[Correlation middleware]\n%%     auth[API key auth]\n%%   end\n%%   subgraph core[\"Redaction\"]\n%%     settings_env[Settings]\n%%     policy_loader[Policy loader]\n%%     pipeline[Sanitize pipeline]\n%%     presidio[Presidio engines]\n%%   end\n%%   subgraph batch[\"Batch path\"]\n%%     jobs_sched[Jobs + scheduler]\n%%     connectors[Connectors]\n%%   end\n%%   storage_state[Storage + state]\n%%   logging[Structured logging]\n%%   sanitize_api --> auth --> pipeline\n%%   internal_jobs --> auth\n%%   internal_jobs --> jobs_sched\n%%   settings_env --> policy_loader --> pipeline\n%%   pipeline --> presidio\n%%   jobs_sched --> connectors\n%%   jobs_sched --> pipeline\n%%   jobs_sched --> storage_state\n%%   sanitize_api --> storage_state\n%%   correlation --> sanitize_api\n%%   sanitize_api --> logging",
               "path": "docs/c4/3-components/pii-gateway.mmd",
-              "markdown": "# C3 — Components: `pii-gateway`\n\nZoom of the single FastAPI container. All of these share one process and one Docker image.\n\n| ID | Code area | Role |\n|----|-----------|------|\n| Sanitize API | `api/routes_sanitize.py` | `POST /v1/sanitize` |\n| Internal jobs API | `api/routes_internal.py` | `POST /internal/jobs/postgres-batch`, `POST /internal/jobs/file-ingest` |\n| Healthz | `main.py` | `GET /healthz` |\n| Auth + correlation | `api/auth.py`, `api/middleware.py` | API keys; correlation ID header |\n| Policy loader | `config_loader.py`, `policy_schema.py` | Mounted policy at lifespan start |\n| Sanitize pipeline | `core/sanitize_*.py` | Text + recursive structured redaction |\n| Presidio engines | lifespan in `main.py` | Analyzer/Anonymizer once per process |\n| Connectors | `connectors/` | Postgres, CSV, JSON array, S3 inbox |\n| Jobs + scheduler | `jobs/` | Batch runners; optional APScheduler |\n| Storage + state | `storage/`, `state_store.py` | Outbound local/S3; cursors and processed-file index |\n\nParent view: [../2-containers.md](../2-containers.md). Diagram: [pii-gateway.mmd](pii-gateway.mmd)."
+              "markdown": "# C3 — Components: `pii-gateway`\n\nZoom of the single FastAPI / Uvicorn process (`Dockerfile` CMD). All components share one Docker image and one OS process.\n\n| ID | Code area | Role |\n|----|-----------|------|\n| Sanitize API | `api/routes_sanitize.py`, `api/schemas.py` | `POST /v1/sanitize` |\n| Internal jobs API | `api/routes_internal.py` | `POST /internal/jobs/postgres-batch`, `POST /internal/jobs/file-ingest` |\n| Healthz | `main.py` | `GET /healthz` |\n| Correlation middleware | `api/middleware.py` | `X-Correlation-ID` (only Starlette middleware besides optional CORS) |\n| API key auth | `api/auth.py` | Route helpers — **not** middleware; constant-time key compare |\n| Settings | `settings.py` | Env-only secrets/DSNs/storage/scheduler flags |\n| Policy loader | `config_loader.py`, `policy_schema.py` | Mounted policy at lifespan start |\n| Sanitize pipeline | `core/sanitize_pipeline.py`, `sanitize_text.py`, `sanitize_structured.py`, `entity_summary.py` | Text + recursive structured redaction |\n| Presidio engines | lifespan in `main.py` | `AnalyzerEngine` / `AnonymizerEngine` once per process |\n| Connectors | `connectors/` | Postgres stream, CSV (Pandas), JSON array, S3 inbox |\n| Jobs + scheduler | `jobs/postgres_batch_job.py`, `file_ingest.py`, `batch_common.py`, `scheduler.py` | Batch runners; optional `AsyncIOScheduler` |\n| Storage + state | `storage/`, `state_store.py`, `storage/paths.py` | Outbound local/S3; Postgres cursor + processed-file index |\n| Structured logging | `logging_config.py` | Stdout; no raw bodies from core sanitize modules |\n\n## Distinctive design (do not flatten away)\n\n1. **Fail-closed structured walk** — Declared fields use `redact` / `tokenize` / `mask` / `passthrough`; undeclared strings and `passthrough` still go through Presidio (`sanitize_structured.py`).\n2. **Named SQL boundary** — Batch SQL text lives only in the policy file; HTTP picks `query_name`, never supplies SQL (`batch_postgres_sqlalchemy.py`).\n3. **Counts-only summary** — `entity_summary` is entity-type counts; no spans/values in meta (`entity_summary.py`).\n4. **Double analyze cost** — Pipeline may call Presidio `analyze` for counts and again inside anonymize paths (honest inefficiency noted in `ARCHITECTURE.md`).\n5. **Scheduler behavior** — When enabled, file-ingest interval job is always registered; Postgres cron job only if `POSTGRES_BATCH_CRON` and `postgres_batch.enabled` (`jobs/scheduler.py`).\n6. **`tokenize` is a label** — Values become `<{FIELD}_TOKEN>`; not cryptographic or reversible tokens.\n\nParent view: [../2-containers.md](../2-containers.md). Diagram: [pii-gateway.mmd](pii-gateway.mmd)."
             }
           },
           "diveTargets": [
             {
               "id": "pii-gateway",
-              "label": "PII Gateway",
+              "label": "pii-gateway",
               "graphNodeIds": [
-                "sanitize-api",
-                "batch-jobs",
-                "sanitize-pipeline",
                 "presidio",
                 "policy"
+              ],
+              "matchLabels": [
+                "pii-gateway",
+                "FastAPI / Uvicorn"
               ]
+            }
+          ],
+          "zoomTargets": [
+            {
+              "id": "pii-gateway-system",
+              "label": "PII Gateway",
+              "fromLevel": "context",
+              "toLevel": "containers",
+              "matchLabels": [
+                "PII Gateway",
+                "pii-gateway-system"
+              ]
+            },
+            {
+              "id": "pii-gateway",
+              "label": "pii-gateway",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "pii-gateway",
+                "FastAPI / Uvicorn"
+              ],
+              "componentId": "pii-gateway"
             }
           ]
         }
@@ -930,16 +1068,15 @@
         "status": "active",
         "links": {
           "github": "https://github.com/aryanjohari/ADA",
-          "docs": "https://github.com/aryanjohari/ADA/tree/main/docs"
+          "docs": "https://github.com/aryanjohari/ADA/blob/main/docs/c4/README.md"
         },
-        "diagram": "docs/architecture.mmd",
-        "graph": "docs/architecture.graph.json"
+        "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-07-30T05:08:57.112Z",
+      "fetchedAt": "2026-07-30T09:30:41.131Z",
       "diagram": {
         "source": "github",
-        "path": "docs/architecture.mmd",
-        "mermaid": "flowchart TB\n  subgraph inputs [Inputs]\n    cliChat[\"ada chat\"]\n    hostScheduler[\"cron / systemd\"]\n    hud[\"ada hud\"]\n  end\n\n  subgraph core [Core]\n    orchestrator[\"Orchestrator\\nmanual Gemini tools\"]\n    toolExecutor[\"Tool executor\\nallowlist + skills\"]\n    daemon[\"ada daemon\\ngoals + workflows\"]\n    stateDb[(\"state.db\\nSQLite WAL + FTS5\")]\n    memoryFiles[(\"memory/*.md\")]\n    ingestClis[\"Ingest CLIs\\nRSS / GSC / brand\"]\n    graphLite[\"Graph-lite\\ntriage + edges\"]\n    publishWorkflows[\"Publish workflows\\nENRICH → GATE? → DRAFT → DEPLOY\"]\n  end\n\n  subgraph outputs [Outputs]\n    s3Out[\"S3 page.json + manifest\\nISR consumer out of repo\"]\n  end\n\n  cliChat -->|runs turns| orchestrator\n  orchestrator -->|invokes tools| toolExecutor\n  toolExecutor -->|persists rows| stateDb\n  orchestrator -->|reads memory| memoryFiles\n  orchestrator -->|transcript| stateDb\n\n  hostScheduler -.->|runs ingest| ingestClis\n  hostScheduler -.->|runs graph| graphLite\n  hostScheduler -.->|supervises| daemon\n  ingestClis -.->|knowledge_items| stateDb\n  graphLite -.->|entities / edges| stateDb\n\n  daemon -.->|goal turns| orchestrator\n  daemon -->|advances steps| publishWorkflows\n  stateDb -->|facts + workflow state| publishWorkflows\n  publishWorkflows -->|DEPLOY| s3Out\n\n  hud -.->|SELECT-only| stateDb",
+        "path": "docs/c4/2-containers.mmd",
+        "mermaid": "C4Container\n  title Containers — ADA\n\n  Person(operator, \"Operator\", \"Local machine\")\n\n  System_Boundary(adaInstall, \"ADA install\") {\n    Container(cliChat, \"ada chat\", \"Python CLI\", \"Entity / Agent / Plan / Setup ingress\")\n    Container(hud, \"ada hud\", \"Streamlit\", \"Read-only observability on localhost\")\n    Container(orch, \"Orchestrator\", \"Python lib\", \"Manual Gemini tool loop + transcript\")\n    Container(tools, \"Tool executor\", \"Python lib\", \"Allowlist + motor skills\")\n    Container(daemon, \"ada daemon\", \"Python worker\", \"Goals + workflow steps (one per profile)\")\n    Container(ingest, \"Ingest CLIs\", \"Python CLI\", \"RSS / GSC / brand / GETS / keywords\")\n    Container(graph, \"Graph-lite\", \"Python CLI\", \"Triage, extract, enrich\")\n    Container(publish, \"Publish workflows\", \"Python\", \"ENRICH → GATE? → DRAFT → DEPLOY\")\n    ContainerDb(stateDb, \"state.db\", \"SQLite WAL + FTS5\", \"Messages, jobs, knowledge, graph, workflows\")\n    ContainerDb(memory, \"memory/*.md\", \"Markdown files\", \"soul, master, related memory\")\n  }\n\n  Container_Ext(scheduler, \"cron / systemd\", \"Host OS\", \"Triggers short CLIs; runs daemon under systemd\")\n  System_Ext(gemini, \"Google Gemini\", \"LLM API\")\n  System_Ext(s3, \"AWS S3\", \"page.json + manifest\")\n\n  Rel(operator, cliChat, \"Interactive chat\")\n  Rel(operator, hud, \"Opens localhost UI\")\n  Rel(operator, scheduler, \"Installs schedules / units\")\n\n  Rel(cliChat, orch, \"Runs turns\")\n  Rel(orch, gemini, \"Model legs\")\n  Rel(orch, tools, \"Invokes tools\")\n  Rel(orch, memory, \"Reads memory context\")\n  Rel(tools, stateDb, \"Persists tool / message rows\")\n\n  Rel(scheduler, ingest, \"Runs ingest-*\")\n  Rel(scheduler, graph, \"Runs triage / extract / enrich\")\n  Rel(scheduler, daemon, \"Starts or keeps worker alive\")\n  Rel(ingest, stateDb, \"Writes knowledge_items\")\n  Rel(graph, stateDb, \"Writes entities / edges\")\n  Rel(graph, gemini, \"Triage / extract / enrich model calls\")\n\n  Rel(daemon, orch, \"Goal model turns\")\n  Rel(daemon, publish, \"Advances workflow steps\")\n  Rel(publish, stateDb, \"Reads facts / writes workflow state\")\n  Rel(publish, s3, \"DEPLOY uploads page.json\")\n\n  Rel(hud, stateDb, \"SELECT-only reads\")\n\n%% Flowchart equivalent (aligned with docs/architecture.mmd):\n%% flowchart TB\n%%   cliChat --> orch --> tools --> stateDb\n%%   orch --> memory\n%%   scheduler -.-> ingest -.-> stateDb\n%%   scheduler -.-> graph -.-> stateDb\n%%   scheduler -.-> daemon\n%%   daemon -.-> orch\n%%   daemon --> publish --> s3\n%%   hud -.-> stateDb",
         "graph": {
           "version": 1,
           "nodes": [
@@ -1161,50 +1298,249 @@
         "graphSource": "local",
         "graphPath": "src/data/architecture-graphs/ada.graph.json",
         "c4": {
+          "mapPath": "docs/c4/portfolio-map.json",
+          "defaultLevel": "context",
           "context": {
-            "mermaid": "C4Context\n  title System Context — ADA\n\n  Person(operator, \"Operator\", \"Runs ADA on their own hardware (e.g. Pi)\")\n\n  System(ada, \"ADA\", \"Local Python agent: chat, daemon, ingest, publish\")\n\n  System_Ext(gemini, \"Google Gemini\", \"LLM turns via google-genai SDK\")\n  System_Ext(sources, \"Content sources\", \"RSS feeds, GSC, GETS HTML\")\n  System_Ext(webtools, \"Optional web tools\", \"Serper search, Jina Reader (env-gated)\")\n  System_Ext(s3, \"AWS S3\", \"page.json + manifest (or S3-compatible endpoint)\")\n  System_Ext(isr, \"ISR frontend\", \"Next.js consumer — out of this repo\")\n\n  Rel(operator, ada, \"CLI, cron/systemd, localhost HUD\")\n  Rel(ada, gemini, \"Model turns, triage, extract/enrich, dream\")\n  Rel(ada, sources, \"Ingest CLIs pull / poll\")\n  Rel(ada, webtools, \"Optional tool calls when keys set\")\n  Rel(ada, s3, \"DEPLOY writes page.json + merges manifest\")\n  Rel(isr, s3, \"Reads published objects (out of repo)\")",
+            "mermaid": "C4Context\n  title System Context — ADA\n\n  Person(operator, \"Operator\", \"Runs ADA on their own hardware (e.g. Pi)\")\n\n  System(ada, \"ADA\", \"Local Python agent: chat, daemon, ingest, publish\")\n\n  System_Ext(gemini, \"Google Gemini\", \"LLM turns via google-genai SDK\")\n  System_Ext(sources, \"Content sources\", \"RSS, brand HTTP, GSC, GETS, DataForSEO\")\n  System_Ext(webtools, \"Optional web tools\", \"Serper search, Jina Reader (env-gated)\")\n  System_Ext(s3, \"AWS S3\", \"page.json + manifest (or S3-compatible endpoint)\")\n  System_Ext(isr, \"ISR frontend\", \"Next.js consumer — out of this repo\")\n\n  Rel(operator, ada, \"CLI, cron/systemd, localhost HUD\")\n  Rel(ada, gemini, \"Model turns, triage, extract/enrich, dream\")\n  Rel(ada, sources, \"Ingest CLIs pull / poll\")\n  Rel(ada, webtools, \"Optional tool calls when keys set\")\n  Rel(ada, s3, \"DEPLOY writes page.json + merges manifest\")\n  Rel(isr, s3, \"Reads published objects (out of repo)\")\n\n%% Flowchart equivalent (if C4Context renderer unavailable):\n%% flowchart LR\n%%   operator[\"Operator\"] --> ada[\"ADA\"]\n%%   ada --> gemini[\"Google Gemini\"]\n%%   ada --> sources[\"Content sources\"]\n%%   ada --> webtools[\"Optional web tools\"]\n%%   ada --> s3[\"AWS S3\"]\n%%   isr[\"ISR frontend\"] --> s3",
             "path": "docs/c4/1-context.mmd",
-            "markdown": "# System Context (C1)\n\nADA is one local system on the operator’s machine. There is no hosted multi-tenant API in this repository.\n\n## Elements\n\n| ID | Role |\n|----|------|\n| **Operator** | Person who runs `ada` CLI, schedules cron/systemd jobs, and optionally opens the Streamlit HUD on localhost |\n| **ADA** | Headless Python package: chat, daemon, offline ingest/graph, publish workflows |\n| **Google Gemini** | Required for model turns (chat, daemon goals, dream, triage, graph extract/enrich) |\n| **Content sources** | RSS / brand / GSC / GETS — pulled by ingest CLIs, not auto-fetched by chat |\n| **Optional web tools** | Serper and Jina when API keys are set; DataForSEO / Unsplash / Apprise are also env-gated (collapsed here) |\n| **AWS S3** | Publish sink for `page.json` and campaign `manifest.json` |\n| **ISR frontend** | Separate codebase; reads S3 under a documented contract ([`pseo-isr-contract.md`](../pseo-isr-contract.md)) |\n\n## Non-goals at this level\n\n- No public demo URL claimed\n- No Docker Compose or in-repo HTTP agent API"
+            "markdown": "# System Context (C1)\n\nADA is one local system on the operator’s machine. There is **no** hosted multi-tenant API and **no** Docker Compose stack in this repository.\n\n## Elements\n\n| ID | Role | Evidence |\n|----|------|----------|\n| `operator` | Person who runs `ada` CLI, schedules cron/systemd, optionally opens Streamlit HUD on localhost | [`src/ada/__main__.py`](../../src/ada/__main__.py), [`ops/schedule.md`](../../ops/schedule.md) |\n| `ada` | Headless Python package: chat, daemon, offline ingest/graph, publish workflows | [`pyproject.toml`](../../pyproject.toml) entry `ada` |\n| `gemini` | Required for model turns (chat, daemon goals, dream, triage, graph extract/enrich) | [`src/ada/adapters/gemini_stream.py`](../../src/ada/adapters/gemini_stream.py), `GEMINI_API_KEY` |\n| `sources` | RSS / brand / GSC / GETS / DataForSEO keywords — pulled by ingest CLIs, not auto-fetched by chat | [`src/ada/ingest/`](../../src/ada/ingest/) |\n| `webtools` | Serper + Jina when API keys set | [`src/ada/tools/web_runtime.py`](../../src/ada/tools/web_runtime.py) |\n| `s3` | Publish sink for `page.json` and campaign `manifest.json` (boto3; optional `AWS_ENDPOINT_URL`) | [`src/ada/publish/s3_publish.py`](../../src/ada/publish/s3_publish.py) |\n| `isr` | Separate codebase; reads S3 under a documented contract | [`isr.md`](../../isr.md); contract doc often local-only under `docs/` |\n\n## Collapsed into notes (not separate C1 boxes)\n\n| Item | Where it lives |\n|------|----------------|\n| Unsplash (hero images on DRAFT) | Publish path; env-gated in draft code |\n| Apprise notifications | Optional import in [`notifications.py`](../../src/ada/notifications.py); **not** in `pyproject.toml` |\n| Gemini embeddings | Optional `ADA_KNOWLEDGE_EMBEDDINGS` / `gemini-embedding-001` |\n\n## Non-goals at this level\n\n- No public demo URL claimed\n- No Docker Compose or in-repo HTTP agent API\n- No inventing users, metrics, or hosted SaaS tenants"
           },
           "containers": {
-            "mermaid": "C4Container\n  title Containers — ADA\n\n  Person(operator, \"Operator\", \"Local machine\")\n\n  System_Boundary(ada, \"ADA install\") {\n    Container(cliChat, \"ada chat\", \"Python CLI\", \"Entity / Agent / Plan / Setup ingress\")\n    Container(hud, \"ada hud\", \"Streamlit\", \"Read-only observability on localhost\")\n    Container(orch, \"Orchestrator\", \"Python\", \"Manual Gemini tool loop + transcript\")\n    Container(tools, \"Tool executor\", \"Python\", \"Allowlist + motor skills\")\n    Container(daemon, \"ada daemon\", \"Python worker\", \"Goals + workflow steps (one per profile)\")\n    Container(ingest, \"Ingest CLIs\", \"Python CLI\", \"RSS / GSC / brand / GETS\")\n    Container(graph, \"Graph-lite\", \"Python CLI\", \"Triage, extract, enrich\")\n    Container(publish, \"Publish workflows\", \"Python\", \"ENRICH → GATE? → DRAFT → DEPLOY\")\n    ContainerDb(stateDb, \"state.db\", \"SQLite WAL + FTS5\", \"Messages, jobs, knowledge, graph, workflows\")\n    ContainerDb(memory, \"memory/*.md\", \"Markdown files\", \"soul, master, related memory\")\n  }\n\n  Container_Ext(scheduler, \"cron / systemd\", \"Host OS\", \"Triggers short CLIs; runs daemon under systemd\")\n  System_Ext(gemini, \"Google Gemini\", \"LLM API\")\n  System_Ext(s3, \"AWS S3\", \"page.json + manifest\")\n\n  Rel(operator, cliChat, \"Interactive chat\")\n  Rel(operator, hud, \"Opens localhost UI\")\n  Rel(operator, scheduler, \"Installs schedules / units\")\n\n  Rel(cliChat, orch, \"Runs turns\")\n  Rel(orch, gemini, \"Model legs\")\n  Rel(orch, tools, \"Invokes tools\")\n  Rel(orch, memory, \"Reads memory context\")\n  Rel(tools, stateDb, \"Persists tool / message rows\")\n\n  Rel(scheduler, ingest, \"Runs ingest-*\")\n  Rel(scheduler, graph, \"Runs triage / extract / enrich\")\n  Rel(scheduler, daemon, \"Starts or keeps worker alive\")\n  Rel(ingest, stateDb, \"Writes knowledge_items\")\n  Rel(graph, stateDb, \"Writes entities / edges\")\n\n  Rel(daemon, orch, \"Goal model turns\")\n  Rel(daemon, publish, \"Advances workflow steps\")\n  Rel(publish, stateDb, \"Reads facts / writes workflow state\")\n  Rel(publish, s3, \"DEPLOY uploads page.json\")\n\n  Rel(hud, stateDb, \"SELECT-only reads\")",
+            "mermaid": "C4Container\n  title Containers — ADA\n\n  Person(operator, \"Operator\", \"Local machine\")\n\n  System_Boundary(adaInstall, \"ADA install\") {\n    Container(cliChat, \"ada chat\", \"Python CLI\", \"Entity / Agent / Plan / Setup ingress\")\n    Container(hud, \"ada hud\", \"Streamlit\", \"Read-only observability on localhost\")\n    Container(orch, \"Orchestrator\", \"Python lib\", \"Manual Gemini tool loop + transcript\")\n    Container(tools, \"Tool executor\", \"Python lib\", \"Allowlist + motor skills\")\n    Container(daemon, \"ada daemon\", \"Python worker\", \"Goals + workflow steps (one per profile)\")\n    Container(ingest, \"Ingest CLIs\", \"Python CLI\", \"RSS / GSC / brand / GETS / keywords\")\n    Container(graph, \"Graph-lite\", \"Python CLI\", \"Triage, extract, enrich\")\n    Container(publish, \"Publish workflows\", \"Python\", \"ENRICH → GATE? → DRAFT → DEPLOY\")\n    ContainerDb(stateDb, \"state.db\", \"SQLite WAL + FTS5\", \"Messages, jobs, knowledge, graph, workflows\")\n    ContainerDb(memory, \"memory/*.md\", \"Markdown files\", \"soul, master, related memory\")\n  }\n\n  Container_Ext(scheduler, \"cron / systemd\", \"Host OS\", \"Triggers short CLIs; runs daemon under systemd\")\n  System_Ext(gemini, \"Google Gemini\", \"LLM API\")\n  System_Ext(s3, \"AWS S3\", \"page.json + manifest\")\n\n  Rel(operator, cliChat, \"Interactive chat\")\n  Rel(operator, hud, \"Opens localhost UI\")\n  Rel(operator, scheduler, \"Installs schedules / units\")\n\n  Rel(cliChat, orch, \"Runs turns\")\n  Rel(orch, gemini, \"Model legs\")\n  Rel(orch, tools, \"Invokes tools\")\n  Rel(orch, memory, \"Reads memory context\")\n  Rel(tools, stateDb, \"Persists tool / message rows\")\n\n  Rel(scheduler, ingest, \"Runs ingest-*\")\n  Rel(scheduler, graph, \"Runs triage / extract / enrich\")\n  Rel(scheduler, daemon, \"Starts or keeps worker alive\")\n  Rel(ingest, stateDb, \"Writes knowledge_items\")\n  Rel(graph, stateDb, \"Writes entities / edges\")\n  Rel(graph, gemini, \"Triage / extract / enrich model calls\")\n\n  Rel(daemon, orch, \"Goal model turns\")\n  Rel(daemon, publish, \"Advances workflow steps\")\n  Rel(publish, stateDb, \"Reads facts / writes workflow state\")\n  Rel(publish, s3, \"DEPLOY uploads page.json\")\n\n  Rel(hud, stateDb, \"SELECT-only reads\")\n\n%% Flowchart equivalent (aligned with docs/architecture.mmd):\n%% flowchart TB\n%%   cliChat --> orch --> tools --> stateDb\n%%   orch --> memory\n%%   scheduler -.-> ingest -.-> stateDb\n%%   scheduler -.-> graph -.-> stateDb\n%%   scheduler -.-> daemon\n%%   daemon -.-> orch\n%%   daemon --> publish --> s3\n%%   hud -.-> stateDb",
             "path": "docs/c4/2-containers.mmd",
-            "markdown": "# Containers (C2)\n\nDefault map for operators, GitHub visitors, and the portfolio graph ([`architecture.graph.json`](../architecture.graph.json)).\n\nADA is **one installable Python package** with several process roles—not a Docker Compose stack.\n\n## Containers\n\n| ID | Label | Kind |\n|----|-------|------|\n| `cli-chat` | ada chat | Interactive CLI (Entity / Agent / Plan / Setup) |\n| `host-scheduler` | cron / systemd | Host OS scheduling (outside the package) |\n| `hud` | ada hud | Optional Streamlit; SELECT-only DB + argv whitelist |\n| `orchestrator` | Orchestrator | Manual Gemini multi-leg turns + transcript persistence |\n| `tool-executor` | Tool executor | Shell allowlist + YAML motor skills |\n| `daemon` | ada daemon | Long-running goals + workflows (one owner per profile) |\n| `ingest-clis` | Ingest CLIs | `ingest-rss`, GSC, brand, GETS, etc. |\n| `graph-lite` | Graph-lite | Triage / extract-graph-lite / enrich-graph |\n| `publish-workflows` | Publish workflows | Deterministic templates → S3 |\n| `state-db` | state.db | Per-profile SQLite (WAL + FTS5) |\n| `memory-files` | memory/*.md | soul / master and related files |\n| `s3-out` | AWS S3 | Publish sink (shown as external system) |\n\nGemini appears as an **external system** on this diagram; the portfolio IR collapses it into edges from the orchestrator (“model turns”).\n\n## Component zooms (C3)\n\n| Container focus | Diagram |\n|-----------------|--------|\n| Orchestrator + tools + chat ingress | [`3-components/agent-core`](3-components/agent-core.md) |\n| Daemon / job plane | [`3-components/daemon`](3-components/daemon.md) |\n| Publish pipeline | [`3-components/publish-workflows`](3-components/publish-workflows.md) |\n\n## Relationships (plain English)\n\n- Chat **runs** orchestrator turns; tools **write** transcript rows to SQLite.\n- Cron **runs** ingest/graph CLIs and **keeps** the daemon alive; daemon **advances** workflows and may **call** the orchestrator for goal turns.\n- Publish **DEPLOY** uploads `page.json` and merges `manifest.json`.\n- HUD **reads** the DB only—it is not the agent."
+            "markdown": "# Containers (C2)\n\nDefault map for operators, GitHub visitors, and the portfolio zoom UI ([`portfolio-map.json`](portfolio-map.json)).\n\nADA is **one installable Python package** ([`pyproject.toml`](../../pyproject.toml)) with several process roles—not a Docker Compose stack. There is no HTTP agent API in this repo.\n\n## Process vs library (important)\n\n| Kind | Containers | Meaning |\n|------|------------|---------|\n| **OS processes / CLI runs** | `cli-chat`, `daemon`, `ingest-clis`, `graph-lite`, `hud`, plus host `cron/systemd` | Separate process or short-lived CLI invocation |\n| **In-process libraries** | `orchestrator`, `tool-executor` | Imported by chat and daemon; **not** standalone daemons—shown as containers so C2 can name the turn loop and tool plane |\n\n## Containers\n\n| ID | Label | Kind | Evidence |\n|----|-------|------|----------|\n| `cli-chat` | ada chat | Interactive CLI (Entity / Agent / Plan / Setup) | [`chat_ingress.py`](../../src/ada/chat_ingress.py), [`chat_session.py`](../../src/ada/chat_session.py) |\n| `host-scheduler` | cron / systemd | Host OS scheduling (outside the package) | [`ops/schedule.md`](../../ops/schedule.md), [`ops/setup_cron.sh`](../../ops/setup_cron.sh) |\n| `hud` | ada hud | Optional Streamlit; SELECT-only DB + argv whitelist | [`observability/app.py`](../../src/ada/observability/app.py) |\n| `orchestrator` | Orchestrator | Manual Gemini multi-leg turns + transcript persistence | [`orchestrator.py`](../../src/ada/orchestrator.py) |\n| `tool-executor` | Tool executor | Shell allowlist + YAML motor skills | [`tool_executor.py`](../../src/ada/tool_executor.py), [`motor/`](../../src/ada/motor/) |\n| `daemon` | ada daemon | Long-running goals + workflows (one owner per profile) | [`main.py`](../../src/ada/main.py), [`jobs/worker.py`](../../src/ada/jobs/worker.py) |\n| `ingest-clis` | Ingest CLIs | `ingest-rss`, GSC, brand, GETS, keywords | [`ingest/`](../../src/ada/ingest/) |\n| `graph-lite` | Graph-lite | Triage / extract-graph-lite / enrich-graph | [`triage/`](../../src/ada/triage/), [`extract/`](../../src/ada/extract/) |\n| `publish-workflows` | Publish workflows | Deterministic templates → S3 | [`workflow/`](../../src/ada/workflow/), [`publish/`](../../src/ada/publish/) |\n| `state-db` | state.db | Per-profile SQLite (WAL + FTS5) | [`persistent/store.py`](../../src/ada/persistent/store.py), [`db/schema.sql`](../../src/ada/db/schema.sql) |\n| `memory-files` | memory/*.md | soul / master and related files | [`memory_io.py`](../../src/ada/memory_io.py), `ADA_MEMORY_DIR` |\n| `s3-out` | AWS S3 | Publish sink (external system on the diagram) | [`publish/s3_publish.py`](../../src/ada/publish/s3_publish.py) |\n\nGemini appears as an **external system**; graph-lite and the orchestrator both call it.\n\n## Collapsed into notes (not separate C2 boxes)\n\nMission control, programme apply, `ada dream`, `ada matrix-scan`, doctor/boot/reload, and approval CLIs are additional **CLI surfaces** in the same package—not separate deployables. See [`__main__.py`](../../src/ada/__main__.py).\n\n## Component zooms (C3)\n\n| Container focus | Diagram |\n|-----------------|--------|\n| Orchestrator + tools + chat ingress | [`3-components/agent-core`](3-components/agent-core.md) |\n| Daemon / job plane | [`3-components/daemon`](3-components/daemon.md) |\n| Ingest CLIs | [`3-components/ingest-clis`](3-components/ingest-clis.md) |\n| Graph-lite | [`3-components/graph-lite`](3-components/graph-lite.md) |\n| Publish pipeline | [`3-components/publish-workflows`](3-components/publish-workflows.md) |\n| HUD | [`3-components/hud`](3-components/hud.md) |\n\n## Relationships (plain English)\n\n- Chat **runs** orchestrator turns; tools **write** transcript rows to SQLite.\n- Cron **runs** ingest/graph CLIs and **keeps** the daemon alive; daemon **advances** workflows and may **call** the orchestrator for goal turns.\n- Publish **DEPLOY** uploads `page.json` and merges `manifest.json`.\n- HUD **reads** the DB only—it is not the agent."
           },
           "components": {
             "agent-core": {
-              "mermaid": "C4Component\n  title Components — Agent core\n\n  Container_Boundary(agentCore, \"Agent core (chat + shared turn loop)\") {\n    Component(ingress, \"Chat ingress\", \"chat_ingress / chat_session\", \"Entity vs Work / Plan / Setup modes\")\n    Component(orch, \"Orchestrator\", \"orchestrator.py\", \"Multi-leg turns, tombstone on failure\")\n    Component(gemini, \"Gemini adapter\", \"adapters/gemini_stream\", \"Manual function calling (SDK auto-FC off)\")\n    Component(tools, \"Tool executor\", \"tool_executor.py\", \"Dispatches registered tools\")\n    Component(motor, \"Motor / skills\", \"motor/ + skills/*.yaml\", \"Allowlisted shell + run_skill\")\n    Component(persist, \"Transcript writes\", \"persistent/store\", \"messages with parent_uuid + sequence\")\n  }\n\n  Rel(ingress, orch, \"Starts turn with mode + tool set\")\n  Rel(orch, gemini, \"Streams model legs\")\n  Rel(orch, tools, \"Runs tool calls from model\")\n  Rel(tools, motor, \"Shell / skill paths\")\n  Rel(orch, persist, \"Persists user / tool / assistant rows\")\n  Rel(tools, persist, \"Persists tool results\")",
+              "mermaid": "C4Component\n  title Components — Agent core\n\n  Container_Boundary(agentCore, \"Agent core (chat + shared turn loop)\") {\n    Component(ingress, \"Chat ingress\", \"chat_ingress / chat_session\", \"Entity vs Work / Plan / Setup modes\")\n    Component(orch, \"Orchestrator\", \"orchestrator.py\", \"Multi-leg turns, tombstone on failure\")\n    Component(geminiAd, \"Gemini adapter\", \"adapters/gemini_stream\", \"Manual function calling (SDK auto-FC off)\")\n    Component(tools, \"Tool executor\", \"tool_executor.py\", \"Dispatches registered tools\")\n    Component(motor, \"Motor / skills\", \"motor/ + skills/*.yaml\", \"Allowlisted shell + run_skill\")\n    Component(webRt, \"Web runtime\", \"tools/web_runtime\", \"Serper / Jina when keys set\")\n    Component(persist, \"Transcript writes\", \"persistent/store\", \"messages with parent_uuid + sequence\")\n  }\n\n  Rel(ingress, orch, \"Starts turn with mode + tool set\")\n  Rel(orch, geminiAd, \"Streams model legs\")\n  Rel(orch, tools, \"Runs tool calls from model\")\n  Rel(tools, motor, \"Shell / skill paths\")\n  Rel(tools, webRt, \"Optional search / fetch\")\n  Rel(orch, persist, \"Persists user / tool / assistant rows\")\n  Rel(tools, persist, \"Persists tool results\")",
               "path": "docs/c4/3-components/agent-core.mmd",
-              "markdown": "# Components — Agent core\n\nZoom of the shared turn loop used by `ada chat` (and by the daemon when a goal needs model work).\n\n## Components\n\n| ID | Role |\n|----|------|\n| **Chat ingress** | Selects Entity vs Work (Agent) / Plan / Setup; different tool sets ([`docs/ADA_CORE.md`](../../ADA_CORE.md)) |\n| **Orchestrator** | Multi-leg Gemini turns; persists each leg; tombstones failed turns ([`src/ada/orchestrator.py`](../../../src/ada/orchestrator.py)) |\n| **Gemini adapter** | Streaming via `google-genai`; automatic function calling disabled ([`src/ada/adapters/gemini_stream.py`](../../../src/ada/adapters/gemini_stream.py)) |\n| **Tool executor** | Registry dispatch for model-requested tools |\n| **Motor / skills** | Exact-line shell allowlist + YAML skills via `run_skill` |\n| **Transcript writes** | SQLite `messages` with `parent_uuid`, sequence, optional rewire ([`docs/claude_logic.md`](../../claude_logic.md)) |\n\n## Out of scope here\n\nMission / programme control plane, ingest CLIs, and publish workflow steps—see sibling C3 diagrams and Containers."
+              "markdown": "# Components — Agent core\n\nZoom of the shared turn loop used by `ada chat` (and by the daemon when a goal needs model work). Maps to C2 containers `cli-chat`, `orchestrator`, and `tool-executor`.\n\n## Components\n\n| ID | Role | Evidence |\n|----|------|----------|\n| `chat-ingress` | Selects Entity vs Work (Agent) / Plan / Setup; different tool sets | [`chat_ingress.py`](../../../src/ada/chat_ingress.py), [`chat_session.py`](../../../src/ada/chat_session.py) |\n| `orchestrator` | Multi-leg Gemini turns; persists each leg; tombstones failed turns | [`orchestrator.py`](../../../src/ada/orchestrator.py) |\n| `gemini-adapter` | Streaming via `google-genai`; `automatic_function_calling` disabled | [`adapters/gemini_stream.py`](../../../src/ada/adapters/gemini_stream.py) (~L621) |\n| `tool-executor` | Registry dispatch for model-requested tools | [`tool_executor.py`](../../../src/ada/tool_executor.py), [`tools/registry.py`](../../../src/ada/tools/registry.py) |\n| `motor-skills` | Exact-line shell allowlist + YAML skills via `run_skill` | [`motor/`](../../../src/ada/motor/), [`skills/*.yaml`](../../../skills/), [`tools/shell_allowlist.py`](../../../src/ada/tools/shell_allowlist.py) |\n| `web-runtime` | Env-gated Serper / Jina | [`tools/web_runtime.py`](../../../src/ada/tools/web_runtime.py) |\n| `transcript-writes` | SQLite `messages` with `parent_uuid`, sequence, optional rewire | [`persistent/store.py`](../../../src/ada/persistent/store.py), [`claude_logic.md`](../../claude_logic.md) |\n\n## Out of scope here\n\nMission / programme control plane, ingest CLIs, graph-lite, and publish workflow steps—see sibling C3 diagrams and Containers."
             },
             "daemon": {
-              "mermaid": "C4Component\n  title Components — ada daemon\n\n  Container_Boundary(daemon, \"ada daemon\") {\n    Component(worker, \"Job worker\", \"jobs/worker.py / main.py\", \"Polls configured job plane\")\n    Component(plane, \"Job plane\", \"ADA_JOB_QUEUE\", \"legacy goal tasks XOR system_jobs\")\n    Component(goals, \"Goal turns\", \"daemon_goal.py\", \"Dequeues goals; may call orchestrator\")\n    Component(wfRun, \"Workflow runner\", \"workflow/runner.py\", \"Advances deterministic step kinds\")\n    Component(templates, \"Workflow templates\", \"workflow/templates.py\", \"Code-defined WORKFLOW_KINDS only\")\n  }\n\n  Component_Ext(orch, \"Orchestrator\", \"Shared agent-core turn loop\")\n  ComponentDb_Ext(stateDb, \"state.db\", \"SQLite\")\n\n  Rel(worker, plane, \"Owns one plane per state.db\")\n  Rel(worker, goals, \"goal.run_turn / legacy tasks\")\n  Rel(worker, wfRun, \"workflow.start and step jobs\")\n  Rel(wfRun, templates, \"Resolves kind → steps\")\n  Rel(goals, orch, \"Model turns when needed\")\n  Rel(worker, stateDb, \"Claims / completes jobs\")\n  Rel(wfRun, stateDb, \"Reads/writes workflow state\")",
+              "mermaid": "C4Component\n  title Components — ada daemon\n\n  Container_Boundary(daemon, \"ada daemon\") {\n    Component(worker, \"Job worker\", \"jobs/worker.py / main.py\", \"Polls configured job plane\")\n    Component(plane, \"Job plane\", \"ADA_JOB_QUEUE\", \"legacy goal tasks XOR system_jobs\")\n    Component(goals, \"Goal turns\", \"daemon_goal.py\", \"Dequeues goals; may call orchestrator\")\n    Component(wfRun, \"Workflow runner\", \"workflow/runner.py\", \"Advances deterministic step kinds\")\n    Component(templates, \"Workflow templates\", \"workflow/templates.py\", \"Code-defined WORKFLOW_KINDS only\")\n    Component(handlers, \"system_jobs handlers\", \"jobs/handlers.py\", \"workflow.start, ingest.run, matrix, ticks\")\n  }\n\n  Component_Ext(orch, \"Orchestrator\", \"Shared agent-core turn loop\")\n  ComponentDb_Ext(stateDb, \"state.db\", \"SQLite\")\n\n  Rel(worker, plane, \"Owns one plane per state.db\")\n  Rel(worker, goals, \"goal.run_turn / legacy tasks\")\n  Rel(worker, handlers, \"Dispatches system_jobs kinds\")\n  Rel(worker, wfRun, \"workflow.start and step jobs\")\n  Rel(wfRun, templates, \"Resolves kind → steps\")\n  Rel(goals, orch, \"Model turns when needed\")\n  Rel(worker, stateDb, \"Claims / completes jobs\")\n  Rel(wfRun, stateDb, \"Reads/writes workflow state\")",
               "path": "docs/c4/3-components/daemon.mmd",
-              "markdown": "# Components — ada daemon\n\nLong-running worker: **one daemon per profile / `state.db`**. Do not mix `ADA_JOB_QUEUE=legacy` and `system_jobs` on the same database ([`JOB_QUEUE_SINGLE_OWNER.md`](../../JOB_QUEUE_SINGLE_OWNER.md)).\n\n## Components\n\n| ID | Role |\n|----|------|\n| **Job worker** | Poll loop in `ada daemon` ([`src/ada/main.py`](../../../src/ada/main.py), [`src/ada/jobs/worker.py`](../../../src/ada/jobs/worker.py)) |\n| **Job plane** | `legacy` pending goal tasks **or** `system_jobs` rows (`goal.run_turn`, `workflow.start`, `ingest.run`, `matrix.scan`, …) |\n| **Goal turns** | Background objectives that may invoke the shared orchestrator |\n| **Workflow runner** | Executes step handlers for enqueued workflows |\n| **Workflow templates** | Code-defined kinds only: `rss_fetch_then_graph_then_synth`, `publish_entity_v1`, `publish_keyword_v1` |\n\n## Scheduling\n\nThe daemon itself is not an in-process cron. Host **cron / systemd** starts or supervises it and runs short one-shot CLIs separately ([`ops/schedule.md`](../../../ops/schedule.md))."
+              "markdown": "# Components — ada daemon\n\nLong-running worker: **one daemon per profile / `state.db`**. Do not mix `ADA_JOB_QUEUE=legacy` and `system_jobs` on the same database.\n\n## Components\n\n| ID | Role | Evidence |\n|----|------|----------|\n| `job-worker` | Poll loop in `ada daemon` | [`main.py`](../../../src/ada/main.py), [`jobs/worker.py`](../../../src/ada/jobs/worker.py) |\n| `job-plane` | `legacy` pending goal tasks **or** `system_jobs` rows | `ADA_JOB_QUEUE` in config; worker plane loop |\n| `goal-turns` | Background objectives that may invoke the shared orchestrator | [`daemon_goal.py`](../../../src/ada/daemon_goal.py) |\n| `workflow-runner` | Executes step handlers for enqueued workflows | [`workflow/runner.py`](../../../src/ada/workflow/runner.py) |\n| `workflow-templates` | Code-defined kinds only | [`workflow/templates.py`](../../../src/ada/workflow/templates.py): `rss_fetch_then_graph_then_synth`, `publish_entity_v1`, `publish_keyword_v1` |\n| `system-jobs-handlers` | `workflow.start`, `ingest.run`, matrix / tick slices | [`jobs/handlers.py`](../../../src/ada/jobs/handlers.py) |\n\n## Scheduling\n\nThe daemon itself is not an in-process cron. Host **cron / systemd** starts or supervises it and runs short one-shot CLIs separately ([`ops/schedule.md`](../../../ops/schedule.md))."
+            },
+            "ingest-clis": {
+              "mermaid": "C4Component\n  title Components — Ingest CLIs\n\n  Container_Boundary(ingest, \"Ingest CLIs\") {\n    Component(rss, \"RSS / Atom\", \"ingest/rss.py\", \"httpx + feedparser → knowledge_items\")\n    Component(brand, \"Brand site\", \"ingest/brand.py\", \"HTTP pull of operator brand URLs\")\n    Component(gsc, \"Search Console\", \"ingest/gsc_*.py\", \"Google Search Console API\")\n    Component(gets, \"NZ GETS\", \"ingest/gets.py\", \"Polls public GETS index HTML\")\n    Component(kw, \"Keywords\", \"ingest/keywords.py\", \"DataForSEO search volume\")\n    Component(gateScore, \"Feed gate\", \"ingest/gate.py\", \"Scores RSS entries before insert\")\n  }\n\n  ComponentDb_Ext(stateDb, \"state.db\", \"knowledge_sources / knowledge_items\")\n  System_Ext(extSources, \"External sources\", \"Feeds, GSC, GETS, DataForSEO\")\n\n  Rel(rss, gateScore, \"Score entry\")\n  Rel(rss, stateDb, \"Insert / dedupe items\")\n  Rel(brand, stateDb, \"Writes knowledge_items\")\n  Rel(gsc, stateDb, \"Writes analytics rows / items\")\n  Rel(gets, stateDb, \"Writes knowledge_items\")\n  Rel(kw, stateDb, \"Writes keyword rows\")\n  Rel(rss, extSources, \"Fetches feeds\")\n  Rel(brand, extSources, \"Fetches brand URLs\")\n  Rel(gsc, extSources, \"GSC API\")\n  Rel(gets, extSources, \"GETS HTML\")\n  Rel(kw, extSources, \"DataForSEO API\")",
+              "path": "docs/c4/3-components/ingest-clis.mmd",
+              "markdown": "# Components — Ingest CLIs\n\nOffline / scheduled pulls into local SQLite. Chat does **not** auto-fetch these sources.\n\n## Components\n\n| ID | Role | Evidence |\n|----|------|----------|\n| `rss` | Fetch registered RSS/Atom feeds into `knowledge_items` | [`ingest/rss.py`](../../../src/ada/ingest/rss.py); CLI `ada ingest-rss` |\n| `brand` | HTTP pull of brand / site URLs | [`ingest/brand.py`](../../../src/ada/ingest/brand.py); `ada ingest-brand` |\n| `gsc` | Google Search Console ingest | [`ingest/gsc_cli.py`](../../../src/ada/ingest/gsc_cli.py), [`gsc_service.py`](../../../src/ada/ingest/gsc_service.py) |\n| `gets` | NZ GETS public index poll | [`ingest/gets.py`](../../../src/ada/ingest/gets.py); default URL in config / `.env.example` |\n| `keywords` | DataForSEO keyword volume | [`ingest/keywords.py`](../../../src/ada/ingest/keywords.py); needs `DATAFORSEO_*` |\n| `feed-gate` | Scores RSS entries before insert | [`ingest/gate.py`](../../../src/ada/ingest/gate.py) |\n\nOptional embeddings on ingest when `ADA_KNOWLEDGE_EMBEDDINGS` is set ([`knowledge_embeddings.py`](../../../src/ada/knowledge_embeddings.py)).\n\nDaemon `system_jobs` may also run `ingest.run` for some kinds (e.g. GSC) via [`jobs/handlers.py`](../../../src/ada/jobs/handlers.py)—same ingest modules, different entry."
+            },
+            "graph-lite": {
+              "mermaid": "C4Component\n  title Components — Graph-lite\n\n  Container_Boundary(graph, \"Graph-lite CLIs\") {\n    Component(triage, \"Triage\", \"triage/run.py\", \"LLM scores knowledge_items (impact + taxonomy)\")\n    Component(extract, \"Extract graph-lite\", \"extract/graph_lite.py\", \"LLM → entities / edges JSON\")\n    Component(enrich, \"Enrich graph\", \"cli + publish/batch_enrich\", \"Widen entity facts for publish\")\n    Component(types, \"Entity types\", \"graph/entity_types.py\", \"Canonical type set + aliases\")\n  }\n\n  Component_Ext(gemini, \"Google Gemini\", \"Model calls\")\n  ComponentDb_Ext(stateDb, \"state.db\", \"knowledge_items, entities, edges\")\n\n  Rel(triage, stateDb, \"Reads unscored items; writes scores\")\n  Rel(triage, gemini, \"Classification turn\")\n  Rel(extract, stateDb, \"Reads items; upserts graph\")\n  Rel(extract, gemini, \"Extraction turn\")\n  Rel(extract, types, \"Normalizes entity types\")\n  Rel(enrich, stateDb, \"Reads entities; writes facts\")\n  Rel(enrich, gemini, \"Enrichment turns\")",
+              "path": "docs/c4/3-components/graph-lite.mmd",
+              "markdown": "# Components — Graph-lite\n\nCLI pipeline that turns ingested knowledge into a local entity/edge graph used by publish GATE and DRAFT.\n\n## Components\n\n| ID | Role | Evidence |\n|----|------|----------|\n| `triage` | LLM scores unscored `knowledge_items` (NZ-relevant impact 1–10 + taxonomy) | [`triage/run.py`](../../../src/ada/triage/run.py); CLI `ada triage` |\n| `extract-graph-lite` | LLM extracts a small graph; server upserts entities/edges | [`extract/graph_lite.py`](../../../src/ada/extract/graph_lite.py); `ada extract-graph-lite` |\n| `enrich-graph` | Batch widen entity facts for publish DRAFT inputs | [`cli.py`](../../../src/ada/cli.py) `run_enrich_graph_cli`, [`publish/batch_enrich_context.py`](../../../src/ada/publish/batch_enrich_context.py) |\n| `entity-types` | Canonical entity type set + aliases | [`graph/entity_types.py`](../../../src/ada/graph/entity_types.py) |\n\nRequires `GEMINI_API_KEY` (unlike pure HTTP RSS ingest). Related: `ada matrix-scan` plans publish subjects from the graph ([`publish/matrix*.py`](../../../src/ada/publish/))—scheduled separately, not a fourth graph CLI box."
             },
             "publish-workflows": {
-              "mermaid": "C4Component\n  title Components — Publish workflows\n\n  Container_Boundary(publish, \"Publish workflows\") {\n    Component(enrich, \"ENRICH\", \"publish/enrich + workflow steps\", \"Gather context for the page\")\n    Component(gate, \"GATE\", \"count unique HTTPS source_url facts\", \"Entity track only\")\n    Component(draft, \"DRAFT\", \"publish/draft + PageJsonV1\", \"Build strict page.json\")\n    Component(deploy, \"DEPLOY\", \"publish/s3_publish\", \"Upload page.json; merge manifest\")\n  }\n\n  ComponentDb_Ext(stateDb, \"state.db\", \"Graph facts + workflow rows\")\n  System_Ext(s3, \"AWS S3\", \"Object store\")\n\n  Rel(enrich, stateDb, \"Reads knowledge / graph\")\n  Rel(enrich, gate, \"Entity: publish_entity_v1\")\n  Rel(enrich, draft, \"Keyword: publish_keyword_v1 skips GATE\")\n  Rel(gate, draft, \"Passes when fact threshold met\")\n  Rel(draft, deploy, \"Validated PageJsonV1\")\n  Rel(deploy, s3, \"/{project}/{campaign}/{slug}/page.json\")\n  Rel(deploy, stateDb, \"Updates workflow status\")",
+              "mermaid": "C4Component\n  title Components — Publish workflows\n\n  Container_Boundary(publish, \"Publish workflows\") {\n    Component(enrich, \"ENRICH\", \"publish/enrich + workflow steps\", \"Gather context for the page\")\n    Component(gate, \"GATE\", \"count unique HTTPS source_url facts\", \"Entity track only\")\n    Component(draft, \"DRAFT\", \"publish/draft + PageJsonV1\", \"Build strict page.json\")\n    Component(deploy, \"DEPLOY\", \"publish/s3_publish\", \"Upload page.json; merge manifest\")\n    Component(schema, \"PageJsonV1\", \"publish/page_schema_v1\", \"Pydantic extra=forbid contract\")\n  }\n\n  ComponentDb_Ext(stateDb, \"state.db\", \"Graph facts + workflow rows\")\n  System_Ext(s3, \"AWS S3\", \"Object store\")\n\n  Rel(enrich, stateDb, \"Reads knowledge / graph\")\n  Rel(enrich, gate, \"Entity: publish_entity_v1\")\n  Rel(enrich, draft, \"Keyword: publish_keyword_v1 skips GATE\")\n  Rel(gate, draft, \"Passes when fact threshold met\")\n  Rel(draft, schema, \"Validates PageJsonV1\")\n  Rel(draft, deploy, \"Validated page.json\")\n  Rel(deploy, s3, \"/{project}/{campaign}/{slug}/page.json\")\n  Rel(deploy, stateDb, \"Updates workflow status\")",
               "path": "docs/c4/3-components/publish-workflows.mmd",
-              "markdown": "# Components — Publish workflows\n\nDeterministic pipelines advanced by `ada daemon` (or workflow CLI helpers). Templates live in [`src/ada/workflow/templates.py`](../../../src/ada/workflow/templates.py).\n\n## Tracks\n\n| Kind | Steps |\n|------|--------|\n| `publish_entity_v1` | ENRICH → **GATE** → DRAFT → DEPLOY |\n| `publish_keyword_v1` | ENRICH → DRAFT → DEPLOY (no GATE) |\n\n## Components\n\n| ID | Role |\n|----|------|\n| **ENRICH** | Builds publish context from local graph / knowledge |\n| **GATE** | Requires enough **distinct** canonical HTTPS `source_url` facts (default `ADA_PUBLISH_MIN_UNIQUE_FACTS=3`); repeating one URL does not help |\n| **DRAFT** | Emits Pydantic `PageJsonV1` (`extra=\"forbid\"`) |\n| **DEPLOY** | Writes S3 `/{project_id}/{campaign_id}/{slug}/page.json` and merges `manifest.json` |\n\nOptional approval flags can require operator approval before enqueue or DEPLOY. Delivery modes include `isr_s3`, `none`, and `wordpress_csv_s3` (see templates).\n\nContract for the out-of-repo Next.js consumer: [`pseo-isr-contract.md`](../../pseo-isr-contract.md)."
+              "markdown": "# Components — Publish workflows\n\nDeterministic pipelines advanced by `ada daemon` (or workflow CLI helpers). Templates live in [`src/ada/workflow/templates.py`](../../../src/ada/workflow/templates.py).\n\n## Tracks\n\n| Kind | Steps |\n|------|--------|\n| `publish_entity_v1` | ENRICH → **GATE** → DRAFT → DEPLOY |\n| `publish_keyword_v1` | ENRICH → DRAFT → DEPLOY (no GATE) |\n| `rss_fetch_then_graph_then_synth` | FETCH → EXTRACT → SYNTHESIZE (non-publish; same template registry) |\n\n## Components\n\n| ID | Role | Evidence |\n|----|------|----------|\n| `enrich` | Builds publish context from local graph / knowledge | [`publish/enrich.py`](../../../src/ada/publish/enrich.py), [`workflow/publish_enrich_step.py`](../../../src/ada/workflow/publish_enrich_step.py) |\n| `gate` | Requires enough **distinct** canonical HTTPS `source_url` facts (default `ADA_PUBLISH_MIN_UNIQUE_FACTS=3`) | [`workflow/runner.py`](../../../src/ada/workflow/runner.py); repeating one URL does not help |\n| `draft` | Emits page body; optional Unsplash hero | [`publish/draft.py`](../../../src/ada/publish/draft.py) |\n| `page-schema` | Pydantic `PageJsonV1` (`extra=\"forbid\"`) | [`publish/page_schema_v1.py`](../../../src/ada/publish/page_schema_v1.py) |\n| `deploy` | Writes S3 `/{project_id}/{campaign_id}/{slug}/page.json` and merges `manifest.json` | [`publish/s3_publish.py`](../../../src/ada/publish/s3_publish.py) |\n\nDelivery modes include `isr_s3`, `none`, and `wordpress_csv_s3` ([`templates.py`](../../../src/ada/workflow/templates.py)). Optional approval flags can require operator approval before enqueue or DEPLOY.\n\nOut-of-repo Next.js consumer: [`isr.md`](../../../isr.md)."
+            },
+            "hud": {
+              "mermaid": "C4Component\n  title Components — ada hud\n\n  Container_Boundary(hud, \"ada hud (Streamlit)\") {\n    Component(app, \"Operator app\", \"observability/app.py\", \"Sidebar + tabs; not the agent\")\n    Component(dbRo, \"RO SQLite\", \"observability/db_ro.py\", \"file:…?mode=ro connections\")\n    Component(whitelist, \"Argv whitelist\", \"operator_whitelist.py\", \"Closed set of ada CLI actions\")\n    Component(subprocess, \"Whitelisted subprocess\", \"operator_subprocess.py\", \"Runs only allowlisted argv\")\n    Component(sqlGuard, \"SQL guard\", \"sql_guard.py\", \"Blocks non-SELECT operator queries\")\n  }\n\n  ComponentDb_Ext(stateDb, \"state.db\", \"Same profile DB as agent\")\n\n  Rel(app, dbRo, \"Dashboard reads\")\n  Rel(dbRo, stateDb, \"SELECT-only URI\")\n  Rel(app, whitelist, \"Maps UI actions to command ids\")\n  Rel(whitelist, subprocess, \"Builds argv\")\n  Rel(app, sqlGuard, \"Ad-hoc query panel\")",
+              "path": "docs/c4/3-components/hud.mmd",
+              "markdown": "# Components — ada hud\n\nOptional localhost Streamlit UI (`pip install -e \".[streamlit]\"` then `ada hud`). **Not** the agent: no orchestrator socket and no arbitrary shell.\n\n## Components\n\n| ID | Role | Evidence |\n|----|------|----------|\n| `operator-app` | Streamlit shell: sidebar config + operator tabs | [`observability/app.py`](../../../src/ada/observability/app.py), [`operator_streamlit.py`](../../../src/ada/observability/operator_streamlit.py) |\n| `db-ro` | Read-only SQLite (`mode=ro` URI) | [`observability/db_ro.py`](../../../src/ada/observability/db_ro.py) |\n| `argv-whitelist` | Closed command id set (mission list, goal list, dry-runs, …) | [`operator_whitelist.py`](../../../src/ada/observability/operator_whitelist.py) |\n| `whitelisted-subprocess` | Runs only allowlisted `ada` argv | [`operator_subprocess.py`](../../../src/ada/observability/operator_subprocess.py) |\n| `sql-guard` | Restricts ad-hoc SQL to safe SELECT patterns | [`sql_guard.py`](../../../src/ada/observability/sql_guard.py) |\n\nCompat launcher under [`ada-control/`](../../../ada-control/) is a thin deprecated shell around the same idea—prefer `ada hud`."
             }
           },
           "diveTargets": [
             {
               "id": "agent-core",
-              "label": "Agent Core",
-              "graphNodeIds": []
+              "label": "Agent core",
+              "graphNodeIds": [],
+              "matchLabels": [
+                "ada chat",
+                "Entity / Agent",
+                "cli-chat",
+                "Orchestrator",
+                "Manual Gemini",
+                "orchestrator",
+                "Tool executor",
+                "Allowlist",
+                "tool-executor"
+              ],
+              "coversContainers": [
+                "cli-chat",
+                "orchestrator",
+                "tool-executor"
+              ]
             },
             {
               "id": "daemon",
-              "label": "Daemon",
+              "label": "ada daemon",
               "graphNodeIds": [
+                "daemon"
+              ],
+              "matchLabels": [
+                "ada daemon",
+                "Goals + workflow",
+                "daemon"
+              ],
+              "coversContainers": [
                 "daemon"
               ]
             },
             {
+              "id": "ingest-clis",
+              "label": "Ingest CLIs",
+              "graphNodeIds": [],
+              "matchLabels": [
+                "Ingest CLIs",
+                "RSS / GSC",
+                "ingest-clis"
+              ],
+              "coversContainers": [
+                "ingest-clis"
+              ]
+            },
+            {
+              "id": "graph-lite",
+              "label": "Graph-lite",
+              "graphNodeIds": [],
+              "matchLabels": [
+                "Graph-lite",
+                "Triage",
+                "graph-lite"
+              ],
+              "coversContainers": [
+                "graph-lite"
+              ]
+            },
+            {
               "id": "publish-workflows",
-              "label": "Publish Workflows",
-              "graphNodeIds": []
+              "label": "Publish workflows",
+              "graphNodeIds": [],
+              "matchLabels": [
+                "Publish workflows",
+                "ENRICH",
+                "publish-workflows"
+              ],
+              "coversContainers": [
+                "publish-workflows"
+              ]
+            },
+            {
+              "id": "hud",
+              "label": "ada hud",
+              "graphNodeIds": [
+                "hud"
+              ],
+              "matchLabels": [
+                "ada hud",
+                "Streamlit",
+                "hud"
+              ],
+              "coversContainers": [
+                "hud"
+              ]
+            }
+          ],
+          "zoomTargets": [
+            {
+              "id": "ada",
+              "label": "ADA",
+              "fromLevel": "context",
+              "toLevel": "containers",
+              "matchLabels": [
+                "ADA",
+                "Local Python agent",
+                "ada"
+              ]
+            },
+            {
+              "id": "cli-chat",
+              "label": "ada chat",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "ada chat",
+                "Entity / Agent",
+                "cli-chat"
+              ],
+              "componentId": "agent-core"
+            },
+            {
+              "id": "orchestrator",
+              "label": "Orchestrator",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "Orchestrator",
+                "Manual Gemini",
+                "orchestrator"
+              ],
+              "componentId": "agent-core"
+            },
+            {
+              "id": "tool-executor",
+              "label": "Tool executor",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "Tool executor",
+                "Allowlist",
+                "tool-executor"
+              ],
+              "componentId": "agent-core"
+            },
+            {
+              "id": "daemon",
+              "label": "ada daemon",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "ada daemon",
+                "Goals + workflow",
+                "daemon"
+              ],
+              "componentId": "daemon"
+            },
+            {
+              "id": "ingest-clis",
+              "label": "Ingest CLIs",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "Ingest CLIs",
+                "RSS / GSC",
+                "ingest-clis"
+              ],
+              "componentId": "ingest-clis"
+            },
+            {
+              "id": "graph-lite",
+              "label": "Graph-lite",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "Graph-lite",
+                "Triage",
+                "graph-lite"
+              ],
+              "componentId": "graph-lite"
+            },
+            {
+              "id": "publish-workflows",
+              "label": "Publish workflows",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "Publish workflows",
+                "ENRICH",
+                "publish-workflows"
+              ],
+              "componentId": "publish-workflows"
+            },
+            {
+              "id": "hud",
+              "label": "ada hud",
+              "fromLevel": "containers",
+              "toLevel": "components",
+              "matchLabels": [
+                "ada hud",
+                "Streamlit",
+                "hud"
+              ],
+              "componentId": "hud"
             }
           ]
         }
@@ -1236,7 +1572,7 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-30T05:09:01.209Z",
+      "fetchedAt": "2026-07-30T09:30:42.347Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
