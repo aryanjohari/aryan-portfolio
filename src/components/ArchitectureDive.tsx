@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { MermaidDiagram } from "@/components/MermaidDiagram";
 import type { ProjectC4Data, ProjectC4DiveTarget } from "@/lib/portfolio-schema";
@@ -14,6 +14,10 @@ type ArchitectureDiveProps = {
   onClose: () => void;
   onSelectTarget: (id: string) => void;
 };
+
+const ZOOM_MIN = 0.75;
+const ZOOM_MAX = 2.25;
+const ZOOM_STEP = 0.25;
 
 function extractCaption(markdown: string | undefined, fallbackLabel: string): string {
   if (!markdown?.trim()) {
@@ -51,6 +55,11 @@ function githubDocUrl(
   return `${base}/blob/${branch}/${docPath}`;
 }
 
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 export function ArchitectureDive({
   c4,
   targetId,
@@ -61,6 +70,9 @@ export function ArchitectureDive({
 }: ArchitectureDiveProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [closing, setClosing] = useState(false);
+  const [zoomByTarget, setZoomByTarget] = useState<Record<string, number>>({});
   const targets = c4.diveTargets;
   const index = Math.max(
     0,
@@ -68,17 +80,64 @@ export function ArchitectureDive({
   );
   const target: ProjectC4DiveTarget | undefined = targets[index] ?? targets[0];
   const component = target ? c4.components[target.id] : undefined;
+  const zoom = zoomByTarget[targetId] ?? 1;
+
+  const requestClose = useCallback(() => {
+    if (closing) return;
+    if (prefersReducedMotion()) {
+      onClose();
+      return;
+    }
+    setClosing(true);
+  }, [closing, onClose]);
+
+  const setZoom = useCallback(
+    (next: number | ((prev: number) => number)) => {
+      setZoomByTarget((prev) => {
+        const current = prev[targetId] ?? 1;
+        const value = typeof next === "function" ? next(current) : next;
+        return { ...prev, [targetId]: value };
+      });
+    },
+    [targetId],
+  );
+
+  useEffect(() => {
+    if (!closing) return;
+    const timer = window.setTimeout(() => onClose(), 200);
+    return () => window.clearTimeout(timer);
+  }, [closing, onClose]);
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
-    panelRef.current?.focus();
+    // Prefer Back button for immediate Escapability; fall back to panel.
+    (closeButtonRef.current ?? panelRef.current)?.focus();
 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        requestClose();
+        return;
+      }
+
+      // Focus trap inside the dialog
+      if (event.key !== "Tab" || !panelRef.current) return;
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
+
     window.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -88,7 +147,7 @@ export function ArchitectureDive({
       document.body.style.overflow = prevOverflow;
       previous?.focus?.();
     };
-  }, [onClose, targetId]);
+  }, [requestClose, targetId]);
 
   if (!target) return null;
 
@@ -100,12 +159,16 @@ export function ArchitectureDive({
   const nextTarget = targets[(index + 1) % targets.length];
 
   return (
-    <div className="arch-dive-root" role="presentation">
+    <div
+      className={`arch-dive-root${closing ? " is-closing" : ""}`}
+      role="presentation"
+    >
       <button
         type="button"
         className="arch-dive-backdrop"
         aria-label="Close architecture dive"
-        onClick={onClose}
+        tabIndex={-1}
+        onClick={requestClose}
       />
       <div
         ref={panelRef}
@@ -143,7 +206,12 @@ export function ArchitectureDive({
                 </button>
               </>
             ) : null}
-            <button type="button" className="arch-dive-back" onClick={onClose}>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className="arch-dive-back"
+              onClick={requestClose}
+            >
               ← Overview
             </button>
           </div>
@@ -151,11 +219,43 @@ export function ArchitectureDive({
 
         <p className="arch-dive-caption">{caption}</p>
 
+        {hasMermaid ? (
+          <div className="arch-dive-toolbar" role="group" aria-label="Diagram zoom">
+            <button
+              type="button"
+              className="arch-dive-zoom"
+              aria-label="Zoom out"
+              disabled={zoom <= ZOOM_MIN}
+              onClick={() => setZoom((z) => Math.max(ZOOM_MIN, +(z - ZOOM_STEP).toFixed(2)))}
+            >
+              −
+            </button>
+            <button
+              type="button"
+              className="arch-dive-zoom"
+              aria-label="Reset zoom"
+              onClick={() => setZoom(1)}
+            >
+              {Math.round(zoom * 100)}%
+            </button>
+            <button
+              type="button"
+              className="arch-dive-zoom"
+              aria-label="Zoom in"
+              disabled={zoom >= ZOOM_MAX}
+              onClick={() => setZoom((z) => Math.min(ZOOM_MAX, +(z + ZOOM_STEP).toFixed(2)))}
+            >
+              +
+            </button>
+          </div>
+        ) : null}
+
         <div className="arch-dive-stage">
           {hasMermaid && component?.mermaid ? (
             <MermaidDiagram
               source={component.mermaid}
               ariaLabel={`Component diagram for ${target.label}`}
+              style={{ transform: `scale(${zoom})` }}
             />
           ) : (
             <p className="arch-dive-fallback" role="status">

@@ -81,6 +81,13 @@ export function ArchitectureJourney({
     if (diveId) openDive(diveId);
   }
 
+  function handleBeatHover(stepId: string) {
+    // Hover highlight only on fine pointers — avoids sticky hover on touch.
+    if (typeof window === "undefined") return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    setActiveBeatId(stepId);
+  }
+
   return (
     <section
       className="arch-journey-section"
@@ -123,7 +130,7 @@ export function ArchitectureJourney({
                     className={`arch-path-beat${isActive ? " is-active" : ""}`}
                     aria-current={isActive ? "step" : undefined}
                     onClick={() => setActiveBeatId(step.id)}
-                    onMouseEnter={() => setActiveBeatId(step.id)}
+                    onMouseEnter={() => handleBeatHover(step.id)}
                     onFocus={() => setActiveBeatId(step.id)}
                   >
                     <span className="arch-path-beat-index">

@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 
 type MermaidDiagramProps = {
   source: string;
   className?: string;
   ariaLabel?: string;
+  style?: CSSProperties;
 };
 
 /**
  * Lightweight client Mermaid renderer for C3 Dive diagrams.
  * Fail soft: on parse/render error, show a short notice instead of crashing.
  */
-export function MermaidDiagram({ source, className, ariaLabel }: MermaidDiagramProps) {
+export function MermaidDiagram({
+  source,
+  className,
+  ariaLabel,
+  style,
+}: MermaidDiagramProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const reactId = useId().replace(/:/g, "");
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +76,7 @@ export function MermaidDiagram({ source, className, ariaLabel }: MermaidDiagramP
       role="img"
       aria-label={ariaLabel ?? "Component architecture diagram"}
       aria-busy={!ready}
+      style={style}
     />
   );
 }

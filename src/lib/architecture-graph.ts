@@ -175,7 +175,10 @@ export function resolveArchitectureSkin(
   graph: Pick<ArchitectureGraph, "skin">,
   slug?: string,
 ): ArchitectureGraphSkin {
-  if (graph.skin && GRAPH_SKINS.includes(graph.skin)) return graph.skin;
+  // Treat explicit "default" as unset so slug accents still apply.
+  if (graph.skin && graph.skin !== "default" && GRAPH_SKINS.includes(graph.skin)) {
+    return graph.skin;
+  }
   if (slug && SLUG_SKINS[slug]) return SLUG_SKINS[slug];
   return "default";
 }

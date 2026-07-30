@@ -106,22 +106,22 @@ export type GraphLayoutOptions = {
 };
 
 const DEFAULTS: Required<GraphLayoutOptions> = {
-  rankGap: 248,
-  spineGapMul: 1.28,
-  ranksGapMul: 0.58,
-  laneGap: 56,
-  stackGap: 52,
-  satelliteStackGap: 36,
-  nodeWidth: 152,
-  nodeHeight: 54,
-  padding: 72,
-  groupLabelH: 36,
+  rankGap: 280,
+  spineGapMul: 1.34,
+  ranksGapMul: 0.62,
+  laneGap: 72,
+  stackGap: 64,
+  satelliteStackGap: 44,
+  nodeWidth: 160,
+  nodeHeight: 58,
+  padding: 88,
+  groupLabelH: 40,
   spineScale: 1.14,
-  satelliteScale: 0.86,
-  coreProcessScale: 1.2,
-  staggerX: 14,
-  ingressYBias: -12,
-  coreYBias: 12,
+  satelliteScale: 0.88,
+  coreProcessScale: 1.18,
+  staggerX: 16,
+  ingressYBias: -14,
+  coreYBias: 10,
   egressYBias: 18,
 };
 
@@ -441,7 +441,7 @@ function edgeRoute(
 
   const fanSpread =
     fanCount > 1
-      ? (fanSlot - (fanCount - 1) / 2) * Math.min(22, opts.rankGap * 0.08)
+      ? (fanSlot - (fanCount - 1) / 2) * Math.min(28, opts.rankGap * 0.1)
       : 0;
 
   // Forward / lateral travel: orthogonal along Inputs→Core→Outputs
@@ -465,13 +465,13 @@ function edgeRoute(
   // doesn’t cut through the spine stack
   if (cyclic) {
     const span = Math.abs(x1c - x0c);
-    const bulge = Math.max(48, span * 0.18 + 36);
+    const bulge = Math.max(56, span * 0.2 + 40);
     const above = Math.min(y0, y1) - opts.padding * 0.35;
     const midY =
       above > opts.padding
         ? Math.min(y0, y1) - bulge
         : Math.max(y0, y1) + bulge;
-    const midX = (x0c + x1c) / 2 + fanSpread * 0.4;
+    const midX = (x0c + x1c) / 2 + fanSpread * 0.45;
     return [
       { x: x0c, y: y0 },
       { x: midX, y: midY },
@@ -482,7 +482,7 @@ function edgeRoute(
   // Same-column sibling link — clear side channel so stacks stay readable
   const preferRight =
     mode === "lanes" ? from.lane < 1 : from.rank < 1;
-  const sidePad = Math.min(64, opts.rankGap * 0.28) + Math.abs(fanSpread);
+  const sidePad = Math.min(72, opts.rankGap * 0.3) + Math.abs(fanSpread);
   const side = preferRight
     ? Math.max(from.x + from.width, to.x + to.width) + sidePad
     : Math.min(from.x, to.x) - sidePad;
@@ -766,10 +766,10 @@ export function layoutArchitectureGraph(
     for (const g of graph.groups ?? []) {
       const members = laidNodes.filter((n) => n.groupId === g.id);
       if (members.length === 0) continue;
-      const minX = Math.min(...members.map((n) => n.x)) - 18;
+      const minX = Math.min(...members.map((n) => n.x)) - 22;
       const minY = Math.min(...members.map((n) => n.y)) - opts.groupLabelH;
-      const maxX = Math.max(...members.map((n) => n.x + n.width)) + 18;
-      const maxY = Math.max(...members.map((n) => n.y + n.height)) + 16;
+      const maxX = Math.max(...members.map((n) => n.x + n.width)) + 22;
+      const maxY = Math.max(...members.map((n) => n.y + n.height)) + 20;
       groups.push({
         id: g.id,
         label: g.label,

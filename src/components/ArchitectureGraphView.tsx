@@ -20,22 +20,22 @@ import {
 
 /** Shared fitted-overview composition. Kept beside the renderer until C4 layout lands. */
 const LAYOUT_OPTS = {
-  rankGap: 248,
-  spineGapMul: 1.28,
-  ranksGapMul: 0.58,
-  laneGap: 56,
-  stackGap: 52,
-  satelliteStackGap: 36,
-  nodeWidth: 152,
-  nodeHeight: 54,
-  padding: 72,
-  groupLabelH: 36,
+  rankGap: 280,
+  spineGapMul: 1.34,
+  ranksGapMul: 0.62,
+  laneGap: 72,
+  stackGap: 64,
+  satelliteStackGap: 44,
+  nodeWidth: 160,
+  nodeHeight: 58,
+  padding: 88,
+  groupLabelH: 40,
   spineScale: 1.14,
-  satelliteScale: 0.86,
-  coreProcessScale: 1.2,
-  staggerX: 14,
-  ingressYBias: -12,
-  coreYBias: 12,
+  satelliteScale: 0.88,
+  coreProcessScale: 1.18,
+  staggerX: 16,
+  ingressYBias: -14,
+  coreYBias: 10,
   egressYBias: 18,
 } as const;
 
@@ -422,6 +422,7 @@ export function ArchitectureGraphView({
         viewBox={`0 0 ${layout.width} ${layout.height}`}
         width={worldSized ? layout.width : undefined}
         height={worldSized ? layout.height : undefined}
+        preserveAspectRatio="xMidYMid meet"
         role={hasDiveTargets ? "group" : "img"}
         aria-label={label}
         data-layout-mode={layout.mode}

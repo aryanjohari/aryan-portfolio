@@ -94,7 +94,9 @@ html[data-boot-cover-skip] #boot-cover {
 .site-main--project {
   max-width: 100%;
   width: 100%;
-  overflow: visible;
+  overflow-x: clip;
+  /* Tighter side padding so How it works can breathe; hero/rest re-rail themselves */
+  padding-inline: clamp(0.75rem, 2.5vw, var(--space-4));
 }
 
 /* Header / void chrome */
@@ -1360,19 +1362,28 @@ body:has(.workshop-page) .site-main {
   overflow-x: clip;
 }
 
+/* Hero + stack/details: readable content rail */
 .project-exhibit-rail {
   width: 100%;
-  max-width: none;
-  margin-inline: 0;
+  max-width: min(100%, 52rem);
+  margin-inline: auto;
+  box-sizing: border-box;
 }
 
+@media (min-width: 1024px) {
+  .project-exhibit-rail {
+    max-width: min(100%, 56rem);
+  }
+}
+
+/* How it works: near full-bleed map stage (breaks the narrow exhibit rail) */
 .project-exhibit-how {
   width: 100%;
   max-width: none;
   margin-inline: 0;
   padding-block: var(--space-3) var(--space-4);
   box-sizing: border-box;
-  overflow: visible;
+  overflow-x: clip;
 }
 
 /* Act 1 — project homepage hero (scrolls away naturally; no exit theatre) */
@@ -1526,6 +1537,16 @@ body:has(.workshop-page) .site-main {
 
 .project-exhibit-rest {
   padding-block: var(--space-4) calc(var(--space-4) * 1.5);
+  width: 100%;
+  max-width: min(100%, 52rem);
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  .project-exhibit-rest {
+    max-width: min(100%, 56rem);
+  }
 }
 
 .project-exhibit-section-title {
@@ -1632,12 +1653,19 @@ body:has(.workshop-page) .site-main {
   max-width: none;
   margin: 0;
   padding-block: var(--space-3) var(--space-4);
-  overflow: visible;
+  overflow-x: clip;
   box-sizing: border-box;
 }
 
 .arch-overview-header {
   margin-bottom: var(--space-3);
+  max-width: min(100%, 52rem);
+}
+
+@media (min-width: 1024px) {
+  .arch-overview-header {
+    max-width: min(100%, 56rem);
+  }
 }
 
 .arch-overview-summary {
@@ -1666,12 +1694,19 @@ body:has(.workshop-page) .site-main {
 
 .arch-overview-graph {
   min-width: 0;
-  min-height: min(48dvh, 440px);
+  width: 100%;
+  /* Stage tall enough to fit full viewBox without crop or microscopic nodes */
+  min-height: min(46dvh, 400px);
+  height: clamp(280px, 48dvh, 520px);
   display: flex;
   align-items: center;
-  padding: var(--space-2);
+  justify-content: center;
+  padding: clamp(0.65rem, 1.5vw, var(--space-3));
   border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.015);
   order: 2;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .arch-path-story {
@@ -1682,20 +1717,28 @@ body:has(.workshop-page) .site-main {
   flex-direction: column;
   gap: 0.35rem;
   order: 1;
+  max-height: none;
 }
 
 @media (min-width: 1024px) {
   .arch-overview-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(15rem, 20rem);
+    grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem);
     gap: clamp(var(--space-3), 2.5vw, var(--space-4));
+    align-items: stretch;
   }
 
   .arch-overview-graph {
     order: 1;
+    height: clamp(360px, 52dvh, 580px);
+    min-height: 360px;
   }
 
   .arch-path-story {
     order: 2;
+    max-height: clamp(360px, 52dvh, 580px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.15rem;
   }
 }
 
@@ -1712,8 +1755,8 @@ body:has(.workshop-page) .site-main {
   text-align: left;
   cursor: pointer;
   transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease;
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
 }
 
 .arch-path-beat:hover,
@@ -1788,6 +1831,13 @@ body:has(.workshop-page) .site-main {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  max-width: min(100%, 52rem);
+}
+
+@media (min-width: 1024px) {
+  .arch-overview-actions {
+    max-width: min(100%, 56rem);
+  }
 }
 
 .arch-dive-hint {
@@ -1808,9 +1858,9 @@ body:has(.workshop-page) .site-main {
   background: transparent;
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    opacity 0.2s ease;
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    opacity var(--motion-fast) ease;
 }
 
 .arch-dive-open:hover,
@@ -1830,13 +1880,18 @@ body:has(.workshop-page) .site-main {
   border-color: var(--color-border);
 }
 
-/* Highlight + diveable nodes on the overview map */
+/* Highlight + diveable nodes on the overview map — soft dim, crossfade */
+.arch-graph-svg .arch-graph-node,
+.arch-graph-svg .arch-graph-edge {
+  transition: opacity var(--motion-medium) ease;
+}
+
 .arch-graph-svg.has-highlight .arch-graph-node:not(.is-highlighted) {
-  opacity: 0.42;
+  opacity: 0.5;
 }
 
 .arch-graph-svg.has-highlight .arch-graph-edge:not(.is-highlighted) {
-  opacity: 0.28;
+  opacity: 0.32;
 }
 
 .arch-graph-node.is-highlighted .arch-graph-node-shape,
@@ -1848,7 +1903,7 @@ body:has(.workshop-page) .site-main {
 }
 
 .arch-graph-node.is-diveable .arch-graph-node-plate {
-  stroke: rgba(242, 240, 235, 0.22);
+  stroke: rgba(242, 240, 235, 0.28);
   stroke-width: 1;
   stroke-dasharray: 3 3;
 }
@@ -1859,14 +1914,16 @@ body:has(.workshop-page) .site-main {
 }
 
 .arch-graph-edge.is-highlighted .arch-graph-edge-path {
-  stroke: rgba(242, 240, 235, 0.75);
+  stroke: rgba(242, 240, 235, 0.78);
+  stroke-width: 1.35;
 }
 
 /* Soft overview entrance */
 .arch-overview-graph [data-arch-graph] {
-  min-height: inherit;
   width: 100%;
-  animation: arch-graph-enter 0.45s ease both;
+  height: 100%;
+  min-height: 0;
+  animation: arch-graph-enter var(--motion-medium) ease both;
 }
 
 @keyframes arch-graph-enter {
@@ -1887,8 +1944,8 @@ body:has(.workshop-page) .site-main {
 
   .arch-path-beat,
   .arch-dive-open,
-  .arch-graph-svg.has-highlight .arch-graph-node,
-  .arch-graph-svg.has-highlight .arch-graph-edge {
+  .arch-graph-svg .arch-graph-node,
+  .arch-graph-svg .arch-graph-edge {
     transition: none;
   }
 }
@@ -1902,11 +1959,19 @@ body:has(.workshop-page) .site-main {
   align-items: stretch;
   justify-content: center;
   padding:
-    max(0.75rem, env(safe-area-inset-top, 0px))
-    max(0.75rem, env(safe-area-inset-right, 0px))
-    max(0.75rem, env(safe-area-inset-bottom, 0px))
-    max(0.75rem, env(safe-area-inset-left, 0px));
+    max(0.5rem, env(safe-area-inset-top, 0px))
+    max(0.5rem, env(safe-area-inset-right, 0px))
+    max(0.5rem, env(safe-area-inset-bottom, 0px))
+    max(0.5rem, env(safe-area-inset-left, 0px));
   box-sizing: border-box;
+}
+
+.arch-dive-root.is-closing .arch-dive-backdrop {
+  animation: arch-dive-fade-out 0.18s ease both;
+}
+
+.arch-dive-root.is-closing .arch-dive-panel {
+  animation: arch-dive-sink 0.2s ease both;
 }
 
 .arch-dive-backdrop {
@@ -1926,13 +1991,15 @@ body:has(.workshop-page) .site-main {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  width: min(100%, 42rem);
-  max-height: min(100dvh - 1.5rem, 100%);
-  margin-top: clamp(3.25rem, 8vh, 4.5rem);
+  width: min(100%, 48rem);
+  max-height: min(100dvh - 1rem, 100%);
+  /* Clear void chrome / header on mobile */
+  margin-top: clamp(3rem, 7vh, 4.25rem);
   padding: var(--space-3);
   border: 1px solid var(--color-border);
   background: #0c0c0c;
   overflow: auto;
+  overscroll-behavior: contain;
   box-sizing: border-box;
   outline: none;
   animation: arch-dive-rise 0.28s ease both;
@@ -1947,6 +2014,15 @@ body:has(.workshop-page) .site-main {
   }
 }
 
+@keyframes arch-dive-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 @keyframes arch-dive-rise {
   from {
     opacity: 0;
@@ -1958,6 +2034,17 @@ body:has(.workshop-page) .site-main {
   }
 }
 
+@keyframes arch-dive-sink {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
 @media (min-width: 1024px) {
   .arch-dive-root {
     align-items: center;
@@ -1966,8 +2053,8 @@ body:has(.workshop-page) .site-main {
   }
 
   .arch-dive-panel {
-    width: min(32rem, 42vw);
-    max-height: min(86dvh, 52rem);
+    width: min(36rem, 44vw);
+    max-height: min(88dvh, 56rem);
     margin-top: 0;
   }
 }
@@ -1978,6 +2065,7 @@ body:has(.workshop-page) .site-main {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-2);
+  flex-shrink: 0;
 }
 
 .arch-dive-kicker {
@@ -2002,7 +2090,8 @@ body:has(.workshop-page) .site-main {
 }
 
 .arch-dive-nav,
-.arch-dive-back {
+.arch-dive-back,
+.arch-dive-zoom {
   min-height: 44px;
   min-width: 44px;
   padding: 0.45rem 0.75rem;
@@ -2013,13 +2102,29 @@ body:has(.workshop-page) .site-main {
   cursor: pointer;
 }
 
+.arch-dive-back {
+  font-weight: 600;
+}
+
 .arch-dive-nav:hover,
 .arch-dive-back:hover,
+.arch-dive-zoom:hover,
 .arch-dive-nav:focus-visible,
-.arch-dive-back:focus-visible {
+.arch-dive-back:focus-visible,
+.arch-dive-zoom:focus-visible {
   background: var(--color-accent-band);
   border-color: rgba(242, 240, 235, 0.36);
   outline: none;
+}
+
+.arch-dive-zoom:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.arch-dive-zoom:disabled:hover {
+  background: transparent;
+  border-color: var(--color-border);
 }
 
 .arch-dive-caption {
@@ -2028,22 +2133,43 @@ body:has(.workshop-page) .site-main {
   font-size: 0.9rem;
   line-height: 1.55;
   color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.arch-dive-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .arch-dive-stage {
-  min-height: 10rem;
-  max-height: min(50dvh, 28rem);
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 12rem;
+  max-height: min(58dvh, 32rem);
   overflow: auto;
+  overscroll-behavior: contain;
   padding: var(--space-2);
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.02);
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 1024px) {
+  .arch-dive-stage {
+    max-height: min(56dvh, 34rem);
+  }
 }
 
 .arch-mermaid {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   min-height: 8rem;
   opacity: 0.55;
-  transition: opacity 0.25s ease;
+  transition: opacity var(--motion-fast) ease;
+  transform-origin: top left;
 }
 
 .arch-mermaid.is-ready {
@@ -2051,7 +2177,8 @@ body:has(.workshop-page) .site-main {
 }
 
 .arch-mermaid svg {
-  max-width: 100%;
+  display: block;
+  max-width: none;
   height: auto;
 }
 
@@ -2071,6 +2198,7 @@ body:has(.workshop-page) .site-main {
   gap: var(--space-2);
   margin: 0;
   font-size: 0.8125rem;
+  flex-shrink: 0;
 }
 
 .arch-dive-footer a {
@@ -2087,6 +2215,8 @@ body:has(.workshop-page) .site-main {
 @media (prefers-reduced-motion: reduce) {
   .arch-dive-backdrop,
   .arch-dive-panel,
+  .arch-dive-root.is-closing .arch-dive-backdrop,
+  .arch-dive-root.is-closing .arch-dive-panel,
   .arch-mermaid {
     animation: none;
     transition: none;
@@ -2110,7 +2240,8 @@ body:has(.workshop-page) .site-main {
   }
 
   .arch-overview-graph {
-    min-height: min(42dvh, 360px);
+    height: clamp(260px, 44dvh, 420px);
+    min-height: 260px;
   }
 
   .arch-graph-label {
@@ -2186,12 +2317,16 @@ body:has(.workshop-page) .site-main {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 0;
+  min-height: 0;
 }
 
+/* Fit entire viewBox in the stage — never inherit base-diagram 320px cap */
 [data-arch-graph] .arch-graph-svg {
   width: 100%;
-  height: auto;
-  max-height: inherit;
+  height: 100%;
+  max-height: none;
+  max-width: 100%;
 }
 
 .arch-graph-group-box {
@@ -2419,12 +2554,12 @@ body:has(.workshop-page) .site-main {
   height: 100%;
   width: 100%;
   margin: 0;
-  padding: 0 1px;
+  padding: 0 2px;
   box-sizing: border-box;
   color: var(--color-text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  line-height: 1.2;
+  font-size: 11.5px;
+  line-height: 1.22;
   text-align: center;
   overflow: hidden;
   word-break: break-word;
@@ -2432,11 +2567,10 @@ body:has(.workshop-page) .site-main {
 }
 
 .arch-graph-edge-path {
-  stroke: var(--arch-edge, rgba(242, 240, 235, 0.16));
-  stroke-width: 0.95;
+  stroke: var(--arch-edge, rgba(242, 240, 235, 0.22));
+  stroke-width: 1.05;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: none;
 }
 
 .arch-graph-edge.is-dashed .arch-graph-edge-path {
@@ -2501,10 +2635,17 @@ body:has(.workshop-page) .site-main {
 
 .project-details-row {
   display: grid;
-  grid-template-columns: 7rem 1fr;
-  gap: var(--space-2);
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
   padding: var(--space-2) 0;
   border-top: 1px solid var(--color-border);
+}
+
+@media (min-width: 640px) {
+  .project-details-row {
+    grid-template-columns: 7rem 1fr;
+    gap: var(--space-2);
+  }
 }
 
 .project-details-row:last-child {

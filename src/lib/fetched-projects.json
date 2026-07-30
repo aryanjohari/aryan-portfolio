@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-30T04:55:50.958Z",
+  "fetchedAt": "2026-07-30T05:09:03.928Z",
   "results": [
     {
       "slug": "background-studio",
@@ -29,7 +29,7 @@
         "diagram": "docs/architecture.mmd",
         "graph": "docs/architecture.graph.json"
       },
-      "fetchedAt": "2026-07-30T04:55:43.961Z",
+      "fetchedAt": "2026-07-30T05:08:51.864Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
@@ -322,7 +322,7 @@
         "diagram": "docs/architecture.mmd",
         "graph": "docs/architecture.graph.json"
       },
-      "fetchedAt": "2026-07-30T04:55:44.099Z",
+      "fetchedAt": "2026-07-30T05:08:53.595Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
@@ -640,7 +640,7 @@
         "diagram": "docs/architecture.mmd",
         "graph": "docs/architecture.graph.json"
       },
-      "fetchedAt": "2026-07-30T04:55:44.256Z",
+      "fetchedAt": "2026-07-30T05:08:55.519Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
@@ -935,7 +935,7 @@
         "diagram": "docs/architecture.mmd",
         "graph": "docs/architecture.graph.json"
       },
-      "fetchedAt": "2026-07-30T04:55:44.413Z",
+      "fetchedAt": "2026-07-30T05:08:57.112Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
@@ -1236,7 +1236,7 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-30T04:55:48.351Z",
+      "fetchedAt": "2026-07-30T05:09:01.209Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
