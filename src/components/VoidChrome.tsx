@@ -34,8 +34,8 @@ const navItems = [
     glyph: null as null,
   },
   {
-    href: "/workshop",
-    label: "workshop",
+    href: "/projects",
+    label: "projects",
     title: "Full project catalog",
     glyph: "workshop" as const,
   },
@@ -173,7 +173,7 @@ function modeFromPath(pathname: string): ChromeMode {
 }
 
 function isInAppChromeRoute(href: string): boolean {
-  return href === "/" || href === "/workshop" || href === "/about";
+  return href === "/" || href === "/projects" || href === "/about";
 }
 
 function isCoarseOrNarrow(): boolean {

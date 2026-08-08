@@ -35,8 +35,8 @@ export default function AboutPage() {
             <p>
               I own the architecture: APIs, deployment, and the trade-offs. AI
               speeds up delivery, but the design decisions are mine. This
-              portfolio is a curated workshop — selected projects with context,
-              not a README dump.
+              portfolio is a curated project collection — selected work with
+              context, not a README dump.
             </p>
           </section>
 
@@ -93,7 +93,7 @@ export default function AboutPage() {
               <span className="about-bridge-sep" aria-hidden="true">
                 ·
               </span>
-              <Link href="/workshop">workshop</Link>
+              <Link href="/projects">projects</Link>
             </p>
           </footer>
         </div>

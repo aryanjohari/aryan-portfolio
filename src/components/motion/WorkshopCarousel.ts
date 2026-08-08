@@ -223,8 +223,8 @@ function paintFace(
 
   ctx.textBaseline = "middle";
   ctx.textAlign = "center";
-  ctx.fillStyle = "rgba(244, 240, 232, 0.38)";
-  ctx.font = `${Math.round(cssH * 0.042)}px ui-monospace, monospace`;
+  ctx.fillStyle = "rgba(244, 240, 232, 0.72)";
+  ctx.font = `${Math.round(cssH * 0.048)}px ui-monospace, monospace`;
   ctx.fillText("preview", paneX + paneW / 2, paneY + paneH / 2);
 
   // Text column
@@ -237,8 +237,8 @@ function paintFace(
   ctx.shadowBlur = Math.max(5, cssH * 0.028);
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = Math.max(1, cssH * 0.004);
-  ctx.fillStyle = "rgba(244, 240, 232, 0.55)";
-  ctx.font = `${Math.round(cssH * 0.046)}px ui-monospace, monospace`;
+  ctx.fillStyle = "rgba(244, 240, 232, 0.78)";
+  ctx.font = `${Math.round(cssH * 0.052)}px ui-monospace, monospace`;
   ctx.fillText(card.status.toLowerCase(), padX, padY);
 
   // Title — hero signal framed by edge light
@@ -246,17 +246,17 @@ function paintFace(
   ctx.shadowBlur = Math.max(8, cssH * 0.045);
   ctx.shadowOffsetY = Math.max(1, cssH * 0.006);
   ctx.fillStyle = CREAM;
-  ctx.font = `600 ${Math.round(cssH * 0.104)}px ui-monospace, monospace`;
+  ctx.font = `600 ${Math.round(cssH * 0.112)}px ui-monospace, monospace`;
   let ty = padY + cssH * 0.095;
-  ty = wrapText(ctx, card.title, padX, ty, colW, cssH * 0.122, 2);
+  ty = wrapText(ctx, card.title, padX, ty, colW, cssH * 0.13, 2);
 
   // Hook
   ty += cssH * 0.04;
   ctx.fillStyle = card.missing
-    ? "rgba(244, 240, 232, 0.7)"
-    : "rgba(244, 240, 232, 0.88)";
-  ctx.font = `${card.missing ? "italic " : ""}${Math.round(cssH * 0.054)}px ui-monospace, monospace`;
-  wrapText(ctx, card.hook, padX, ty, colW, cssH * 0.07, 3);
+    ? "rgba(244, 240, 232, 0.78)"
+    : "rgba(244, 240, 232, 0.94)";
+  ctx.font = `${card.missing ? "italic " : ""}${Math.round(cssH * 0.06)}px ui-monospace, monospace`;
+  wrapText(ctx, card.hook, padX, ty, colW, cssH * 0.078, 3);
 
   // CTA pill — 1px cream border, quiet, matches void chrome affordances
   const ctaFont = `${Math.round(cssH * 0.05)}px ui-monospace, monospace`;

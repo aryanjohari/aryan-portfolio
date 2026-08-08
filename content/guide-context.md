@@ -6,12 +6,12 @@ User-editable source for the Portfolio Guide. Aggregated at build time into `src
 
 - **Who:** Aryan Johari — graduate software engineer, Auckland, New Zealand
 - **Availability:** Seeking a graduate software engineering role in Auckland from September 2026
-- **Site:** Curated workshop portfolio — selected projects with narrative and live demos
+- **Site:** Curated project portfolio — selected work with narrative and live demos
 - **Work history:** Detailed employment history is ingested from `public/resume.pdf` at build time (not duplicated here)
 
 ## Philosophy
 
-I build software that solves real problems — from visual tools to edge systems. I own the full stack: architecture, APIs, and deployment. AI accelerates delivery, but the design and architecture are mine. This portfolio is a workshop index, not a README dump.
+I build software that solves real problems — from visual tools to edge systems. I own the full stack: architecture, APIs, and deployment. AI accelerates delivery, but the design and architecture are mine. This portfolio is a curated project index, not a README dump.
 
 ## Quick facts
 

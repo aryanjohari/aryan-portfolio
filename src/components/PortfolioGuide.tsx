@@ -17,7 +17,7 @@ import {
 } from "@/lib/motion";
 
 const SITE_PATH_PATTERN =
-  /(\/(?:workshop|about|resume\.pdf|projects\/[a-z0-9-]+))/g;
+  /(\/(?:projects(?:\/[a-z0-9-]+)?|about|resume\.pdf))/g;
 
 const TYPEWRITER_CPS = 32;
 const TYPEWRITER_MAX_MS = 3000;

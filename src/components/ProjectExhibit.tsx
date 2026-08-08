@@ -229,7 +229,7 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
                 ) : null}
               </div>
               <nav className="project-exhibit-coda-nav" aria-label="Project navigation">
-                <Link href="/workshop">← Back to workshop</Link>
+                <Link href="/projects">← Back to projects</Link>
                 {nextProject && nextProject.slug !== project.slug ? (
                   <Link href={`/projects/${nextProject.slug}`}>
                     Next: {nextProject.title} →

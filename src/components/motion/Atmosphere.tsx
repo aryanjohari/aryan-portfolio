@@ -11,15 +11,41 @@ import {
 
 /** Site void clear — matches :root `--color-bg` / BootField. */
 const CLEAR = 0x0a0a0a;
-const DEAD_ZONE_PAD = 24;
-const DEAD_ZONE_WEIGHT = 0.15;
 const PEAK_ALPHA = 0.55;
 const LIFE_MIN = 0.7;
 const LIFE_MAX = 1.15;
-const ASK_RECT_CACHE_MS = 100;
+const DEPTH_RECT_CACHE_MS = 120;
+const DEPTH_PAD = 6;
+const DEPTH_FEATHER = 20;
+const DEPTH_RESPONSE = 18;
+const DEPTH_SPAWN_WEIGHT = 0.72;
 /** Soft comet head size in CSS pixels. */
 const SIZE_HEAD = 38;
 const SIZE_TAIL = 9;
+
+/**
+ * DOM content that should visually sit in front of the trail. The workshop
+ * tablets have their own WebGL void shades; this maps the same depth cue to
+ * regular site copy and controls without adding rectangular CSS panels.
+ */
+const DEPTH_CONTENT_SELECTOR = [
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "p",
+  "blockquote",
+  "li",
+  "dt",
+  "dd",
+  "pre",
+  "label",
+  "input",
+  "textarea",
+  "button",
+  "a",
+  "[data-atmosphere-depth]",
+].join(",");
 
 const DENSE_TRAIL = {
   maxTrail: 200,
@@ -46,6 +72,15 @@ type TrailSlot = {
   spawnAlpha: number;
   /** 0 = core, 1 = soft halo for body. */
   layer: number;
+  /** Smoothed amount of DOM content in front of this particle. */
+  depth: number;
+};
+
+type DepthRect = {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
 };
 
 function makeSoftGlowTexture(THREE: typeof import("three")) {
@@ -77,8 +112,8 @@ function makeSoftGlowTexture(THREE: typeof import("three")) {
 /**
  * Full-viewport fixed WebGL canvas behind content (all routes).
  * Soft red↔blue comet trail when theatre motion + boot done; otherwise null.
- * Ask-bar dead zone only applies for the home hero ask
- * (`.void-chrome--home .portfolio-guide-float`).
+ * Text and controls form a soft depth map: the sharp trail core recedes while
+ * its halo remains visible, matching the workshop tablet shade treatment.
  * Touch and mouse both drive the trail via pointermove.
  */
 export function Atmosphere() {
@@ -130,8 +165,8 @@ export function Atmosphere() {
 
       let allowTrail = isBootDone();
       let pathHue = 0;
-      let lastAskCache = 0;
-      let askRect: DOMRect | null = null;
+      let lastDepthCache = 0;
+      let depthRects: DepthRect[] = [];
       let viewW = 1;
       let viewH = 1;
       let lastTs = 0;
@@ -150,6 +185,7 @@ export function Atmosphere() {
         alive: false,
         spawnAlpha: PEAK_ALPHA,
         layer: 0,
+        depth: 0,
       }));
 
       const positions = new Float32Array(maxTrail * 3);
@@ -157,28 +193,60 @@ export function Atmosphere() {
       const sizes = new Float32Array(maxTrail);
       const alphas = new Float32Array(maxTrail);
 
-      const refreshAskRect = (now: number) => {
-        if (now - lastAskCache < ASK_RECT_CACHE_MS) return;
-        lastAskCache = now;
-        const el = document.querySelector(
-          ".void-chrome--home .portfolio-guide-float",
-        );
-        askRect = el?.getBoundingClientRect() ?? null;
+      const refreshDepthRects = (now: number) => {
+        if (now - lastDepthCache < DEPTH_RECT_CACHE_MS) return;
+        lastDepthCache = now;
+
+        const shell = document.querySelector(".site-shell");
+        if (!shell) {
+          depthRects = [];
+          return;
+        }
+
+        depthRects = Array.from(
+          shell.querySelectorAll<HTMLElement>(DEPTH_CONTENT_SELECTOR),
+        ).flatMap((el) => {
+          if (el.classList.contains("visually-hidden")) return [];
+          const rect = el.getBoundingClientRect();
+          if (
+            rect.width <= 0 ||
+            rect.height <= 0 ||
+            rect.bottom < -DEPTH_FEATHER ||
+            rect.top > viewH + DEPTH_FEATHER ||
+            rect.right < -DEPTH_FEATHER ||
+            rect.left > viewW + DEPTH_FEATHER
+          ) {
+            return [];
+          }
+          return [
+            {
+              left: rect.left - DEPTH_PAD,
+              top: rect.top - DEPTH_PAD,
+              right: rect.right + DEPTH_PAD,
+              bottom: rect.bottom + DEPTH_PAD,
+            },
+          ];
+        });
+      };
+
+      const depthAt = (x: number, y: number) => {
+        let depth = 0;
+        for (const rect of depthRects) {
+          const dx = Math.max(rect.left - x, 0, x - rect.right);
+          const dy = Math.max(rect.top - y, 0, y - rect.bottom);
+          if (dx > DEPTH_FEATHER || dy > DEPTH_FEATHER) continue;
+          const distance = Math.hypot(dx, dy);
+          if (distance >= DEPTH_FEATHER) continue;
+          depth = Math.max(depth, 1 - distance / DEPTH_FEATHER);
+          if (depth === 1) break;
+        }
+        return depth;
       };
 
       const spawnWeightAt = (clientX: number, clientY: number, now: number) => {
-        refreshAskRect(now);
-        if (!askRect) return 1;
-        const pad = DEAD_ZONE_PAD;
-        if (
-          clientX >= askRect.left - pad &&
-          clientX <= askRect.right + pad &&
-          clientY >= askRect.top - pad &&
-          clientY <= askRect.bottom + pad
-        ) {
-          return DEAD_ZONE_WEIGHT;
-        }
-        return 1;
+        refreshDepthRects(now);
+        const depth = depthAt(clientX, clientY);
+        return 1 - depth * (1 - DEPTH_SPAWN_WEIGHT);
       };
 
       const spawnOne = (
@@ -199,6 +267,7 @@ export function Atmosphere() {
         slot.t = (Math.sin(pathHue) + 1) * 0.5;
         slot.alive = true;
         slot.layer = layer;
+        slot.depth = depthAt(slot.x, slot.y);
         slot.spawnAlpha =
           PEAK_ALPHA * Math.max(weight, 0.12) * (layer === 0 ? 1 : 0.45);
       };
@@ -318,8 +387,10 @@ export function Atmosphere() {
           const baseSize =
             SIZE_TAIL + (SIZE_HEAD - SIZE_TAIL) * headness;
           const layerScale = s.layer === 0 ? 1 : 1.65;
-          sizes[i] = baseSize * layerScale * dpr;
-          alphas[i] = s.spawnAlpha * ease;
+          const depthSize = 1 + s.depth * (s.layer === 0 ? 0.18 : 0.52);
+          const depthAlpha = 1 - s.depth * (s.layer === 0 ? 0.68 : 0.22);
+          sizes[i] = baseSize * layerScale * depthSize * dpr;
+          alphas[i] = s.spawnAlpha * ease * depthAlpha;
 
           const r = RED.r + (BLUE.r - RED.r) * s.t;
           const g = RED.g + (BLUE.g - RED.g) * s.t;
@@ -344,10 +415,13 @@ export function Atmosphere() {
 
         const dt = lastTs ? Math.min((ts - lastTs) / 1000, 0.05) : 0.016;
         lastTs = ts;
+        refreshDepthRects(ts);
+        const depthEase = 1 - Math.exp(-DEPTH_RESPONSE * dt);
 
         for (let i = 0; i < maxTrail; i++) {
           const s = slots[i];
           if (!s.alive) continue;
+          s.depth += (depthAt(s.x, s.y) - s.depth) * depthEase;
           s.age += dt;
           if (s.age >= s.life) s.alive = false;
         }

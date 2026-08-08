@@ -512,7 +512,7 @@ export function BootOverlay() {
             margin: 0,
             textAlign: "center",
             fontFamily: "var(--font-mono), ui-monospace, monospace",
-            fontSize: "clamp(0.65rem, 0.9vw + 0.4rem, 0.8rem)",
+            fontSize: "clamp(0.8125rem, 0.9vw + 0.5rem, 0.9375rem)",
             letterSpacing: "0.06em",
             color: FG,
             opacity: 0,

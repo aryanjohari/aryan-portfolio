@@ -2,23 +2,32 @@
 
 ## Design tokens
 
-All tokens live as CSS custom properties in `src/app/globals.css`.
+Ink + type tokens are defined in `src/lib/type-tokens.ts` (`TYPE`, `INK`) and mirrored as CSS custom properties in `src/app/globals.css`. Motion paces stay in `src/lib/motion-tokens.ts`.
 
 | Token | Value | Usage |
 |-------|-------|-------|
 | `--color-bg` | `#0a0a0a` | Page / void background |
-| `--color-text` | `#f2f0eb` | Primary text (cream/off-white) |
-| `--color-border` | `rgba(242, 240, 235, 0.16)` | Soft light borders, table rules |
-| `--color-muted` | `#9a9690` | Secondary text, placeholders |
+| `--color-text` | `#f4f0e8` | Primary text (cream/off-white) |
+| `--color-border` | `rgba(244, 240, 232, 0.22)` | Soft light borders, table rules |
+| `--color-muted` | `#c4bfb6` | Secondary text, placeholders |
+| `--color-faint` | `rgba(244, 240, 232, 0.72)` | Soft secondary (idle, separators) |
 | `--color-accent-band` | `#161616` | Header accent background |
 | `--space-1` | `8px` | Base grid unit |
 | `--space-2` | `16px` | Standard padding |
 | `--space-3` | `24px` | Section gaps |
 | `--space-4` | `32px` | Page margins |
 | `--font-mono` | IBM Plex Mono | Only font family used |
+| `--type-body` | `1rem` | Body / primary copy |
+| `--type-meta` | `0.875rem` | Chrome, meta, secondary |
+| `--type-caption` | `0.8125rem` | Smallest allowed site type |
+| `--type-heading` | `1.125rem` | Quiet page headings (`> about`) |
+| `--type-title` | `clamp(1.5rem, 3vw, 2rem)` | Emphasized section titles |
+| `--type-display` | `clamp(2.35rem, 8.75vw, 5.5rem)` | Home identity |
 | `--motion-fast` | `0.2s` | CSS mirror of `MOTION.fast` |
 | `--motion-medium` | `0.45s` | CSS mirror of `MOTION.medium` |
 | `--motion-slow` | `0.6s` | CSS mirror of `MOTION.slow` |
+
+**Architecture diagram exception:** Do not restyle `.project-diagram*`, `.arch-*`, `.c4-*`, `.dg-*`, or Mermaid SVG labels with these type/ink tokens — those surfaces keep their own scale.
 
 ## Motion language
 
@@ -55,8 +64,11 @@ Helpers: `motionDuration("fast" \| "medium" \| "slow")`, `motionDurationCss(...)
 
 - **Single family:** IBM Plex Mono via `next/font/google`
 - **No display fonts, no sans-serif fallbacks in the shell**
-- **Sizes:** 14px body, 12px table/meta, 18–24px page titles
+- **Root:** 17px (`TYPE.rootPx`) — rem scale baseline
+- **Scale:** `--type-body` / `--type-meta` / `--type-caption` / `--type-heading` / `--type-title` / `--type-display` (see Design tokens). Do not ship site UI below `--type-caption`.
+- **Ink:** `--color-text` primary, `--color-muted` secondary, `--color-faint` soft secondary — avoid one-off low-opacity cream rgba for copy
 - **Weight:** 400 regular, 600 for headings and nav emphasis
+- **Exception:** Architecture diagram surfaces keep their own label sizes/colours
 
 ## Visual rules
 

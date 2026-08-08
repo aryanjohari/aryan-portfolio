@@ -8,7 +8,7 @@ export default function NotFound() {
         Page not found.{" "}
         <Link href="/">return home</Link>
         {" · "}
-        <Link href="/workshop">view workshop</Link>.
+        <Link href="/projects">view projects</Link>.
       </p>
     </main>
   );

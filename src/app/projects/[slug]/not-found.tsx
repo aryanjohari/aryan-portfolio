@@ -6,7 +6,7 @@ export default function ProjectNotFound() {
       <h1 className="page-heading">not found</h1>
       <p>
         No project matches that slug.{" "}
-        <Link href="/workshop">view workshop</Link>
+        <Link href="/projects">view projects</Link>
         {" · "}
         <Link href="/">return home</Link>.
       </p>
