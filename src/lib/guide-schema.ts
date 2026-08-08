@@ -32,6 +32,30 @@ export type SuggestedChip = {
   tooltip: string;
 };
 
+export type TenureRoleHint = {
+  role: string;
+  company: string;
+  period: string;
+  approxMonths: number;
+};
+
+export type TenureAreaHint = {
+  label: string;
+  approxMonths: number;
+  note: string;
+};
+
+export type TenureHints = {
+  asOf: string;
+  professional: {
+    approxYears: number;
+    wording: string;
+    roles: TenureRoleHint[];
+  };
+  byArea?: TenureAreaHint[];
+  caveats: string[];
+};
+
 export type GuideContextFile = {
   builtAt: string;
   identity: string;
@@ -39,6 +63,7 @@ export type GuideContextFile = {
   experience: GuideExperienceEntry[];
   education: GuideEducationEntry[];
   skills?: string[];
+  tenureHints?: TenureHints;
   meta: {
     projectCount: number;
     featuredDemoSlugs: string[];

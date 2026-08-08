@@ -10,6 +10,9 @@ import {
   type GuideContextFile,
   type GuideEducationEntry,
   type GuideExperienceEntry,
+  type TenureAreaHint,
+  type TenureHints,
+  type TenureRoleHint,
 } from "../src/lib/guide-schema";
 import type { FetchedProjectsFile } from "../src/lib/portfolio-schema";
 
@@ -293,6 +296,188 @@ function truncateText(text: string, maxChars: number): string {
   return `${text.slice(0, maxChars - 1).trimEnd()}…`;
 }
 
+const MONTH_INDEX: Record<string, number> = {
+  jan: 0,
+  january: 0,
+  feb: 1,
+  february: 1,
+  mar: 2,
+  march: 2,
+  apr: 3,
+  april: 3,
+  may: 4,
+  jun: 5,
+  june: 5,
+  jul: 6,
+  july: 6,
+  aug: 7,
+  august: 7,
+  sep: 8,
+  sept: 8,
+  september: 8,
+  oct: 9,
+  october: 9,
+  nov: 10,
+  november: 10,
+  dec: 11,
+  december: 11,
+};
+
+type MonthPoint = { year: number; month: number };
+
+function parseMonthYear(token: string): MonthPoint | null {
+  const match = token.trim().match(/^([A-Za-z]+)\s+(\d{4})$/);
+  if (!match) return null;
+  const month = MONTH_INDEX[match[1]!.toLowerCase()];
+  if (month === undefined) return null;
+  return { year: Number(match[2]), month };
+}
+
+function parsePeriodRange(
+  period: string,
+  asOf: Date,
+): { start: MonthPoint; end: MonthPoint; endedPresent: boolean } | null {
+  const parts = period.split(/[–-]/).map((part) => part.trim());
+  if (parts.length !== 2) return null;
+  const start = parseMonthYear(parts[0]!);
+  if (!start) return null;
+
+  const endToken = parts[1]!;
+  if (/^present$/i.test(endToken)) {
+    return {
+      start,
+      end: { year: asOf.getFullYear(), month: asOf.getMonth() },
+      endedPresent: true,
+    };
+  }
+
+  const end = parseMonthYear(endToken);
+  if (!end) return null;
+  return { start, end, endedPresent: false };
+}
+
+/** Inclusive month span: Jan 2024 – Jan 2024 = 1 month. */
+function monthsBetweenInclusive(start: MonthPoint, end: MonthPoint): number {
+  const delta =
+    (end.year - start.year) * 12 + (end.month - start.month) + 1;
+  return Math.max(0, delta);
+}
+
+function monthsToYearsWording(approxMonths: number): {
+  approxYears: number;
+  wording: string;
+} {
+  const approxYears = Math.round((approxMonths / 12) * 10) / 10;
+  if (approxMonths < 10) {
+    return {
+      approxYears,
+      wording: `roughly ${approxMonths} months of listed professional roles`,
+    };
+  }
+  const rounded =
+    approxYears % 1 === 0 ? String(approxYears) : approxYears.toFixed(1);
+  return {
+    approxYears,
+    wording: `about ${rounded} year${approxYears === 1 ? "" : "s"} of listed professional roles`,
+  };
+}
+
+function classifyExperienceArea(
+  entry: GuideExperienceEntry,
+): string | undefined {
+  const haystack = `${entry.role} ${entry.highlights.join(" ")}`.toLowerCase();
+  if (
+    /\bseo\b/.test(haystack) ||
+    /\bsearch console\b/.test(haystack) ||
+    /\borganic\b/.test(haystack)
+  ) {
+    return "SEO / web growth";
+  }
+  if (
+    /\bwebsite developer\b/.test(haystack) ||
+    /\bweb developer\b/.test(haystack) ||
+    /\bwordpress\b/.test(haystack) ||
+    /\bshopify\b/.test(haystack)
+  ) {
+    return "Web development";
+  }
+  return undefined;
+}
+
+function buildTenureHints(
+  experience: GuideExperienceEntry[],
+  asOfDate: Date = new Date(),
+): TenureHints {
+  const asOf = asOfDate.toISOString();
+  const caveats: string[] = [
+    "Approximate only — computed from listed role periods at build time.",
+    "Do not invent employers, titles, or metrics beyond this rollup.",
+  ];
+
+  const roles: TenureRoleHint[] = [];
+  let usedPresent = false;
+
+  for (const entry of experience) {
+    const range = parsePeriodRange(entry.period, asOfDate);
+    if (!range) {
+      caveats.push(`Could not parse period for ${entry.role} at ${entry.company}.`);
+      continue;
+    }
+    if (range.endedPresent) usedPresent = true;
+    roles.push({
+      role: entry.role,
+      company: entry.company,
+      period: entry.period,
+      approxMonths: monthsBetweenInclusive(range.start, range.end),
+    });
+  }
+
+  if (usedPresent) {
+    caveats.push(
+      `Roles ending in Present are measured through the build date (${asOf.slice(0, 10)}).`,
+    );
+  }
+
+  const totalMonths = roles.reduce((sum, role) => sum + role.approxMonths, 0);
+  const { approxYears, wording } = monthsToYearsWording(totalMonths);
+
+  if (experience.length >= 2) {
+    caveats.push(
+      "Role months are summed per listed period; overlapping calendar months (if any) are not de-duplicated.",
+    );
+  }
+
+  const areaMonths = new Map<string, number>();
+  for (const entry of experience) {
+    const label = classifyExperienceArea(entry);
+    if (!label) continue;
+    const range = parsePeriodRange(entry.period, asOfDate);
+    if (!range) continue;
+    const months = monthsBetweenInclusive(range.start, range.end);
+    areaMonths.set(label, (areaMonths.get(label) ?? 0) + months);
+  }
+
+  const byArea: TenureAreaHint[] | undefined =
+    areaMonths.size > 0
+      ? [...areaMonths.entries()].map(([label, approxMonths]) => ({
+          label,
+          approxMonths,
+          note: `Based on listed role titles/highlights matching ${label}.`,
+        }))
+      : undefined;
+
+  return {
+    asOf,
+    professional: {
+      approxYears,
+      wording,
+      roles,
+    },
+    ...(byArea ? { byArea } : {}),
+    caveats,
+  };
+}
+
 function mergeExperienceFromMarkdown(
   parsed: GuideExperienceEntry[],
 ): GuideExperienceEntry[] {
@@ -374,13 +559,17 @@ async function buildGuideContext(): Promise<GuideContextFile> {
     .filter((project) => project.demo)
     .map((project) => project.slug);
 
+  const builtAt = new Date().toISOString();
+  const tenureHints = buildTenureHints(experience, new Date(builtAt));
+
   const baseOutput = {
-    builtAt: new Date().toISOString(),
+    builtAt,
     identity,
     resumeText,
     experience,
     education,
     ...(skills.length > 0 ? { skills } : {}),
+    tenureHints,
     meta: {
       projectCount: projects.length,
       featuredDemoSlugs,
@@ -417,6 +606,11 @@ async function main(): Promise<void> {
   console.log(
     `resumeText: ${output.resumeText.length} chars | experience: ${output.experience.length} entries | education: ${output.education.length} | skills: ${output.skills?.length ?? 0} | contextCharCount: ${output.meta.contextCharCount}`,
   );
+  if (output.tenureHints) {
+    console.log(
+      `tenureHints: ${output.tenureHints.professional.wording} (${output.tenureHints.professional.approxYears}y)`,
+    );
+  }
 
   if (output.meta.contextCharCount > MAX_TOTAL_CONTEXT_CHARS) {
     console.warn(

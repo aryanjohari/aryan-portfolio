@@ -570,7 +570,7 @@ export function VoidChrome({ children }: { children: ReactNode }) {
         setMode(toMode);
         setGlyphsRevealed(true);
         navSettledRef.current = true;
-        if (toMode === "site") setAskMountKey(`site:${href}`);
+        setAskMountKey(toMode === "site" ? `site:${href}` : "home");
       });
       pendingPushRef.current = href;
       router.push(href);
@@ -602,9 +602,7 @@ export function VoidChrome({ children }: { children: ReactNode }) {
 
       await tweenChrome(toMode);
 
-      if (toMode === "site") {
-        setAskMountKey(`site:${href}`);
-      }
+      setAskMountKey(toMode === "site" ? `site:${href}` : "home");
 
       pendingPushRef.current = href;
       router.push(href);
@@ -694,6 +692,7 @@ export function VoidChrome({ children }: { children: ReactNode }) {
           })();
         }
       } else {
+        setAskMountKey("home");
         pageTransitioningRef.current = false;
       }
       return cleanupPageTween;
@@ -704,8 +703,10 @@ export function VoidChrome({ children }: { children: ReactNode }) {
       if (morphingRef.current || cancelled) return;
 
       if (modeRef.current === nextMode) {
+        setAskMountKey(
+          nextMode === "site" ? `site:${pathname}` : "home",
+        );
         if (nextMode === "site") {
-          setAskMountKey(`site:${pathname}`);
           if (prefersReducedMotion()) {
             await settlePageContent();
           } else {
@@ -721,7 +722,9 @@ export function VoidChrome({ children }: { children: ReactNode }) {
           setMode(nextMode);
           setGlyphsRevealed(true);
           navSettledRef.current = true;
-          if (nextMode === "site") setAskMountKey(`site:${pathname}`);
+          setAskMountKey(
+            nextMode === "site" ? `site:${pathname}` : "home",
+          );
         });
         if (contentRef.current) {
           contentRef.current.style.opacity = nextMode === "home" ? "0" : "1";
@@ -739,8 +742,10 @@ export function VoidChrome({ children }: { children: ReactNode }) {
         }
         await tweenChrome(nextMode);
         if (cancelled) return;
+        setAskMountKey(
+          nextMode === "site" ? `site:${pathname}` : "home",
+        );
         if (nextMode === "site") {
-          setAskMountKey(`site:${pathname}`);
           await fadeContent(1, { pointerEvents: "auto" });
         }
       } finally {

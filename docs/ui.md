@@ -115,7 +115,7 @@ Single persistent client shell: `VoidChrome` in root `layout.tsx` (`html[data-vo
 
 **Morph (morph-first):** Chrome nav intercepts in-app clicks. Home ↔ site: measure→tween name/nav/ask (`MOTION.chrome.morph`), **then** `router.push`, then soft content fade. Site ↔ site: **exit → push → entry** shift on `.void-chrome-page` (`MOTION.chrome.pageExit` / `pageEnter`). See `docs/void-chrome-transitions.md`. Narrow/coarse: matched crossfade. `prefers-reduced-motion`: instant mode + push.
 
-**Mini ask:** Compact wireframe input; replies open in a non-layout-breaking panel (dropdown under the bar; fixed bottom sheet on small screens). Remounts cleanly on site navigations via `remountKey`.
+**Mini ask:** Compact wireframe input with the same three whisper hints (`ask · explain page · go to…`, tighter type); live reply + optional confirm chip in a non-layout-breaking panel (dropdown under the bar; fixed bottom sheet on small screens). Full transcript opens from a quiet glyph into a separate void **Chat history** overlay (same pattern on home). Remounts on site navigations via `remountKey`; transcript rehydrates from `sessionStorage`.
 
 Boot → home theatre is unchanged (`BootOverlay` / ask-bar measure).
 
@@ -139,7 +139,7 @@ Minimal black void (`#0a0a0a`) site-wide via `:root` tokens. Home and all site r
 Editorial composition (desktop): oversized name top-left · centered ask + invite whisper + reply · right-rail section links · contacts footer.
 
 - **Header (home):** hero-scale soft GSAP scramble of `aryan johari` (`MOTION.scramble` ~2.15s, `clamp(2.35rem, 8.75vw, 5.5rem)`) once after boot on a full load (initial paint is dots only — no final-name flash). Return-to-home settles without re-scramble. **No under-name role/tagline.** `prefers-reduced-motion`: final name immediately. Accessible via `aria-label` on the name link (`HomeIdentity`).
-- **Center:** void wireframe ask bar (larger type/padding) with a soft invite whisper under the bar (`ask me anything about my work` — DOM type-once + `MOTION.medium` fade after boot; full text instantly if reduced-motion; one-line reserved height so the bar does not jump) and a **reserved reply slot** below. Placeholder: `ask about my work, availability, or projects…`. Loading dots → character typewriter (~32 cps, capped ~3s); links become interactive when typing finishes. `prefers-reduced-motion`: full reply, no typewriter. No intro essay, no chip rails, no canvas quotes. Ask bar stays wireframe — no float/tilt chrome. Manual ask only (no auto Gemini).
+- **Center:** void wireframe ask bar (larger type/padding) with three whisper hints under the bar (`ask · explain page · go to…` — not a chip toolbar; `ask` focuses the input; `explain page` / `go to…` submit page-aware prompts), a soft invite whisper below the hints (`ask about this page or my work` — DOM type-once + `MOTION.medium` fade after boot; full text instantly if reduced-motion; one-line reserved height so the bar does not jump), and a **reserved live-reply band** below (latest answer only; absolute so streaming cannot shove the ask bar). When the API returns an allowlisted `navigateTo`, an ephemeral confirm (`go to {path}?` · Go · Stay) appears in that band — never auto-navigates. Quiet **Chat history** glyph (hidden until turns exist; sits clear of the hint row) opens a separate void overlay with the full session transcript + clear. Placeholder: `ask about this page or my work…`. Loading dots → character typewriter on the latest guide reply (~32 cps, capped ~3s); links become interactive when typing finishes. `prefers-reduced-motion`: full reply, no typewriter. No intro essay, no SaaS chip rails, no canvas quotes. Ask bar stays wireframe — no float/tilt chrome. Manual ask only (no auto Gemini).
 - **Section links:** workshop · about · resume — clear text labels with larger glyph marks (18px) + ~1rem labels; underline on hover/focus. **Desktop (≥1024px):** fixed vertical stack in the right margin, out of the center cluster. **Mobile / tablet:** horizontal row under the ask stage (collapsed until reveal so the input stays centered). Auto-fades in ~0.9s after boot (`MOTION.medium` enter; immediate if reduced-motion); `inert` only until revealed. Leaving home morphs these into the site top nav (adds `home`).
 - **Footer (home):** contacts only (`email · github · linkedin`) — always soft-visible (`HomeFooterChrome`). Light padding; no heavy separator.
 - Ask bar: void fill (`#0a0a0a`), cream/off-white rounded outline, soft outer glow — reads as settled boot wireframe; off-white text + muted placeholder; ghost outline send. No GSAP float / no CSS 3D tilt. Mobile: same language, slightly tighter radius.
@@ -151,11 +151,12 @@ Editorial composition (desktop): oversized name top-left · centered ask + invit
 │                                        resume               │
 │                                                             │
 │           ┌─ void wireframe ask bar ────────────────┐      │
-│           │ ask about my work, availability…  send │      │
+│           │ ask about this page or my work…   send │      │
 │           └─────────────────────────────────────────┘      │
-│           ask me anything about my work (whisper)           │
-│           ┌─ reserved reply slot (scrolls) ─────────┐      │
-│           │ loading → typed reply                   │      │
+│           ask · explain page · go to… (whisper)            │
+│           ask about this page or my work (invite)          │
+│           ┌─ live reply (scrolls) ──────────────────┐      │
+│           │ latest guide answer · confirm go/stay   │      │
 │           └─────────────────────────────────────────┘      │
 │                                                             │
 │  email · github · linkedin                                  │
@@ -166,7 +167,7 @@ Editorial composition (desktop): oversized name top-left · centered ask + invit
 
 **Void chrome CSS:** `.void-chrome`, `.void-chrome--home`, `.void-chrome--site`, `.void-chrome-name`, `.void-chrome-nav`, `.void-chrome-ask`, `.void-chrome-page`
 
-**Home ask CSS classes:** `.portfolio-guide--home`, `.portfolio-guide-stage`, `.portfolio-guide-invite`, `.portfolio-guide-reply-slot`
+**Home ask CSS classes:** `.portfolio-guide--home`, `.portfolio-guide-stage`, `.portfolio-guide-hints`, `.portfolio-guide-hint`, `.portfolio-guide-invite`, `.portfolio-guide-reply-slot`, `.portfolio-guide-live`, `.portfolio-guide-nav-confirm`, `.portfolio-guide-history-glyph`, `.portfolio-guide-history-panel`, `.portfolio-guide-transcript`, `.portfolio-guide-clear`
 
 **Home header identity:** `.site-header-identity` (`HomeIdentity`) — name only
 
@@ -244,7 +245,7 @@ Each tablet is **five meshes**, back → front:
 
 Exhibit panels match iframe sandbox height. Body scrolls on mobile.
 
-**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide--home`, `.portfolio-guide--mini`, `.portfolio-guide-float-wrap`, `.portfolio-guide-float`, `.portfolio-guide-form`, `.portfolio-guide-label`, `.portfolio-guide-input-row`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-invite`, `.portfolio-guide-response`, `.portfolio-guide-response--loading`, `.portfolio-guide-mini-panel`
+**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide--home`, `.portfolio-guide--mini`, `.portfolio-guide-float-wrap`, `.portfolio-guide-float`, `.portfolio-guide-form`, `.portfolio-guide-label`, `.portfolio-guide-input-row`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-hints`, `.portfolio-guide-hint`, `.portfolio-guide-hint-sep`, `.portfolio-guide-invite`, `.portfolio-guide-reply-slot`, `.portfolio-guide-live`, `.portfolio-guide-live--loading`, `.portfolio-guide-live--idle`, `.portfolio-guide-nav-confirm`, `.portfolio-guide-history-glyph`, `.portfolio-guide-history-layer`, `.portfolio-guide-history-panel`, `.portfolio-guide-transcript`, `.portfolio-guide-turn`, `.portfolio-guide-clear`, `.portfolio-guide-mini-panel`
 
 ### Project page (`/projects/[slug]`)
 

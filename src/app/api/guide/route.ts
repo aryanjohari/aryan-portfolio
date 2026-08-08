@@ -1,7 +1,21 @@
 import guideContext from "@/lib/guide-context.json";
-import type { GuideContextFile } from "@/lib/guide-schema";
+import { validateNavigateTo } from "@/lib/guide-navigate";
+import {
+  buildProjectPageMeta,
+  extractProjectSlug,
+  getStaticPageMeta,
+  normalizeGuidePathname,
+  type GuidePageMeta,
+} from "@/lib/guide-page-meta";
+import type { GuideContextFile, TenureHints } from "@/lib/guide-schema";
 
 const MAX_MESSAGE_LENGTH = 500;
+const MAX_PATHNAME_LENGTH = 200;
+const MAX_HISTORY_PAIRS = 3;
+const MAX_HISTORY_USER_CHARS = 500;
+const MAX_HISTORY_MODEL_CHARS = 800;
+const MAX_HISTORY_TOTAL_CHARS = 3000;
+const MAX_VISIT_MEMORY_CHARS = 1000;
 const MAX_RUNTIME_CONTEXT_CHARS = 24000;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 20;
@@ -12,14 +26,28 @@ type RateLimitEntry = {
   resetAt: number;
 };
 
-type CompactGuideContext = {
+export type GuideTurn = {
+  role: "user" | "model";
+  text: string;
+};
+
+type GuideRequestBody = {
+  message: string;
+  pathname?: string;
+  history?: GuideTurn[];
+  visitMemory?: string;
+};
+
+type SlicedGuideContext = {
   identity: string;
   availability?: string;
+  tenureHints?: TenureHints;
   experience: GuideContextFile["experience"];
   education: GuideContextFile["education"];
   skills?: string[];
-  resumeExcerpt: string;
-  projects: Array<{
+  resumeExcerpt?: string;
+  page?: GuidePageMeta;
+  projects?: Array<{
     slug: string;
     title: string;
     summary: string;
@@ -27,13 +55,35 @@ type CompactGuideContext = {
     stack: string[];
     demo?: boolean;
   }>;
+  projectIndex?: Array<{ slug: string; title: string; demo?: boolean }>;
   meta: GuideContextFile["meta"];
 };
 
 const rateLimitStore = new Map<string, RateLimitEntry>();
-let runtimeContextTrimLogged = false;
 
 const context = guideContext as GuideContextFile;
+
+const PAGE_VERB_PATTERNS = [
+  /^explain\s+this\s+page\??$/i,
+  /^what\s+am\s+i\s+looking\s+at\??$/i,
+  /^summarize(\s+this(\s+page)?)?\??$/i,
+  /^summarise(\s+this(\s+page)?)?\??$/i,
+  /^what\s+should\s+i\s+look\s+at\??$/i,
+  /^why\s+does\s+this\s+matter\??$/i,
+];
+
+const GO_INTENT_PATTERNS = [
+  /^where\s+should\s+i\s+go(\s+next)?(\s+from\s+here)?\??$/i,
+  /^go\s+somewhere\??$/i,
+  /^where\s+next\??$/i,
+  /^suggest\s+(a\s+|one\s+)?(page|path|place)\??$/i,
+  /^what\s+should\s+i\s+look\s+at\??$/i,
+];
+
+const RESUME_INTENT_PATTERN =
+  /\b(experience|resume|cv|employment|employer|years?|tenure|role|job|work history|availability|eligible|visa|education|degree|unitec|mumbai|how long|months?)\b/i;
+
+const PROJECT_SLUGS = new Set(context.projects.map((project) => project.slug));
 
 function getClientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -81,73 +131,180 @@ function extractAvailability(ctx: GuideContextFile): string | undefined {
   return undefined;
 }
 
-function buildCompactContext(ctx: GuideContextFile): CompactGuideContext {
-  const compact: CompactGuideContext = {
-    identity: ctx.identity,
+function truncate(text: string, max: number): string {
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
+function resolvePageMeta(
+  pathname: string | undefined,
+  ctx: GuideContextFile,
+): GuidePageMeta | undefined {
+  if (!pathname) return undefined;
+  const normalized = normalizeGuidePathname(pathname);
+  const staticMeta = getStaticPageMeta(normalized);
+  if (staticMeta) return staticMeta;
+
+  const slug = extractProjectSlug(normalized);
+  if (!slug) return undefined;
+  const project = ctx.projects.find((entry) => entry.slug === slug);
+  if (!project) return undefined;
+  return buildProjectPageMeta(project);
+}
+
+function isPageVerbMessage(message: string): boolean {
+  const trimmed = message.trim();
+  return PAGE_VERB_PATTERNS.some((pattern) => pattern.test(trimmed));
+}
+
+function isGoIntentMessage(message: string): boolean {
+  const trimmed = message.trim();
+  return GO_INTENT_PATTERNS.some((pattern) => pattern.test(trimmed));
+}
+
+function buildStaticPageReply(
+  page: GuidePageMeta,
+  message: string,
+): { reply: string; navigateTo?: string } {
+  const lower = message.trim().toLowerCase();
+  const next = page.nextPath
+    ? validateNavigateTo(page.nextPath, PROJECT_SLUGS)
+    : undefined;
+
+  if (isGoIntentMessage(message)) {
+    const destination = next ?? "/projects";
+    return {
+      reply: `From here, try ${destination} next — one concrete path deeper into the portfolio.`,
+      navigateTo: destination,
+    };
+  }
+  if (/why does this matter/.test(lower)) {
+    return {
+      reply: `${page.blurb}\n\nHiring signal: it’s a focused look at craft and delivery, not a dump of everything Aryan has ever touched.${next ? ` Next: ${next}.` : ""}`,
+    };
+  }
+  return {
+    reply: next ? `${page.blurb}\n\nNext path: ${next}.` : page.blurb,
+  };
+}
+
+function needsResumeExcerpt(message: string, history: GuideTurn[]): boolean {
+  if (RESUME_INTENT_PATTERN.test(message)) return true;
+  return history.some((turn) => RESUME_INTENT_PATTERN.test(turn.text));
+}
+
+function buildSlicedContext(
+  ctx: GuideContextFile,
+  pathname: string | undefined,
+  message: string,
+  history: GuideTurn[],
+): SlicedGuideContext {
+  const page = resolvePageMeta(pathname, ctx);
+  const slug = pathname ? extractProjectSlug(pathname) : undefined;
+  const focusedProject = slug
+    ? ctx.projects.find((project) => project.slug === slug)
+    : undefined;
+
+  const includeResume = needsResumeExcerpt(message, history);
+
+  const sliced: SlicedGuideContext = {
+    identity: truncate(ctx.identity, 1800),
     availability: extractAvailability(ctx),
+    ...(ctx.tenureHints ? { tenureHints: ctx.tenureHints } : {}),
     experience: ctx.experience,
     education: ctx.education,
     ...(ctx.skills && ctx.skills.length > 0 ? { skills: ctx.skills } : {}),
-    resumeExcerpt: ctx.resumeText,
-    projects: ctx.projects.map((project) => ({
+    ...(includeResume
+      ? { resumeExcerpt: truncate(ctx.resumeText, 4000) }
+      : {}),
+    ...(page ? { page } : {}),
+    projectIndex: ctx.projects.map((project) => ({
       slug: project.slug,
       title: project.title,
-      summary: project.summary,
-      description: project.description,
-      stack: project.stack,
       ...(project.demo ? { demo: true } : {}),
     })),
     meta: ctx.meta,
   };
 
-  let serialized = JSON.stringify(compact);
-  if (serialized.length <= MAX_RUNTIME_CONTEXT_CHARS) {
-    return compact;
-  }
-
-  const trimmed: CompactGuideContext = {
-    ...compact,
-    projects: compact.projects.map((project) => ({
+  if (focusedProject) {
+    sliced.projects = [
+      {
+        slug: focusedProject.slug,
+        title: focusedProject.title,
+        summary: focusedProject.summary,
+        description: focusedProject.description,
+        stack: focusedProject.stack,
+        ...(focusedProject.demo ? { demo: true } : {}),
+      },
+    ];
+  } else if (!page || page.pathname === "/projects" || page.pathname === "/workshop") {
+    sliced.projects = ctx.projects.map((project) => ({
       slug: project.slug,
       title: project.title,
       summary: project.summary,
       stack: project.stack,
       ...(project.demo ? { demo: true } : {}),
-    })),
-  };
-
-  serialized = JSON.stringify(trimmed);
-  if (
-    process.env.NODE_ENV === "development" &&
-    !runtimeContextTrimLogged &&
-    serialized.length < JSON.stringify(compact).length
-  ) {
-    console.warn(
-      `Guide context trimmed at runtime (${JSON.stringify(compact).length} → ${serialized.length} chars).`,
-    );
-    runtimeContextTrimLogged = true;
+    }));
   }
 
-  return trimmed;
+  let serialized = JSON.stringify(sliced);
+  if (serialized.length <= MAX_RUNTIME_CONTEXT_CHARS) {
+    return sliced;
+  }
+
+  if (sliced.projects) {
+    sliced.projects = sliced.projects.map((project) => ({
+      slug: project.slug,
+      title: project.title,
+      summary: project.summary,
+      stack: project.stack,
+      ...(project.demo ? { demo: true } : {}),
+    }));
+  }
+  if (sliced.resumeExcerpt) {
+    sliced.resumeExcerpt = truncate(sliced.resumeExcerpt, 2000);
+  }
+
+  serialized = JSON.stringify(sliced);
+  if (serialized.length > MAX_RUNTIME_CONTEXT_CHARS && sliced.resumeExcerpt) {
+    delete sliced.resumeExcerpt;
+  }
+
+  return sliced;
 }
 
-const compactContext = buildCompactContext(context);
+function buildSystemPrompt(
+  sliced: SlicedGuideContext,
+  pathname: string | undefined,
+  visitMemory: string | undefined,
+): string {
+  const contextBlock = JSON.stringify(sliced, null, 2);
+  const pathLine = pathname
+    ? `The visitor is currently on pathname: ${pathname}.`
+    : "No current pathname was provided.";
+  const memoryLine = visitMemory
+    ? `Visit memory (earlier conversation summary):\n${visitMemory}`
+    : "No prior visit memory.";
 
-function buildSystemPrompt(): string {
-  const contextBlock = JSON.stringify(compactContext, null, 2);
+  return `You are a quiet gallery curator and a friendly peer engineer for Aryan Johari’s portfolio. Warm, plain, concise — not salesy, corporate, or sarcastic. Prefer short semantic takes over resume dumps.
 
-  return `You are the portfolio guide for Aryan Johari's project portfolio. Answer using ONLY the context below.
+Grounding: Use ONLY the CONTEXT JSON, visit memory, and conversation history. Never invent employers, titles, dates, metrics, credentials, or projects that are not present.
 
-Rules:
-1. Use identity, availability, resumeExcerpt, experience, education, skills, and projects as your sources.
-2. Do not invent employers, dates, metrics, projects, or credentials that are not in the context.
-3. Do not refuse prematurely. If partial information exists (for example, resumeExcerpt mentions a role but experience is empty), answer from resumeExcerpt.
-4. Say "I don't have specific information about that in Aryan's portfolio materials" ONLY when the topic is absent from all context sections.
-5. For general knowledge or unrelated questions (for example, weather), politely say you can only help with Aryan's portfolio, background, and projects.
-6. For project questions, mention live demos when demo is true.
-7. For hiring or availability questions, use availability, education, and resumeExcerpt.
-8. Be concise: 2-5 sentences unless the user asks for more detail. Prefer plain language; avoid jargon unless the user asks a technical question.
-9. When useful, end with one concrete next-step site path visitors can follow: /projects, /about, /projects/{slug}, or /resume.pdf. Use at most one path. Do not invent slugs.
+Inference: You may approximate years/durations from tenureHints and dated periods. Prefer tenureHints.professional.wording and byArea when present. Say “about / roughly” and “based on roles listed.” If dates are ambiguous, say what is known — never invent a number.
+
+Page: ${pathLine} Explain or summarize the current page only from CONTEXT.page / CONTEXT.projects — do not invent UI chrome or on-page copy that is not in context. When useful, you may mention at most one concrete next site path in the reply text. Do not invent slugs.
+
+Navigation: When the visitor asks where to go / what to look at next / to suggest a page, recommend at most ONE allowlisted path and set navigateTo to that exact path. Allowed paths only: "/", "/about", "/projects", "/projects/{slug}" for slugs in CONTEXT.projectIndex, and "/resume.pdf". If you are unsure, omit navigateTo and say you don’t know that page. Never set navigateTo for ordinary Q&A or page explain/summarize unless they explicitly asked to go somewhere.
+
+Off-topic (weather, unrelated general knowledge): briefly and playfully redirect back to the portfolio.
+
+Length: usually 2–5 sentences; for summarize requests keep about 3–5 lines.
+
+Response format: Return ONLY a JSON object (no markdown fences) shaped as:
+{"reply":"<answer for the visitor>","visitMemory":"<≤1000 chars rolling summary of this visit for future turns>","navigateTo":"<optional allowlisted path or omit>"}
+Update visitMemory to a short curator note of topics already covered. If you cannot update memory, still return JSON with reply and an empty visitMemory string. Omit navigateTo unless recommending a single confirmable destination.
+
+${memoryLine}
 
 CONTEXT:
 ${contextBlock}`;
@@ -164,25 +321,148 @@ type GeminiResponse = {
   };
 };
 
-async function callGemini(message: string, apiKey: string): Promise<string> {
+function parseGuideModelPayload(raw: string): {
+  reply: string;
+  visitMemory?: string;
+  navigateTo?: string;
+} {
+  const trimmed = raw.trim();
+  const fenceMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  const candidate = fenceMatch?.[1]?.trim() ?? trimmed;
+
+  try {
+    const parsed = JSON.parse(candidate) as {
+      reply?: unknown;
+      visitMemory?: unknown;
+      navigateTo?: unknown;
+    };
+    if (typeof parsed.reply === "string" && parsed.reply.trim()) {
+      const visitMemory =
+        typeof parsed.visitMemory === "string"
+          ? truncate(parsed.visitMemory.trim(), MAX_VISIT_MEMORY_CHARS)
+          : undefined;
+      const navigateTo = validateNavigateTo(parsed.navigateTo, PROJECT_SLUGS);
+      return {
+        reply: parsed.reply.trim(),
+        ...(visitMemory ? { visitMemory } : {}),
+        ...(navigateTo ? { navigateTo } : {}),
+      };
+    }
+  } catch {
+    // plain-text fallback
+  }
+
+  return { reply: trimmed };
+}
+
+function sanitizeHistory(raw: unknown): GuideTurn[] {
+  if (!Array.isArray(raw)) return [];
+
+  const turns: GuideTurn[] = [];
+  let totalChars = 0;
+
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const role = (item as { role?: unknown }).role;
+    const text = (item as { text?: unknown }).text;
+    if ((role !== "user" && role !== "model") || typeof text !== "string") {
+      continue;
+    }
+    const capped =
+      role === "user"
+        ? truncate(text.trim(), MAX_HISTORY_USER_CHARS)
+        : truncate(text.trim(), MAX_HISTORY_MODEL_CHARS);
+    if (!capped) continue;
+    if (totalChars + capped.length > MAX_HISTORY_TOTAL_CHARS) break;
+    turns.push({ role, text: capped });
+    totalChars += capped.length;
+  }
+
+  // Keep last N pairs worth of messages (max 6).
+  const maxMessages = MAX_HISTORY_PAIRS * 2;
+  return turns.slice(-maxMessages);
+}
+
+function parseRequestBody(body: unknown):
+  | { ok: true; data: GuideRequestBody }
+  | { ok: false; error: string } {
+  if (!body || typeof body !== "object") {
+    return { ok: false, error: "Invalid JSON body." };
+  }
+
+  const record = body as Record<string, unknown>;
+  const message =
+    typeof record.message === "string" ? record.message.trim() : "";
+
+  if (!message) {
+    return { ok: false, error: "Message is required." };
+  }
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    return {
+      ok: false,
+      error: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer.`,
+    };
+  }
+
+  let pathname: string | undefined;
+  if (typeof record.pathname === "string" && record.pathname.trim()) {
+    pathname = truncate(
+      normalizeGuidePathname(record.pathname),
+      MAX_PATHNAME_LENGTH,
+    );
+  }
+
+  const history = sanitizeHistory(record.history);
+
+  let visitMemory: string | undefined;
+  if (typeof record.visitMemory === "string" && record.visitMemory.trim()) {
+    visitMemory = truncate(record.visitMemory.trim(), MAX_VISIT_MEMORY_CHARS);
+  }
+
+  return {
+    ok: true,
+    data: {
+      message,
+      ...(pathname ? { pathname } : {}),
+      ...(history.length > 0 ? { history } : {}),
+      ...(visitMemory ? { visitMemory } : {}),
+    },
+  };
+}
+
+async function callGemini(options: {
+  message: string;
+  history: GuideTurn[];
+  pathname?: string;
+  visitMemory?: string;
+  sliced: SlicedGuideContext;
+  apiKey: string;
+}): Promise<{ reply: string; visitMemory?: string; navigateTo?: string }> {
+  const { message, history, pathname, visitMemory, sliced, apiKey } = options;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  const contents = [
+    ...history.map((turn) => ({
+      role: turn.role,
+      parts: [{ text: turn.text }],
+    })),
+    {
+      role: "user" as const,
+      parts: [{ text: message }],
+    },
+  ];
 
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       systemInstruction: {
-        parts: [{ text: buildSystemPrompt() }],
+        parts: [{ text: buildSystemPrompt(sliced, pathname, visitMemory) }],
       },
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: message }],
-        },
-      ],
+      contents,
       generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 512,
+        temperature: 0.55,
+        maxOutputTokens: 640,
       },
     }),
   });
@@ -198,19 +478,10 @@ async function callGemini(message: string, apiKey: string): Promise<string> {
     throw new Error("Gemini returned an empty response.");
   }
 
-  return text;
+  return parseGuideModelPayload(text);
 }
 
 export async function POST(request: Request) {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
-
-  if (!apiKey) {
-    return Response.json(
-      { error: "Guide is not configured. GEMINI_API_KEY is missing." },
-      { status: 503 },
-    );
-  }
-
   const ip = getClientIp(request);
   if (isRateLimited(ip)) {
     return Response.json(
@@ -226,28 +497,52 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const message =
-    typeof body === "object" &&
-    body !== null &&
-    "message" in body &&
-    typeof (body as { message: unknown }).message === "string"
-      ? (body as { message: string }).message.trim()
-      : "";
-
-  if (!message) {
-    return Response.json({ error: "Message is required." }, { status: 400 });
+  const parsed = parseRequestBody(body);
+  if (!parsed.ok) {
+    return Response.json({ error: parsed.error }, { status: 400 });
   }
 
-  if (message.length > MAX_MESSAGE_LENGTH) {
+  const { message, pathname, history = [], visitMemory } = parsed.data;
+  const page = resolvePageMeta(pathname, context);
+
+  if (page && (isPageVerbMessage(message) || isGoIntentMessage(message))) {
+    const staticReply = buildStaticPageReply(page, message);
+    return Response.json({
+      reply: staticReply.reply,
+      source: "page-meta" as const,
+      ...(staticReply.navigateTo
+        ? { navigateTo: staticReply.navigateTo }
+        : {}),
+      ...(visitMemory ? { visitMemory } : {}),
+    });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+
+  if (!apiKey) {
     return Response.json(
-      { error: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer.` },
-      { status: 400 },
+      { error: "Guide is not configured. GEMINI_API_KEY is missing." },
+      { status: 503 },
     );
   }
 
+  const sliced = buildSlicedContext(context, pathname, message, history);
+
   try {
-    const reply = await callGemini(message, apiKey);
-    return Response.json({ reply });
+    const result = await callGemini({
+      message,
+      history,
+      pathname,
+      visitMemory,
+      sliced,
+      apiKey,
+    });
+    return Response.json({
+      reply: result.reply,
+      source: "model" as const,
+      ...(result.visitMemory ? { visitMemory: result.visitMemory } : {}),
+      ...(result.navigateTo ? { navigateTo: result.navigateTo } : {}),
+    });
   } catch (error) {
     const messageText =
       error instanceof Error ? error.message : "Guide request failed.";
