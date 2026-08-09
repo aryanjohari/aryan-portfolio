@@ -2067,7 +2067,11 @@ body:has(.workshop-page) .site-main {
 }
 
 .project-exhibit-action {
-  display: inline-block;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  isolation: isolate;
+  overflow: hidden;
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--color-border);
   font-size: var(--type-meta);
@@ -2076,18 +2080,40 @@ body:has(.workshop-page) .site-main {
   color: var(--color-text);
   background-color: transparent;
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    opacity 0.2s ease;
+    color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease;
+}
+
+/* Trail-palette cream dissolve — fills upward from the void */
+.project-exhibit-action::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    to top,
+    rgba(244, 240, 232, 0.94) 0%,
+    rgba(244, 240, 232, 0.72) 55%,
+    rgba(244, 240, 232, 0.22) 100%
+  );
+  transform: scaleY(0);
+  transform-origin: bottom center;
+  transition: transform var(--motion-medium) var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+  pointer-events: none;
 }
 
 .project-exhibit-action:hover,
 .project-exhibit-action:focus-visible {
-  background-color: var(--color-accent-band);
-  border-color: var(--color-faint);
+  color: var(--color-bg);
+  border-color: rgba(244, 240, 232, 0.72);
   text-decoration: none;
   outline: none;
+  text-shadow: none;
+}
+
+.project-exhibit-action:hover::before,
+.project-exhibit-action:focus-visible::before {
+  transform: scaleY(1);
 }
 
 .project-exhibit-action:focus-visible {
@@ -2099,18 +2125,33 @@ body:has(.workshop-page) .site-main {
   font-weight: 600;
 }
 
+.project-exhibit-action--primary::before {
+  background: linear-gradient(
+    to top,
+    #f4f0e8 0%,
+    rgba(244, 240, 232, 0.88) 60%,
+    rgba(244, 240, 232, 0.35) 100%
+  );
+}
+
 .project-exhibit-action--quiet {
   border-color: transparent;
   color: var(--color-muted);
   padding-left: 0;
+  overflow: visible;
+}
+
+.project-exhibit-action--quiet::before {
+  display: none;
 }
 
 .project-exhibit-action--quiet:hover,
 .project-exhibit-action--quiet:focus-visible {
-  background-color: transparent;
-  border-color: transparent;
   color: var(--color-text);
+  border-color: transparent;
+  background-color: transparent;
   box-shadow: none;
+  text-shadow: var(--text-void-halo);
 }
 
 /* SplitText wrappers — keep inline flow readable */
@@ -4334,9 +4375,18 @@ body:has(.about-page) .site-main {
 
 .project-exhibit-action {
   min-height: 44px;
-  display: inline-flex;
-  align-items: center;
   box-sizing: border-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-exhibit-action::before {
+    transition: none;
+  }
+
+  .project-exhibit-action:hover::before,
+  .project-exhibit-action:focus-visible::before {
+    transform: scaleY(1);
+  }
 }
 
 /* Quiet stack belt under the hero — looping monogram marquee */

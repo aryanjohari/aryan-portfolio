@@ -742,6 +742,9 @@ function PortfolioGuideInner({
   const [typingTurnId, setTypingTurnId] = useState<string | null>(null);
   const [liveExpandedId, setLiveExpandedId] = useState<string | null>(null);
   const [pendingNavigate, setPendingNavigate] = useState<string | null>(null);
+  const [autoNavigatePath, setAutoNavigatePath] = useState<string | null>(
+    null,
+  );
   const liveRef = useRef<HTMLDivElement>(null);
   const historyListRef = useRef<HTMLOListElement>(null);
   const historyGlyphRef = useRef<HTMLButtonElement>(null);
@@ -831,6 +834,30 @@ function PortfolioGuideInner({
     });
   }
 
+  function goToPath(path: string) {
+    const destination = validateNavigateTo(path);
+    if (!destination) {
+      focusAskInput();
+      return;
+    }
+    if (isResumePath(destination)) {
+      window.location.assign(destination);
+      return;
+    }
+    void navigate(destination);
+  }
+
+  /* Explicit go-intent: finish the whisper, then teleport. */
+  useEffect(() => {
+    if (!autoNavigatePath) return;
+    if (typewriterActive && !typingDone) return;
+    const path = autoNavigatePath;
+    setAutoNavigatePath(null);
+    goToPath(path);
+    // navigate / focusAskInput are stable enough for this settle effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoNavigatePath, typewriterActive, typingDone]);
+
   function clearHistory() {
     setTurns([]);
     setVisitMemory("");
@@ -839,6 +866,7 @@ function PortfolioGuideInner({
     setTypingTurnId(null);
     setLiveExpandedId(null);
     setPendingNavigate(null);
+    setAutoNavigatePath(null);
     setHistoryOpen(false);
     clearSessionStorage();
     focusAskInput();
@@ -864,19 +892,13 @@ function PortfolioGuideInner({
   }
 
   function confirmNavigate() {
-    const path = pendingNavigate
-      ? validateNavigateTo(pendingNavigate)
-      : undefined;
+    const path = pendingNavigate;
     setPendingNavigate(null);
     if (!path) {
       focusAskInput();
       return;
     }
-    if (isResumePath(path)) {
-      window.location.assign(path);
-      return;
-    }
-    void navigate(path);
+    goToPath(path);
   }
 
   async function submitQuestion(question: string) {
@@ -907,6 +929,7 @@ function PortfolioGuideInner({
     setTypingTurnId(null);
     setLiveExpandedId(null);
     setPendingNavigate(null);
+    setAutoNavigatePath(null);
     if (variant === "mini") setPanelOpen(true);
 
     try {
@@ -925,6 +948,7 @@ function PortfolioGuideInner({
         reply?: string;
         visitMemory?: string;
         navigateTo?: string;
+        autoNavigate?: boolean;
         error?: string;
       };
 
@@ -945,7 +969,13 @@ function PortfolioGuideInner({
         setVisitMemory(data.visitMemory.slice(0, 1000));
       }
       const destination = validateNavigateTo(data.navigateTo);
-      setPendingNavigate(destination ?? null);
+      if (destination && data.autoNavigate === true) {
+        setPendingNavigate(null);
+        setAutoNavigatePath(destination);
+      } else {
+        setAutoNavigatePath(null);
+        setPendingNavigate(destination ?? null);
+      }
       setTypingTurnId(modelTurn.id);
       setStatus("idle");
     } catch {

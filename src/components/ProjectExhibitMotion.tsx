@@ -30,8 +30,6 @@ export const HERO_ENTRY = {
   titleAt: 0,
   buttonsAt: 0.12,
   ledeAt: 0.26,
-  hoverX: 3,
-  hoverDuration: MOTION.fast,
 } as const;
 
 export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
@@ -90,10 +88,6 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
 
         mm.add("(prefers-reduced-motion: no-preference)", () => {
           addHeroEntry(gsap, SplitText, { title, lede, buttons });
-          const unbindHover = buttons.length > 0 ? bindButtonHovers(gsap, buttons) : null;
-          return () => {
-            unbindHover?.();
-          };
         });
       }, root);
     }
@@ -203,47 +197,4 @@ function addHeroEntry(
   } else if (lede) {
     tl.to(lede, { autoAlpha: 1, y: 0, duration: HERO_ENTRY.ledeDuration }, HERO_ENTRY.ledeAt);
   }
-}
-
-function bindButtonHovers(gsap: GsapLike, buttons: HTMLElement[]): () => void {
-  const cleanups: Array<() => void> = [];
-
-  for (const btn of buttons) {
-    const nudgeIn = () => {
-      gsap.to(btn, {
-        x: HERO_ENTRY.hoverX,
-        duration: HERO_ENTRY.hoverDuration,
-        ease: MOTION.ease,
-        overwrite: "auto",
-      });
-    };
-    const nudgeOut = () => {
-      gsap.to(btn, {
-        x: 0,
-        duration: HERO_ENTRY.hoverDuration,
-        ease: MOTION.ease,
-        overwrite: "auto",
-      });
-    };
-    const onFocus = () => {
-      if (btn.matches(":focus-visible")) nudgeIn();
-    };
-
-    btn.addEventListener("pointerenter", nudgeIn);
-    btn.addEventListener("pointerleave", nudgeOut);
-    btn.addEventListener("focus", onFocus);
-    btn.addEventListener("blur", nudgeOut);
-
-    cleanups.push(() => {
-      btn.removeEventListener("pointerenter", nudgeIn);
-      btn.removeEventListener("pointerleave", nudgeOut);
-      btn.removeEventListener("focus", onFocus);
-      btn.removeEventListener("blur", nudgeOut);
-      gsap.killTweensOf(btn);
-    });
-  }
-
-  return () => {
-    for (const cleanup of cleanups) cleanup();
-  };
 }

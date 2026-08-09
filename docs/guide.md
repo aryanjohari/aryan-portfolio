@@ -83,13 +83,16 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey).
   "reply": "…",
   "visitMemory": "optional refreshed summary",
   "navigateTo": "/projects/background-studio",
+  "autoNavigate": true,
   "source": "model"
 }
 ```
 
-`navigateTo` is optional and only present when recommending a single confirmable destination. Server allowlists `/`, `/about`, `/projects`, `/projects/{slug}` for known project slugs, and `/resume.pdf`. Invalid values are stripped — never returned.
+`navigateTo` is optional when locating, soft-suggesting, or fulfilling a go request. Server allowlists `/`, `/about`, `/projects`, `/projects/{slug}` for known project slugs, and `/resume.pdf`. Invalid values are stripped — never returned.
 
-`source` is `"page-meta"` when a clear free-form page verb / go-intent message short-circuits to a static route blurb (no Gemini call), or `"model"` for ordinary Q&A. These are **message-intent helpers**, not UI modes — hint clicks are not required.
+`autoNavigate` is optional and only present when `navigateTo` is valid **and** the user message matches explicit go phrasing. Soft suggests (“where should I go next?”, “where is X?”) keep confirm-only.
+
+`source` is `"page-meta"` when a clear free-form page verb / soft go-intent message short-circuits to a static route blurb (no Gemini call), or `"model"` for ordinary Q&A. These are **message-intent helpers**, not UI modes — hint clicks are not required.
 
 **Errors:** `{ "error": "…" }` with status 400 (validation), 429 (rate limit), 502 (Gemini failure), or 503 (missing API key).
 
@@ -100,7 +103,7 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey).
 - Rate limit: 20 requests per 10 minutes per IP (in-memory; resets on cold start in serverless — not a hard guarantee across instances)
 - Client session: 10 user asks per browser session (`sessionStorage`); then soft stop
 
-**Hybrid page verbs (static, no Gemini):** Exact-ish **typed** matches such as “explain this page”, “what am I looking at?”, “summarize”, “what should I look at?”, “why does this matter?”, and go-intents like “where should I go next from here?” return the hand-authored blurb / next-path suggestion for the current route or project when page meta exists. Go-intents include a validated `navigateTo` when a next path is known. Destination asks (“go to about”, “take me to projects”) still use the normal model path and may return `navigateTo` for confirm.
+**Hybrid page verbs (static, no Gemini):** Exact-ish **typed** matches such as “explain this page”, “what am I looking at?”, “summarize”, “what should I look at?”, “why does this matter?”, and soft go-intents like “where should I go next from here?” return the hand-authored blurb / next-path suggestion for the current route or project when page meta exists. Soft go-intents include a validated `navigateTo` for **confirm** (never `autoNavigate`). Destination asks (“go to about”, “take me to projects”) still use the normal model path and may return `navigateTo` plus `autoNavigate: true` when the user phrasing is an explicit go.
 
 **System prompt (voice):**
 
@@ -112,7 +115,8 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey).
 - Prefer short answers (2–4 sentences) unless the visitor asks for detail / page explain
 - Gemini called with `responseMimeType: application/json` + a tiny schema (`reply` required; `visitMemory` / `navigateTo` optional)
 - Server parses with fence-strip + first-object extract; invalid payloads yield a short apology — **never** the raw model string
-- `navigateTo` only for explicit go/next-page asks (allowlisted; stripped otherwise)
+- `navigateTo` for locate / soft-suggest / go asks (allowlisted; stripped otherwise)
+- `autoNavigate` is **server-gated**: only when `navigateTo` is valid **and** the user message matches explicit go phrasing (`go to`, `take me to/there`, `navigate to`, …) — never from model output alone
 
 ## Client UX
 
@@ -121,7 +125,8 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey).
 - **Live stage** shows only the latest guide answer (loading / error in the same pane) — not a chat stack
 - Long replies open as a short **whisper** (~360 chars / a few lines) with an explicit **more** / **less** control — no mystery scrollbar
 - Three whisper capability labels (not modes): **ask** (may focus input), **explain page**, **go to…** — reminders only; never submit canned prompts. Free-form typed intent drives explain / navigate / Q&A through one request path
-- When `navigateTo` is returned, show confirm chip (`go to {path}?` · **Go** / **Stay**) — never navigate without **Go**
+- When `navigateTo` is returned without `autoNavigate`, show confirm chip (`go to {path}?` · **Go** / **Stay**)
+- When `autoNavigate` is true with a validated path (explicit go phrasing only), finish the live whisper then navigate — no confirm chip
 - Full multi-turn transcript mounts **only** inside the open **Chat history** overlay (quiet glyph when turns exist); closed = no transcript in page flow
 - Persists to `sessionStorage` key `portfolio-guide:v1` for the browser session (model turns store cleaned `reply` text only; older JSON leaks are scrubbed on load)
 - Sends `pathname`, last 2–3 turns, and `visitMemory`
@@ -169,7 +174,7 @@ curl -X POST http://localhost:3000/api/guide \
 - Structured resume parsing is heuristic; if it fails, answers still work from `resumeText` when included
 - Answers quality depends on `guide-context.md`, resume PDF, fetched YAML, and page-meta blurbs
 - No SaaS chip rails, tool calling, RAG, or server-side transcript store
-- Navigation suggestions require client confirm — never auto-teleport from model text alone
+- Soft navigation suggestions require client confirm; explicit go phrasing may auto-navigate after the reply whisper (still allowlisted + server-gated)
 
 ## Updating guide knowledge
 

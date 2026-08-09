@@ -75,12 +75,27 @@ const PAGE_VERB_PATTERNS = [
   /^why\s+does\s+this\s+matter\??$/i,
 ];
 
+/** Soft “where next?” — returns navigateTo for confirm, never auto. */
 const GO_INTENT_PATTERNS = [
   /^where\s+should\s+i\s+go(\s+next)?(\s+from\s+here)?\??$/i,
   /^go\s+somewhere\??$/i,
   /^where\s+next\??$/i,
   /^suggest\s+(a\s+|one\s+)?(page|path|place)\??$/i,
   /^what\s+should\s+i\s+look\s+at\??$/i,
+];
+
+/**
+ * Explicit teleport intent — server may set autoNavigate when navigateTo is
+ * allowlisted. Keep tighter than soft go-intent (must not match “where should I go”).
+ */
+const EXPLICIT_GO_PATTERNS = [
+  /\bgo\s+to\b/i,
+  /\btake\s+me\s+(to|there)\b/i,
+  /\bnavigate\s+to\b/i,
+  /\bbring\s+me\s+to\b/i,
+  /\bopen\s+(the\s+)?(about|projects|resume|home|page)\b/i,
+  /^go\s+there\.?$/i,
+  /^open\s+(it|that)\.?$/i,
 ];
 
 const RESUME_INTENT_PATTERN =
@@ -163,6 +178,22 @@ function isPageVerbMessage(message: string): boolean {
 function isGoIntentMessage(message: string): boolean {
   const trimmed = message.trim();
   return GO_INTENT_PATTERNS.some((pattern) => pattern.test(trimmed));
+}
+
+function isExplicitGoMessage(message: string): boolean {
+  const trimmed = message.trim();
+  return EXPLICIT_GO_PATTERNS.some((pattern) => pattern.test(trimmed));
+}
+
+/** Auto only when visitor clearly asked to go and destination is allowlisted. */
+function withAutoNavigate(
+  payload: { reply: string; visitMemory?: string; navigateTo?: string },
+  message: string,
+): { reply: string; visitMemory?: string; navigateTo?: string; autoNavigate?: boolean } {
+  if (payload.navigateTo && isExplicitGoMessage(message)) {
+    return { ...payload, autoNavigate: true };
+  }
+  return payload;
 }
 
 function buildStaticPageReply(
@@ -297,7 +328,7 @@ Inference: You may approximate years/durations from tenureHints and dated period
 
 Page: ${pathLine} Explain or summarize the current page only from CONTEXT.page / CONTEXT.projects — do not invent UI chrome or on-page copy that is not in context. When useful, you may mention at most one concrete next site path in the reply text. Do not invent slugs.
 
-Navigation: When the visitor asks where to go / what to look at next / to suggest a page, recommend at most ONE allowlisted path and set navigateTo to that exact path. Allowed paths only: "/", "/about", "/projects", "/projects/{slug}" for slugs in CONTEXT.projectIndex, and "/resume.pdf". If you are unsure, omit navigateTo and say you don’t know that page. Never set navigateTo for ordinary Q&A or page explain/summarize unless they explicitly asked to go somewhere.
+Navigation: Set navigateTo to at most ONE allowlisted path when the visitor (a) asks where something lives / how to find a page or project, (b) asks where to go / what to look at next / for a page suggestion, or (c) explicitly asks to go / be taken / open a destination. Mention that path once in the reply. Allowed paths only: "/", "/about", "/projects", "/projects/{slug}" for slugs in CONTEXT.projectIndex, and "/resume.pdf". If unsure, omit navigateTo and say you don’t know that page. Never set navigateTo for ordinary Q&A or page explain/summarize that is not about locating or going somewhere. The client confirms soft suggestions; explicit go phrases may auto-navigate — still set navigateTo so the destination is clear.
 
 Off-topic (weather, unrelated general knowledge): briefly and playfully redirect back to the portfolio.
 
@@ -305,7 +336,7 @@ Length: prefer 2–4 short sentences unless the visitor asks for detail or an ex
 
 Response format: Return ONLY a JSON object (no markdown fences, no prose outside JSON) shaped as:
 {"reply":"<answer for the visitor>","visitMemory":"<≤1000 chars rolling summary of this visit for future turns>","navigateTo":"<optional allowlisted path or omit>"}
-Update visitMemory to a short curator note of topics already covered. If you cannot update memory, still return JSON with reply and an empty visitMemory string. Omit navigateTo unless recommending a single confirmable destination.
+Update visitMemory to a short curator note of topics already covered. If you cannot update memory, still return JSON with reply and an empty visitMemory string. Omit navigateTo unless locating, suggesting, or fulfilling a go request for a single destination.
 
 ${memoryLine}
 
@@ -626,13 +657,17 @@ export async function POST(request: Request) {
   const page = resolvePageMeta(pathname, context);
 
   if (page && (isPageVerbMessage(message) || isGoIntentMessage(message))) {
-    const staticReply = buildStaticPageReply(page, message);
+    const staticReply = withAutoNavigate(
+      buildStaticPageReply(page, message),
+      message,
+    );
     return Response.json({
       reply: staticReply.reply,
       source: "page-meta" as const,
       ...(staticReply.navigateTo
         ? { navigateTo: staticReply.navigateTo }
         : {}),
+      ...(staticReply.autoNavigate ? { autoNavigate: true } : {}),
       ...(visitMemory ? { visitMemory } : {}),
     });
   }
@@ -657,11 +692,13 @@ export async function POST(request: Request) {
       sliced,
       apiKey,
     });
+    const guided = withAutoNavigate(result, message);
     return Response.json({
-      reply: result.reply,
+      reply: guided.reply,
       source: "model" as const,
-      ...(result.visitMemory ? { visitMemory: result.visitMemory } : {}),
-      ...(result.navigateTo ? { navigateTo: result.navigateTo } : {}),
+      ...(guided.visitMemory ? { visitMemory: guided.visitMemory } : {}),
+      ...(guided.navigateTo ? { navigateTo: guided.navigateTo } : {}),
+      ...(guided.autoNavigate ? { autoNavigate: true } : {}),
     });
   } catch (error) {
     const messageText =
