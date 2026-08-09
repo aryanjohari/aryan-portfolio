@@ -699,21 +699,27 @@ html[data-void-chrome="home"] .site-footer {
   background: transparent;
   border: none;
   border-radius: 0.2rem;
+  cursor: default;
+  user-select: none;
+}
+
+/* Only “ask” is interactive — focuses the input; not a mode toggle. */
+button.portfolio-guide-hint--focus {
   cursor: pointer;
 }
 
-.portfolio-guide-hint:hover:not(:disabled) {
+button.portfolio-guide-hint--focus:hover:not(:disabled) {
   color: rgba(244, 240, 232, 0.72);
   text-decoration: underline;
 }
 
-.portfolio-guide-hint:focus-visible {
+button.portfolio-guide-hint--focus:focus-visible {
   outline: 1px solid rgba(244, 240, 232, 0.55);
   outline-offset: 2px;
   color: rgba(244, 240, 232, 0.78);
 }
 
-.portfolio-guide-hint:disabled {
+button.portfolio-guide-hint--focus:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
@@ -869,18 +875,41 @@ html[data-void-chrome="home"] .site-footer {
   pointer-events: auto;
 }
 
+/* Stack keeps more/less outside the clipped text region */
+.portfolio-guide-live-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.portfolio-guide-live-stack--idle {
+  height: 0;
+  max-height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+}
+
 .portfolio-guide-live {
   border: none;
   padding: var(--space-1) var(--space-1) 0;
   font-size: var(--type-meta);
   text-align: left;
-  height: 8.5rem;
+  height: auto;
+  max-height: 5.75rem;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   background: transparent;
   color: rgba(244, 240, 232, 0.7);
   scrollbar-width: thin;
   scrollbar-color: rgba(244, 240, 232, 0.25) transparent;
+  width: 100%;
+}
+
+.portfolio-guide-live--expanded {
+  max-height: 12rem;
+  overflow-y: auto;
 }
 
 .portfolio-guide-live--idle {
@@ -888,6 +917,7 @@ html[data-void-chrome="home"] .site-footer {
   visibility: hidden;
   pointer-events: none;
   height: 0;
+  max-height: 0;
   padding: 0;
   overflow: hidden;
 }
@@ -896,6 +926,30 @@ html[data-void-chrome="home"] .site-footer {
   margin: 0;
   white-space: pre-wrap;
   color: rgba(244, 240, 232, 0.78);
+}
+
+.portfolio-guide-live-more {
+  display: inline-block;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: rgba(244, 240, 232, 0.42);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.portfolio-guide-live-more:hover {
+  color: rgba(244, 240, 232, 0.72);
+  text-decoration: underline;
+}
+
+.portfolio-guide-live-more:focus-visible {
+  outline: 1px solid rgba(244, 240, 232, 0.55);
+  outline-offset: 2px;
+  color: rgba(244, 240, 232, 0.72);
 }
 
 .portfolio-guide-live p {
@@ -1302,9 +1356,13 @@ html[data-void-chrome="home"] .site-footer {
 
 .portfolio-guide-mini-panel-body .portfolio-guide-live {
   flex: 0 1 auto;
-  max-height: min(28vh, 10rem);
+  max-height: 5.5rem;
   padding: 0;
   font-size: var(--type-meta);
+}
+
+.portfolio-guide-mini-panel-body .portfolio-guide-live--expanded {
+  max-height: min(28vh, 10rem);
 }
 
 @media (max-width: 767px) {
@@ -1331,7 +1389,11 @@ html[data-void-chrome="home"] .site-footer {
   }
 
   .portfolio-guide-live {
-    height: 7rem;
+    max-height: 5.25rem;
+  }
+
+  .portfolio-guide-live--expanded {
+    max-height: 10rem;
   }
 
   .portfolio-guide--mini .portfolio-guide-float {

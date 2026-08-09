@@ -89,7 +89,7 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey).
 
 `navigateTo` is optional and only present when recommending a single confirmable destination. Server allowlists `/`, `/about`, `/projects`, `/projects/{slug}` for known project slugs, and `/resume.pdf`. Invalid values are stripped — never returned.
 
-`source` is `"page-meta"` when a known page verb / go-intent short-circuits to a static route blurb (no Gemini call), or `"model"` for free-form answers.
+`source` is `"page-meta"` when a clear free-form page verb / go-intent message short-circuits to a static route blurb (no Gemini call), or `"model"` for ordinary Q&A. These are **message-intent helpers**, not UI modes — hint clicks are not required.
 
 **Errors:** `{ "error": "…" }` with status 400 (validation), 429 (rate limit), 502 (Gemini failure), or 503 (missing API key).
 
@@ -100,7 +100,7 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey).
 - Rate limit: 20 requests per 10 minutes per IP (in-memory; resets on cold start in serverless — not a hard guarantee across instances)
 - Client session: 10 user asks per browser session (`sessionStorage`); then soft stop
 
-**Hybrid page verbs (static, no Gemini):** Exact-ish matches such as “explain this page”, “what am I looking at?”, “summarize”, “what should I look at?”, “why does this matter?”, and go-intents like “where should I go next from here?” return the hand-authored blurb / next-path suggestion for the current route or project when page meta exists. Go-intents include a validated `navigateTo` when a next path is known.
+**Hybrid page verbs (static, no Gemini):** Exact-ish **typed** matches such as “explain this page”, “what am I looking at?”, “summarize”, “what should I look at?”, “why does this matter?”, and go-intents like “where should I go next from here?” return the hand-authored blurb / next-path suggestion for the current route or project when page meta exists. Go-intents include a validated `navigateTo` when a next path is known. Destination asks (“go to about”, “take me to projects”) still use the normal model path and may return `navigateTo` for confirm.
 
 **System prompt (voice):**
 
@@ -109,21 +109,26 @@ Get a key from [Google AI Studio](https://aistudio.google.com/apikey).
 - Dated inference allowed from `tenureHints` with approximate wording
 - Page-aware from `pathname` + page/project slice
 - Off-topic → playful redirect to the portfolio
-- Model responses prefer JSON `{ reply, visitMemory, navigateTo? }` in one call (plain reply fallback supported); `navigateTo` only for explicit go/next-page asks
+- Prefer short answers (2–4 sentences) unless the visitor asks for detail / page explain
+- Gemini called with `responseMimeType: application/json` + a tiny schema (`reply` required; `visitMemory` / `navigateTo` optional)
+- Server parses with fence-strip + first-object extract; invalid payloads yield a short apology — **never** the raw model string
+- `navigateTo` only for explicit go/next-page asks (allowlisted; stripped otherwise)
 
 ## Client UX
 
 [`PortfolioGuide`](../src/components/PortfolioGuide.tsx) (`home` | `mini`):
 
 - **Live stage** shows only the latest guide answer (loading / error in the same pane) — not a chat stack
-- Three whisper hints: **ask** (focus input), **explain page**, **go to…** (asks for one best next path)
+- Long replies open as a short **whisper** (~360 chars / a few lines) with an explicit **more** / **less** control — no mystery scrollbar
+- Three whisper capability labels (not modes): **ask** (may focus input), **explain page**, **go to…** — reminders only; never submit canned prompts. Free-form typed intent drives explain / navigate / Q&A through one request path
 - When `navigateTo` is returned, show confirm chip (`go to {path}?` · **Go** / **Stay**) — never navigate without **Go**
-- Full multi-turn transcript lives in a quiet **Chat history** overlay (glyph control; hidden until turns exist); memory still persists for the API
-- Persists to `sessionStorage` key `portfolio-guide:v1` for the browser session
+- Full multi-turn transcript mounts **only** inside the open **Chat history** overlay (quiet glyph when turns exist); closed = no transcript in page flow
+- Persists to `sessionStorage` key `portfolio-guide:v1` for the browser session (model turns store cleaned `reply` text only; older JSON leaks are scrubbed on load)
 - Sends `pathname`, last 2–3 turns, and `visitMemory`
 - **clear history** (inside the history panel) wipes storage + UI; closing history does not
-- Invite: `ask about this page or my work` — whisper hints, not a SaaS chip rail
-- Ask pill stays Y-stable while replies stream (absolute reply band + internal scroll)
+- Invite: `ask · explain this page · or say where to go` — quiet capability whisper, not a SaaS chip rail
+- Ask pill stays Y-stable while replies appear (absolute reply band; expand grows within that band)
+
 ## Testing checklist
 
 1. `npm run build:guide-context` — verify `resumeText`, `experience`, `tenureHints`, and `meta.contextCharCount`

@@ -20,6 +20,9 @@ const MAX_RUNTIME_CONTEXT_CHARS = 24000;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 20;
 const GEMINI_MODEL = "gemini-2.5-flash-lite";
+/** Safe visitor-facing text when the model payload cannot be cleaned. */
+const PARSE_FALLBACK_REPLY =
+  "I couldn't shape that answer cleanly — try asking again in a different way.";
 
 type RateLimitEntry = {
   count: number;
@@ -298,9 +301,9 @@ Navigation: When the visitor asks where to go / what to look at next / to sugges
 
 Off-topic (weather, unrelated general knowledge): briefly and playfully redirect back to the portfolio.
 
-Length: usually 2–5 sentences; for summarize requests keep about 3–5 lines.
+Length: prefer 2–4 short sentences unless the visitor asks for detail or an explain/summarize of the page. Stay scannable — not a wall of text.
 
-Response format: Return ONLY a JSON object (no markdown fences) shaped as:
+Response format: Return ONLY a JSON object (no markdown fences, no prose outside JSON) shaped as:
 {"reply":"<answer for the visitor>","visitMemory":"<≤1000 chars rolling summary of this visit for future turns>","navigateTo":"<optional allowlisted path or omit>"}
 Update visitMemory to a short curator note of topics already covered. If you cannot update memory, still return JSON with reply and an empty visitMemory string. Omit navigateTo unless recommending a single confirmable destination.
 
@@ -321,38 +324,142 @@ type GeminiResponse = {
   };
 };
 
+/** Strip a single outer ``` / ```json fence if the whole payload is fenced. */
+function stripJsonFences(raw: string): string {
+  const trimmed = raw.trim();
+  const fenceMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return fenceMatch?.[1]?.trim() ?? trimmed;
+}
+
+/** First balanced `{…}` object, respecting string escapes. */
+function extractFirstJsonObject(text: string): string | null {
+  const start = text.indexOf("{");
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (ch === "\\") {
+        escape = true;
+        continue;
+      }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === "{") depth += 1;
+    else if (ch === "}") {
+      depth -= 1;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+
+  return null;
+}
+
+function coerceGuidePayload(parsed: {
+  reply?: unknown;
+  visitMemory?: unknown;
+  navigateTo?: unknown;
+}): { reply: string; visitMemory?: string; navigateTo?: string } | null {
+  if (typeof parsed.reply !== "string" || !parsed.reply.trim()) {
+    return null;
+  }
+  const visitMemory =
+    typeof parsed.visitMemory === "string"
+      ? truncate(parsed.visitMemory.trim(), MAX_VISIT_MEMORY_CHARS)
+      : undefined;
+  const navigateTo = validateNavigateTo(parsed.navigateTo, PROJECT_SLUGS);
+  return {
+    reply: parsed.reply.trim(),
+    ...(visitMemory ? { visitMemory } : {}),
+    ...(navigateTo ? { navigateTo } : {}),
+  };
+}
+
+/**
+ * Parse model output into a visitor-safe guide payload.
+ * Never returns raw JSON / fenced blobs as `reply`.
+ */
 function parseGuideModelPayload(raw: string): {
   reply: string;
   visitMemory?: string;
   navigateTo?: string;
 } {
-  const trimmed = raw.trim();
-  const fenceMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  const candidate = fenceMatch?.[1]?.trim() ?? trimmed;
-
-  try {
-    const parsed = JSON.parse(candidate) as {
-      reply?: unknown;
-      visitMemory?: unknown;
-      navigateTo?: unknown;
-    };
-    if (typeof parsed.reply === "string" && parsed.reply.trim()) {
-      const visitMemory =
-        typeof parsed.visitMemory === "string"
-          ? truncate(parsed.visitMemory.trim(), MAX_VISIT_MEMORY_CHARS)
-          : undefined;
-      const navigateTo = validateNavigateTo(parsed.navigateTo, PROJECT_SLUGS);
-      return {
-        reply: parsed.reply.trim(),
-        ...(visitMemory ? { visitMemory } : {}),
-        ...(navigateTo ? { navigateTo } : {}),
-      };
-    }
-  } catch {
-    // plain-text fallback
+  const unfenced = stripJsonFences(raw);
+  const candidates = [unfenced];
+  const extracted = extractFirstJsonObject(unfenced);
+  if (extracted && extracted !== unfenced) {
+    candidates.push(extracted);
   }
 
-  return { reply: trimmed };
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as {
+        reply?: unknown;
+        visitMemory?: unknown;
+        navigateTo?: unknown;
+      };
+      const coerced = coerceGuidePayload(parsed);
+      if (coerced) return coerced;
+    } catch {
+      // try next candidate
+    }
+  }
+
+  return { reply: PARSE_FALLBACK_REPLY };
+}
+
+/**
+ * Recover a human reply if older session turns stored a leaked JSON payload.
+ * Returns empty string when the text is unusable JSON with no recoverable reply.
+ */
+function scrubModelTurnText(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+
+  const unfenced = stripJsonFences(trimmed);
+  const looksJson =
+    unfenced.startsWith("{") ||
+    /"reply"\s*:/.test(unfenced) ||
+    trimmed.startsWith("```");
+
+  if (!looksJson) return trimmed;
+
+  const candidates = [unfenced];
+  const extracted = extractFirstJsonObject(unfenced);
+  if (extracted) candidates.unshift(extracted);
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as { reply?: unknown };
+      if (typeof parsed.reply === "string" && parsed.reply.trim()) {
+        return parsed.reply.trim();
+      }
+    } catch {
+      // continue
+    }
+  }
+
+  // Prose before a trailing JSON dump — keep the prose only.
+  const dumpAt = trimmed.search(/\{[\s\S]*"reply"\s*:/);
+  if (dumpAt > 0) {
+    const before = trimmed.slice(0, dumpAt).trim();
+    if (before && !before.includes('"reply"')) return before;
+  }
+
+  return "";
 }
 
 function sanitizeHistory(raw: unknown): GuideTurn[] {
@@ -368,10 +475,13 @@ function sanitizeHistory(raw: unknown): GuideTurn[] {
     if ((role !== "user" && role !== "model") || typeof text !== "string") {
       continue;
     }
+    const cleaned =
+      role === "model" ? scrubModelTurnText(text) : text.trim();
+    if (!cleaned) continue;
     const capped =
       role === "user"
-        ? truncate(text.trim(), MAX_HISTORY_USER_CHARS)
-        : truncate(text.trim(), MAX_HISTORY_MODEL_CHARS);
+        ? truncate(cleaned, MAX_HISTORY_USER_CHARS)
+        : truncate(cleaned, MAX_HISTORY_MODEL_CHARS);
     if (!capped) continue;
     if (totalChars + capped.length > MAX_HISTORY_TOTAL_CHARS) break;
     turns.push({ role, text: capped });
@@ -463,6 +573,16 @@ async function callGemini(options: {
       generationConfig: {
         temperature: 0.55,
         maxOutputTokens: 640,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            reply: { type: "STRING" },
+            visitMemory: { type: "STRING" },
+            navigateTo: { type: "STRING" },
+          },
+          required: ["reply"],
+        },
       },
     }),
   });

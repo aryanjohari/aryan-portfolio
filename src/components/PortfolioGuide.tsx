@@ -32,14 +32,13 @@ const TYPEWRITER_MAX_MS = 3000;
 const HISTORY_PAIRS = 3;
 const MAX_SESSION_ASKS = 10;
 const STORAGE_KEY = "portfolio-guide:v1";
+/** Live stage whisper — full reply available via more/expand. */
+const WHISPER_MAX_CHARS = 360;
 const SESSION_CAP_MESSAGE =
   "That’s enough for this visit — close the tab or clear history to ask again later.";
 
-const EXPLAIN_PAGE_PROMPT = "Explain this page";
-const GO_NEXT_PROMPT = "Where should I go next from here?";
-
 /** Soft whisper under the ask bar — DOM only, not on the WebGL canvas. */
-const ASK_INVITE = "ask about this page or my work";
+const ASK_INVITE = "ask · explain this page · or say where to go";
 /** Type-once pace; short line finishes near MOTION.slow. */
 const INVITE_CPS = 28;
 
@@ -83,6 +82,127 @@ function linkifyReply(reply: string): ReactNode[] {
   }
 
   return parts.length > 0 ? parts : [reply];
+}
+
+/**
+ * Recover a human reply from older session turns that stored leaked JSON.
+ * Drops turns that are unusable JSON with no recoverable `reply`.
+ */
+function scrubModelTurnText(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+
+  const fenceMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  const unfenced = fenceMatch?.[1]?.trim() ?? trimmed;
+  const looksJson =
+    unfenced.startsWith("{") ||
+    /"reply"\s*:/.test(unfenced) ||
+    trimmed.startsWith("```");
+
+  if (!looksJson) return trimmed;
+
+  const tryParse = (candidate: string): string | null => {
+    try {
+      const parsed = JSON.parse(candidate) as { reply?: unknown };
+      if (typeof parsed.reply === "string" && parsed.reply.trim()) {
+        return parsed.reply.trim();
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  };
+
+  const direct = tryParse(unfenced);
+  if (direct) return direct;
+
+  const start = unfenced.indexOf("{");
+  if (start !== -1) {
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    for (let i = start; i < unfenced.length; i++) {
+      const ch = unfenced[i];
+      if (inString) {
+        if (escape) {
+          escape = false;
+          continue;
+        }
+        if (ch === "\\") {
+          escape = true;
+          continue;
+        }
+        if (ch === '"') inString = false;
+        continue;
+      }
+      if (ch === '"') {
+        inString = true;
+        continue;
+      }
+      if (ch === "{") depth += 1;
+      else if (ch === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          const extracted = tryParse(unfenced.slice(start, i + 1));
+          if (extracted) return extracted;
+          break;
+        }
+      }
+    }
+  }
+
+  const dumpAt = trimmed.search(/\{[\s\S]*"reply"\s*:/);
+  if (dumpAt > 0) {
+    const before = trimmed.slice(0, dumpAt).trim();
+    if (before && !before.includes('"reply"')) return before;
+  }
+
+  return "";
+}
+
+function scrubTurns(turns: TranscriptTurn[]): TranscriptTurn[] {
+  const cleaned: TranscriptTurn[] = [];
+  for (const turn of turns) {
+    if (turn.role === "user") {
+      cleaned.push(turn);
+      continue;
+    }
+    const text = scrubModelTurnText(turn.text);
+    if (!text) continue;
+    cleaned.push(text === turn.text ? turn : { ...turn, text });
+  }
+  return cleaned;
+}
+
+/** Short live-stage whisper; expand reveals the rest intentionally. */
+function truncateToWhisper(text: string): {
+  preview: string;
+  needsExpand: boolean;
+} {
+  if (text.length <= WHISPER_MAX_CHARS) {
+    return { preview: text, needsExpand: false };
+  }
+
+  const slice = text.slice(0, WHISPER_MAX_CHARS);
+  const sentenceBreak = Math.max(
+    slice.lastIndexOf(". "),
+    slice.lastIndexOf("? "),
+    slice.lastIndexOf("! "),
+  );
+  let cut = WHISPER_MAX_CHARS;
+  if (sentenceBreak >= WHISPER_MAX_CHARS * 0.55) {
+    cut = sentenceBreak + 1;
+  } else {
+    const spaceBreak = slice.lastIndexOf(" ");
+    if (spaceBreak >= WHISPER_MAX_CHARS * 0.55) {
+      cut = spaceBreak;
+    }
+  }
+
+  return {
+    preview: text.slice(0, cut).trimEnd(),
+    needsExpand: true,
+  };
 }
 
 function useTypewriter(fullText: string | null, enabled: boolean) {
@@ -147,12 +267,14 @@ function loadSession(): StoredGuideSession | null {
     const parsed = JSON.parse(raw) as StoredGuideSession;
     if (!parsed || !Array.isArray(parsed.turns)) return null;
     return {
-      turns: parsed.turns.filter(
-        (turn) =>
-          turn &&
-          typeof turn.id === "string" &&
-          (turn.role === "user" || turn.role === "model") &&
-          typeof turn.text === "string",
+      turns: scrubTurns(
+        parsed.turns.filter(
+          (turn) =>
+            turn &&
+            typeof turn.id === "string" &&
+            (turn.role === "user" || turn.role === "model") &&
+            typeof turn.text === "string",
+        ),
       ),
       visitMemory:
         typeof parsed.visitMemory === "string" ? parsed.visitMemory : "",
@@ -280,36 +402,27 @@ function AskInvite() {
 }
 
 type GuideHintsProps = {
-  variant: PortfolioGuideVariant;
-  disabled: boolean;
-  onAsk: () => void;
-  onExplain: () => void;
-  onGo: () => void;
+  /** When true, the ask focus control is inactive (loading / session cap). */
+  askDisabled: boolean;
+  onAskFocus: () => void;
 };
 
-/** Three whisper actions — not a chip toolbar. */
-function GuideHints({
-  variant,
-  disabled,
-  onAsk,
-  onExplain,
-  onGo,
-}: GuideHintsProps) {
-  const isMini = variant === "mini";
-
+/**
+ * Quiet capability reminders — home only; not modes, not a chip toolbar.
+ * Only “ask” is interactive (focuses the input); the rest are labels.
+ */
+function GuideHints({ askDisabled, onAskFocus }: GuideHintsProps) {
   return (
     <div
-      className={`portfolio-guide-hints${
-        isMini ? " portfolio-guide-hints--mini" : ""
-      }`}
+      className="portfolio-guide-hints"
       role="group"
-      aria-label="Guide hints"
+      aria-label="Guide capabilities"
     >
       <button
         type="button"
-        className="portfolio-guide-hint"
-        disabled={disabled}
-        onClick={onAsk}
+        className="portfolio-guide-hint portfolio-guide-hint--focus"
+        disabled={askDisabled}
+        onClick={onAskFocus}
         aria-label="Ask — focus the question input"
       >
         ask
@@ -317,27 +430,11 @@ function GuideHints({
       <span className="portfolio-guide-hint-sep" aria-hidden="true">
         ·
       </span>
-      <button
-        type="button"
-        className="portfolio-guide-hint"
-        disabled={disabled}
-        onClick={onExplain}
-        aria-label="Explain this page"
-      >
-        explain page
-      </button>
+      <span className="portfolio-guide-hint">explain page</span>
       <span className="portfolio-guide-hint-sep" aria-hidden="true">
         ·
       </span>
-      <button
-        type="button"
-        className="portfolio-guide-hint"
-        disabled={disabled}
-        onClick={onGo}
-        aria-label="Ask where to go next"
-      >
-        go to…
-      </button>
+      <span className="portfolio-guide-hint">go to…</span>
     </div>
   );
 }
@@ -390,6 +487,10 @@ type LiveReplyProps = {
   latestModel: TranscriptTurn | null;
   visibleText: string;
   typing: boolean;
+  expanded: boolean;
+  needsExpand: boolean;
+  onExpand: () => void;
+  onCollapse: () => void;
   liveRef: RefObject<HTMLDivElement | null>;
 };
 
@@ -400,38 +501,82 @@ function LiveReply({
   latestModel,
   visibleText,
   typing,
+  expanded,
+  needsExpand,
+  onExpand,
+  onCollapse,
   liveRef,
 }: LiveReplyProps) {
   const idle = !isLoading && status !== "error" && !latestModel;
+  const showMore = Boolean(latestModel) && needsExpand && !expanded && !typing;
+  const showLess = Boolean(latestModel) && needsExpand && expanded && !typing;
+  const whisper = latestModel
+    ? truncateToWhisper(latestModel.text)
+    : null;
+  const displayText =
+    latestModel && whisper
+      ? expanded
+        ? latestModel.text
+        : needsExpand
+          ? `${whisper.preview}…`
+          : latestModel.text
+      : "";
 
   return (
     <div
-      ref={liveRef}
-      className={`portfolio-guide-live${
-        isLoading ? " portfolio-guide-live--loading" : ""
-      }${idle ? " portfolio-guide-live--idle" : ""}`}
-      aria-live="polite"
-      aria-busy={isLoading || typing}
+      className={`portfolio-guide-live-stack${
+        idle ? " portfolio-guide-live-stack--idle" : ""
+      }`}
     >
-      {isLoading && (
-        <>
-          <p className="portfolio-guide-loading-dots" aria-hidden="true">
-            <span />
-            <span />
-            <span />
+      <div
+        ref={liveRef}
+        className={`portfolio-guide-live${
+          isLoading ? " portfolio-guide-live--loading" : ""
+        }${idle ? " portfolio-guide-live--idle" : ""}${
+          expanded ? " portfolio-guide-live--expanded" : ""
+        }`}
+        aria-live="polite"
+        aria-busy={isLoading || typing}
+      >
+        {isLoading && (
+          <>
+            <p className="portfolio-guide-loading-dots" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </p>
+            <span className="visually-hidden">Thinking</span>
+          </>
+        )}
+
+        {!isLoading && status === "error" && errorMessage && (
+          <p className="portfolio-guide-error">{errorMessage}</p>
+        )}
+
+        {!isLoading && status !== "error" && latestModel && (
+          <p className="portfolio-guide-live-text">
+            {typing ? visibleText : linkifyReply(displayText)}
           </p>
-          <span className="visually-hidden">Thinking</span>
-        </>
+        )}
+      </div>
+      {/* Expand controls sit outside the clipped live region so more/less stay visible */}
+      {showMore && (
+        <button
+          type="button"
+          className="portfolio-guide-live-more"
+          onClick={onExpand}
+        >
+          more
+        </button>
       )}
-
-      {!isLoading && status === "error" && errorMessage && (
-        <p className="portfolio-guide-error">{errorMessage}</p>
-      )}
-
-      {!isLoading && status !== "error" && latestModel && (
-        <p className="portfolio-guide-live-text">
-          {typing ? visibleText : linkifyReply(latestModel.text)}
-        </p>
+      {showLess && (
+        <button
+          type="button"
+          className="portfolio-guide-live-more"
+          onClick={onCollapse}
+        >
+          less
+        </button>
       )}
     </div>
   );
@@ -450,7 +595,7 @@ type ChatHistoryProps = {
   closeRef: RefObject<HTMLButtonElement | null>;
 };
 
-/** Quiet glyph + separate void overlay for the full session transcript. */
+/** Quiet glyph entry; full transcript mounts only while the overlay is open. */
 function ChatHistory({
   turns,
   open,
@@ -594,6 +739,7 @@ function PortfolioGuideInner({
   const [panelOpen, setPanelOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [typingTurnId, setTypingTurnId] = useState<string | null>(null);
+  const [liveExpandedId, setLiveExpandedId] = useState<string | null>(null);
   const [pendingNavigate, setPendingNavigate] = useState<string | null>(null);
   const liveRef = useRef<HTMLDivElement>(null);
   const historyListRef = useRef<HTMLOListElement>(null);
@@ -606,17 +752,15 @@ function PortfolioGuideInner({
   useEffect(() => {
     const stored = loadSession();
     // sessionStorage hydrate — client-only; must not run in useState init (SSR mismatch)
+    // Mini panel + history stay closed on hydrate; user opens them via ask / glyph.
     startTransition(() => {
       if (stored) {
         setTurns(stored.turns);
         setVisitMemory(stored.visitMemory);
-        if (stored.turns.length > 0 && variant === "mini") {
-          setPanelOpen(true);
-        }
       }
       setHydrated(true);
     });
-  }, [variant]);
+  }, []);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -629,18 +773,32 @@ function PortfolioGuideInner({
 
   const latestModel =
     [...turns].reverse().find((turn) => turn.role === "model") ?? null;
+  const liveExpanded =
+    latestModel !== null && liveExpandedId === latestModel.id;
+  const whisper = latestModel
+    ? truncateToWhisper(latestModel.text)
+    : null;
   const typewriterActive =
-    typingTurnId !== null && latestModel?.id === typingTurnId;
+    typingTurnId !== null &&
+    latestModel?.id === typingTurnId &&
+    !liveExpanded;
+  const typewriterSource =
+    typewriterActive && whisper
+      ? whisper.needsExpand
+        ? `${whisper.preview}…`
+        : whisper.preview
+      : null;
   const { visibleText, done: typingDone } = useTypewriter(
-    typewriterActive ? latestModel?.text ?? null : null,
+    typewriterSource,
     typewriterActive,
   );
-  /* Keep live reply top stable; scroll only inside the pane (user-driven). */
+
+  /* Keep live reply top stable; scroll only after intentional expand. */
   useEffect(() => {
     const el = liveRef.current;
     if (!el) return;
     el.scrollTop = 0;
-  }, [latestModel?.id, status]);
+  }, [latestModel?.id, status, liveExpanded]);
 
   useEffect(() => {
     if (!historyOpen) return;
@@ -678,6 +836,7 @@ function PortfolioGuideInner({
     setErrorMessage(null);
     setStatus("idle");
     setTypingTurnId(null);
+    setLiveExpandedId(null);
     setPendingNavigate(null);
     setHistoryOpen(false);
     clearSessionStorage();
@@ -690,7 +849,12 @@ function PortfolioGuideInner({
   }
 
   function toggleHistory() {
-    setHistoryOpen((prev) => !prev);
+    setHistoryOpen((prev) => {
+      const next = !prev;
+      // Opening history collapses live expand so the page stage stays quiet.
+      if (next) setLiveExpandedId(null);
+      return next;
+    });
   }
 
   function dismissNavigateConfirm() {
@@ -740,6 +904,7 @@ function PortfolioGuideInner({
     setErrorMessage(null);
     setHistoryOpen(false);
     setTypingTurnId(null);
+    setLiveExpandedId(null);
     setPendingNavigate(null);
     if (variant === "mini") setPanelOpen(true);
 
@@ -768,7 +933,7 @@ function PortfolioGuideInner({
         return;
       }
 
-      const reply = data.reply ?? "No reply received.";
+      const reply = scrubModelTurnText(data.reply ?? "") || "No reply received.";
       const modelTurn: TranscriptTurn = {
         id: makeId(),
         role: "model",
@@ -796,7 +961,6 @@ function PortfolioGuideInner({
   const isLoading = status === "loading";
   const isMini = variant === "mini";
   const atSessionCap = countUserAsks(turns) >= MAX_SESSION_ASKS;
-  const hintsDisabled = isLoading || atSessionCap;
   const showLiveSurface =
     Boolean(latestModel) ||
     isLoading ||
@@ -806,6 +970,7 @@ function PortfolioGuideInner({
     Boolean(typingTurnId) && !typingDone && latestModel?.id === typingTurnId;
   const showConfirm =
     Boolean(pendingNavigate) && !isLoading && status !== "error";
+  const needsExpand = Boolean(whisper?.needsExpand);
 
   const liveBlock = (
     <LiveReply
@@ -815,6 +980,13 @@ function PortfolioGuideInner({
       latestModel={latestModel}
       visibleText={visibleText}
       typing={typing}
+      expanded={liveExpanded}
+      needsExpand={needsExpand}
+      onExpand={() => {
+        if (latestModel) setLiveExpandedId(latestModel.id);
+        setTypingTurnId(null);
+      }}
+      onCollapse={() => setLiveExpandedId(null)}
       liveRef={liveRef}
     />
   );
@@ -844,19 +1016,12 @@ function PortfolioGuideInner({
     />
   );
 
-  const hintsBlock = (
+  const hintsBlock = !isMini ? (
     <GuideHints
-      variant={variant}
-      disabled={hintsDisabled}
-      onAsk={focusAskInput}
-      onExplain={() => {
-        void submitQuestion(EXPLAIN_PAGE_PROMPT);
-      }}
-      onGo={() => {
-        void submitQuestion(GO_NEXT_PROMPT);
-      }}
+      askDisabled={isLoading || atSessionCap}
+      onAskFocus={focusAskInput}
     />
-  );
+  ) : null;
 
   return (
     <section
@@ -879,8 +1044,8 @@ function PortfolioGuideInner({
                   onChange={(event) => setMessage(event.target.value)}
                   placeholder={
                     isMini
-                      ? "ask about this page…"
-                      : "ask about this page or my work…"
+                      ? "ask · explain · go somewhere…"
+                      : "ask · explain this page · or say where to go…"
                   }
                   maxLength={500}
                   disabled={isLoading || atSessionCap}
