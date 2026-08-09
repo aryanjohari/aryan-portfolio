@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   FormEvent,
   startTransition,
@@ -13,6 +13,7 @@ import {
   type RefObject,
 } from "react";
 
+import { useVoidChromeNavigate } from "@/components/void-chrome-nav";
 import {
   isResumePath,
   validateNavigateTo,
@@ -727,7 +728,7 @@ function PortfolioGuideInner({
   variant: PortfolioGuideVariant;
 }) {
   const pathname = usePathname() || "/";
-  const router = useRouter();
+  const navigate = useVoidChromeNavigate();
   const historyPanelId = useId();
   const historyTitleId = useId();
   const [message, setMessage] = useState("");
@@ -875,7 +876,7 @@ function PortfolioGuideInner({
       window.location.assign(path);
       return;
     }
-    router.push(path);
+    void navigate(path);
   }
 
   async function submitQuestion(question: string) {

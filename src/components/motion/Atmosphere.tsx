@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   BOOT_DONE_EVENT,
   canUseEnhancedMotion,
   canUseTheatreMotion,
   isBootDone,
+  prefersReducedMotion,
 } from "@/lib/motion";
+import { MOTION } from "@/lib/motion-tokens";
 
-/** Site void clear — matches :root `--color-bg` / BootField. */
-const CLEAR = 0x0a0a0a;
+const V = MOTION.void;
+const CLEAR = V.clear;
 const PEAK_ALPHA = 0.55;
 const LIFE_MIN = 0.7;
 const LIFE_MAX = 1.15;
@@ -109,41 +111,44 @@ function makeSoftGlowTexture(THREE: typeof import("three")) {
   return tex;
 }
 
+function hexToRgb(hex: number) {
+  return {
+    r: ((hex >> 16) & 255) / 255,
+    g: ((hex >> 8) & 255) / 255,
+    b: (hex & 255) / 255,
+  };
+}
+
+/** Coarse / short / narrow → quieter void + lighter trail budget. */
+function isLightVoidBudget() {
+  return (
+    window.matchMedia("(pointer: coarse)").matches ||
+    window.matchMedia("(max-height: 700px)").matches ||
+    !window.matchMedia("(min-width: 1024px)").matches
+  );
+}
+
 /**
  * Full-viewport fixed WebGL canvas behind content (all routes).
- * Soft red↔blue comet trail when theatre motion + boot done; otherwise null.
- * Text and controls form a soft depth map: the sharp trail core recedes while
- * its halo remains visible, matching the workshop tablet shade treatment.
- * Touch and mouse both drive the trail via pointermove.
+ * Cool-slate void presence (grain, bowl vignette, center wash, soft parallax
+ * fog) so the stage reads with depth; red↔blue comet trail when theatre
+ * motion + boot done. Text/controls depth-map the trail core.
+ * Reduced-motion keeps static presence (no trail / drift / parallax).
  */
 export function Atmosphere() {
   const hostRef = useRef<HTMLDivElement>(null);
-  const [theatre, setTheatre] = useState(false);
 
   useEffect(() => {
-    setTheatre(canUseTheatreMotion());
-
-    const mqMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setTheatre(canUseTheatreMotion());
-    mqMotion.addEventListener("change", sync);
-
-    return () => {
-      mqMotion.removeEventListener("change", sync);
-    };
-  }, []);
-
-  const active = theatre;
-
-  useEffect(() => {
-    if (!active) return;
     const host = hostRef.current;
     if (!host) return;
 
     let disposed = false;
     let raf = 0;
     let renderer: import("three").WebGLRenderer | undefined;
-    let geometry: import("three").BufferGeometry | undefined;
-    let material: import("three").ShaderMaterial | undefined;
+    let voidGeometry: import("three").PlaneGeometry | undefined;
+    let voidMaterial: import("three").ShaderMaterial | undefined;
+    let trailGeometry: import("three").BufferGeometry | undefined;
+    let trailMaterial: import("three").ShaderMaterial | undefined;
     let glowMap: import("three").CanvasTexture | null | undefined;
     let onResize: (() => void) | undefined;
     let onVisibility: (() => void) | undefined;
@@ -152,46 +157,327 @@ export function Atmosphere() {
     let onPointerLeave: (() => void) | undefined;
     let onPointerEnter: (() => void) | undefined;
     let onBootDone: (() => void) | undefined;
+    let onMotionChange: (() => void) | undefined;
+    let mqMotion: MediaQueryList | undefined;
 
     void (async () => {
       const THREE = await import("three");
       if (disposed || !hostRef.current) return;
 
-      const dense = canUseEnhancedMotion();
-      const budget = dense ? DENSE_TRAIL : LIGHT_TRAIL;
-      const maxTrail = budget.maxTrail;
-      const sampleSpacing = budget.sampleSpacing;
-      const maxSamplesPerMove = budget.maxSamplesPerMove;
+      let reduced = prefersReducedMotion();
+      let theatre = canUseTheatreMotion();
+      let dense = canUseEnhancedMotion();
+      let lightVoid = isLightVoidBudget();
 
-      let allowTrail = isBootDone();
+      const base = hexToRgb(CLEAR);
+      const overlay = hexToRgb(V.overlay);
+      const deep = hexToRgb(V.deep);
+      let allowTrail = theatre && isBootDone();
       let pathHue = 0;
       let lastDepthCache = 0;
       let depthRects: DepthRect[] = [];
       let viewW = 1;
       let viewH = 1;
       let lastTs = 0;
+      let elapsed = 0;
       let pointerInside = true;
       let nextSlot = 0;
       let hasLast = false;
       let lastX = 0;
       let lastY = 0;
+      /** Smoothed pointer NDC offset for fog parallax (−1…1). */
+      let ptrX = 0;
+      let ptrY = 0;
+      let ptrTX = 0;
+      let ptrTY = 0;
 
-      const slots: TrailSlot[] = Array.from({ length: maxTrail }, () => ({
-        x: 0,
-        y: 0,
-        age: 0,
-        life: LIFE_MIN,
-        t: 0,
-        alive: false,
-        spawnAlpha: PEAK_ALPHA,
-        layer: 0,
-        depth: 0,
-      }));
+      const scene = new THREE.Scene();
+      const camera = new THREE.OrthographicCamera(0, 1, 0, 1, 0.1, 10);
+      camera.position.z = 5;
 
-      const positions = new Float32Array(maxTrail * 3);
-      const colors = new Float32Array(maxTrail * 3);
-      const sizes = new Float32Array(maxTrail);
-      const alphas = new Float32Array(maxTrail);
+      renderer = new THREE.WebGLRenderer({
+        antialias: false,
+        alpha: false,
+        powerPreference: "low-power",
+      });
+      renderer.setClearColor(CLEAR, 1);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, V.dprCap));
+      const canvas = renderer.domElement;
+      canvas.style.display = "block";
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      host.appendChild(canvas);
+
+      const voidUniforms = {
+        uBase: { value: new THREE.Vector3(base.r, base.g, base.b) },
+        uOverlay: {
+          value: new THREE.Vector3(overlay.r, overlay.g, overlay.b),
+        },
+        uDeep: { value: new THREE.Vector3(deep.r, deep.g, deep.b) },
+        uGrainOpacity: {
+          value: lightVoid ? V.grainOpacityLight : V.grainOpacity,
+        },
+        uGrainScale: {
+          value: lightVoid ? V.grainScaleLight : V.grainScale,
+        },
+        uVignette: { value: lightVoid ? V.vignetteLight : V.vignette },
+        uVignetteSoft: { value: V.vignetteSoft },
+        uWash: { value: lightVoid ? V.washLight : V.wash },
+        uFog: { value: lightVoid ? V.fogLight : V.fog },
+        uFogScale: { value: lightVoid ? V.fogScaleLight : V.fogScale },
+        uParallax: {
+          value: (lightVoid ? V.parallaxLight : V.parallax) as number,
+        },
+        uPointer: { value: new THREE.Vector2(0, 0) },
+        uTime: { value: 0 },
+        uBreatheAmp: { value: reduced ? 0 : V.breatheAmp },
+        uBreatheHz: { value: V.breatheHz },
+        uDriftSpeed: { value: reduced ? 0 : V.driftSpeed },
+        uResolution: { value: new THREE.Vector2(1, 1) },
+      };
+
+      voidGeometry = new THREE.PlaneGeometry(1, 1);
+      voidMaterial = new THREE.ShaderMaterial({
+        uniforms: voidUniforms,
+        vertexShader: /* glsl */ `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: /* glsl */ `
+          uniform vec3 uBase;
+          uniform vec3 uOverlay;
+          uniform vec3 uDeep;
+          uniform float uGrainOpacity;
+          uniform float uGrainScale;
+          uniform float uVignette;
+          uniform float uVignetteSoft;
+          uniform float uWash;
+          uniform float uFog;
+          uniform float uFogScale;
+          uniform float uParallax;
+          uniform vec2 uPointer;
+          uniform float uTime;
+          uniform float uBreatheAmp;
+          uniform float uBreatheHz;
+          uniform float uDriftSpeed;
+          uniform vec2 uResolution;
+          varying vec2 vUv;
+
+          float hash(vec2 p) {
+            vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+            p3 += dot(p3, p3.yzx + 33.33);
+            return fract((p3.x + p3.y) * p3.z);
+          }
+
+          float valueNoise(vec2 p) {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            f = f * f * (3.0 - 2.0 * f);
+            float a = hash(i);
+            float b = hash(i + vec2(1.0, 0.0));
+            float c = hash(i + vec2(0.0, 1.0));
+            float d = hash(i + vec2(1.0, 1.0));
+            return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+          }
+
+          void main() {
+            float breathe =
+              1.0 + uBreatheAmp * sin(uTime * 6.28318530718 * uBreatheHz);
+
+            vec2 vc = vUv * 2.0 - 1.0;
+            float aspect = uResolution.x / max(uResolution.y, 1.0);
+            vc.x *= aspect;
+            float r = length(vc);
+
+            // Soft center wash + bowl vignette (edges sink to deep cool)
+            float center = 1.0 - smoothstep(0.0, 0.95, r);
+            float vig = smoothstep(uVignetteSoft, 1.28, r) * uVignette;
+            vec3 col = mix(uBase, uOverlay * breathe, uWash * center);
+            col = mix(col, uDeep, vig);
+
+            // Soft multi-layer fog — parallax opposite the pointer
+            vec2 anti = -uPointer * uParallax;
+            float fog =
+              valueNoise((vUv + anti * 0.55) * uFogScale + vec2(uTime * 0.012, 0.0)) * 0.5 +
+              valueNoise((vUv + anti * 1.1) * uFogScale * 1.85 + 7.3) * 0.32 +
+              valueNoise((vUv + anti * 1.85) * uFogScale * 3.1 + 19.0) * 0.18;
+            fog = smoothstep(0.28, 0.82, fog) * uFog * (0.55 + 0.45 * center);
+            col = mix(col, uOverlay * (0.92 + 0.08 * breathe), fog);
+
+            // Film grain — cool-slate speck drifted in pixel space
+            vec2 drift = vec2(uTime * uDriftSpeed * 0.37, uTime * uDriftSpeed * 0.21);
+            vec2 gUv = (gl_FragCoord.xy + drift) * uGrainScale;
+            float n = valueNoise(gUv);
+            n = mix(n, valueNoise(gUv * 2.13 + 17.0), 0.32);
+            float grain = (n - 0.5) * uGrainOpacity;
+            col += uOverlay * grain;
+
+            gl_FragColor = vec4(col, 1.0);
+          }
+        `,
+        // Atmosphere ortho uses top=0, bottom=viewH (DOM Y-down). That flips
+        // winding so a FrontSide PlaneGeometry is back-face culled — only the
+        // clear color + trail would show. DoubleSide keeps the void quad drawn.
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        depthTest: true,
+      });
+      const voidMesh = new THREE.Mesh(voidGeometry, voidMaterial);
+      voidMesh.position.z = -1;
+      voidMesh.frustumCulled = false;
+      scene.add(voidMesh);
+
+      // Trail resources — sized for current budget; rebuilt if gate flips
+      let budget = dense ? DENSE_TRAIL : LIGHT_TRAIL;
+      let maxTrail = theatre ? budget.maxTrail : 0;
+      let sampleSpacing = budget.sampleSpacing;
+      let maxSamplesPerMove = budget.maxSamplesPerMove;
+
+      let slots: TrailSlot[] = [];
+      let positions = new Float32Array(0);
+      let colors = new Float32Array(0);
+      let sizes = new Float32Array(0);
+      let alphas = new Float32Array(0);
+      let points: import("three").Points | undefined;
+
+      const syncVoidBudget = () => {
+        lightVoid = isLightVoidBudget();
+        voidUniforms.uGrainOpacity.value = lightVoid
+          ? V.grainOpacityLight
+          : V.grainOpacity;
+        voidUniforms.uGrainScale.value = lightVoid
+          ? V.grainScaleLight
+          : V.grainScale;
+        voidUniforms.uVignette.value = lightVoid ? V.vignetteLight : V.vignette;
+        voidUniforms.uWash.value = lightVoid ? V.washLight : V.wash;
+        voidUniforms.uFog.value = lightVoid ? V.fogLight : V.fog;
+        voidUniforms.uFogScale.value = lightVoid
+          ? V.fogScaleLight
+          : V.fogScale;
+        voidUniforms.uParallax.value = reduced
+          ? 0
+          : lightVoid
+            ? V.parallaxLight
+            : V.parallax;
+        voidUniforms.uBreatheAmp.value = reduced ? 0 : V.breatheAmp;
+        voidUniforms.uDriftSpeed.value = reduced ? 0 : V.driftSpeed;
+        if (reduced) {
+          ptrX = 0;
+          ptrY = 0;
+          ptrTX = 0;
+          ptrTY = 0;
+          voidUniforms.uPointer.value.set(0, 0);
+        }
+      };
+
+      const disposeTrail = () => {
+        if (points) {
+          scene.remove(points);
+          points = undefined;
+        }
+        trailGeometry?.dispose();
+        trailGeometry = undefined;
+        trailMaterial?.dispose();
+        trailMaterial = undefined;
+        glowMap?.dispose();
+        glowMap = undefined;
+        slots = [];
+        positions = new Float32Array(0);
+        colors = new Float32Array(0);
+        sizes = new Float32Array(0);
+        alphas = new Float32Array(0);
+        maxTrail = 0;
+        nextSlot = 0;
+        hasLast = false;
+      };
+
+      const buildTrail = () => {
+        disposeTrail();
+        if (!theatre) return;
+
+        dense = canUseEnhancedMotion();
+        budget = dense ? DENSE_TRAIL : LIGHT_TRAIL;
+        maxTrail = budget.maxTrail;
+        sampleSpacing = budget.sampleSpacing;
+        maxSamplesPerMove = budget.maxSamplesPerMove;
+
+        slots = Array.from({ length: maxTrail }, () => ({
+          x: 0,
+          y: 0,
+          age: 0,
+          life: LIFE_MIN,
+          t: 0,
+          alive: false,
+          spawnAlpha: PEAK_ALPHA,
+          layer: 0,
+          depth: 0,
+        }));
+        positions = new Float32Array(maxTrail * 3);
+        colors = new Float32Array(maxTrail * 3);
+        sizes = new Float32Array(maxTrail);
+        alphas = new Float32Array(maxTrail);
+
+        glowMap = makeSoftGlowTexture(THREE);
+        trailGeometry = new THREE.BufferGeometry();
+        trailGeometry.setAttribute(
+          "position",
+          new THREE.BufferAttribute(positions, 3),
+        );
+        trailGeometry.setAttribute(
+          "color",
+          new THREE.BufferAttribute(colors, 3),
+        );
+        trailGeometry.setAttribute(
+          "aSize",
+          new THREE.BufferAttribute(sizes, 1),
+        );
+        trailGeometry.setAttribute(
+          "aAlpha",
+          new THREE.BufferAttribute(alphas, 1),
+        );
+
+        trailMaterial = new THREE.ShaderMaterial({
+          uniforms: {
+            uMap: { value: glowMap },
+          },
+          vertexShader: /* glsl */ `
+            attribute float aSize;
+            attribute float aAlpha;
+            attribute vec3 color;
+            varying vec3 vColor;
+            varying float vAlpha;
+            void main() {
+              vColor = color;
+              vAlpha = aAlpha;
+              vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+              gl_Position = projectionMatrix * mvPosition;
+              gl_PointSize = aSize;
+            }
+          `,
+          fragmentShader: /* glsl */ `
+            uniform sampler2D uMap;
+            varying vec3 vColor;
+            varying float vAlpha;
+            void main() {
+              float glow = texture2D(uMap, gl_PointCoord).a;
+              float a = glow * vAlpha;
+              if (a < 0.01) discard;
+              gl_FragColor = vec4(vColor, a);
+            }
+          `,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.NormalBlending,
+        });
+        points = new THREE.Points(trailGeometry, trailMaterial);
+        points.frustumCulled = false;
+        scene.add(points);
+      };
+
+      if (theatre) buildTrail();
 
       const refreshDepthRects = (now: number) => {
         if (now - lastDepthCache < DEPTH_RECT_CACHE_MS) return;
@@ -257,6 +543,7 @@ export function Atmosphere() {
         ox = 0,
         oy = 0,
       ) => {
+        if (maxTrail === 0 || slots.length === 0) return;
         if (weight < 1 && Math.random() > weight * 1.5) return;
         const slot = slots[nextSlot];
         nextSlot = (nextSlot + 1) % maxTrail;
@@ -272,8 +559,13 @@ export function Atmosphere() {
           PEAK_ALPHA * Math.max(weight, 0.12) * (layer === 0 ? 1 : 0.45);
       };
 
-      const spawnAt = (x: number, y: number, weight: number, nx = 0, ny = 0) => {
-        // Core + soft body for comet thickness
+      const spawnAt = (
+        x: number,
+        y: number,
+        weight: number,
+        nx = 0,
+        ny = 0,
+      ) => {
         spawnOne(x, y, weight, 0);
         if (dense) {
           const spread = 4 + Math.random() * 5;
@@ -284,69 +576,6 @@ export function Atmosphere() {
           spawnOne(x, y, weight, 1, nx * spread * 0.5, ny * spread * 0.5);
         }
       };
-
-      const scene = new THREE.Scene();
-      const camera = new THREE.OrthographicCamera(0, 1, 0, 1, 0.1, 10);
-      camera.position.z = 5;
-
-      renderer = new THREE.WebGLRenderer({
-        antialias: false,
-        alpha: false,
-        powerPreference: "low-power",
-      });
-      renderer.setClearColor(CLEAR, 1);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-      const canvas = renderer.domElement;
-      canvas.style.display = "block";
-      canvas.style.width = "100%";
-      canvas.style.height = "100%";
-      host.appendChild(canvas);
-
-      glowMap = makeSoftGlowTexture(THREE);
-
-      geometry = new THREE.BufferGeometry();
-      geometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(positions, 3),
-      );
-      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-      geometry.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
-      geometry.setAttribute("aAlpha", new THREE.BufferAttribute(alphas, 1));
-
-      material = new THREE.ShaderMaterial({
-        uniforms: {
-          uMap: { value: glowMap },
-        },
-        vertexShader: /* glsl */ `
-          attribute float aSize;
-          attribute float aAlpha;
-          attribute vec3 color;
-          varying vec3 vColor;
-          varying float vAlpha;
-          void main() {
-            vColor = color;
-            vAlpha = aAlpha;
-            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-            gl_Position = projectionMatrix * mvPosition;
-            gl_PointSize = aSize;
-          }
-        `,
-        fragmentShader: /* glsl */ `
-          uniform sampler2D uMap;
-          varying vec3 vColor;
-          varying float vAlpha;
-          void main() {
-            float glow = texture2D(uMap, gl_PointCoord).a;
-            float a = glow * vAlpha;
-            if (a < 0.01) discard;
-            gl_FragColor = vec4(vColor, a);
-          }
-        `,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.NormalBlending,
-      });
-      scene.add(new THREE.Points(geometry, material));
 
       const resize = () => {
         if (!renderer) return;
@@ -360,10 +589,16 @@ export function Atmosphere() {
         renderer.setSize(viewW, viewH, false);
         canvas.style.width = "100%";
         canvas.style.height = "100%";
+
+        voidMesh.position.set(viewW * 0.5, viewH * 0.5, -1);
+        voidMesh.scale.set(viewW, viewH, 1);
+        voidUniforms.uResolution.value.set(viewW, viewH);
+        syncVoidBudget();
       };
       resize();
 
       const writeBuffers = () => {
+        if (!trailGeometry || maxTrail === 0) return;
         const dpr = renderer!.getPixelRatio();
         for (let i = 0; i < maxTrail; i++) {
           const s = slots[i];
@@ -379,13 +614,11 @@ export function Atmosphere() {
             alphas[i] = 0;
             continue;
           }
-          // Ease: bright fat head → thin soft tail
           const u = s.age / s.life;
           const fade = 1 - u;
           const ease = fade * fade;
           const headness = Math.pow(fade, 0.55);
-          const baseSize =
-            SIZE_TAIL + (SIZE_HEAD - SIZE_TAIL) * headness;
+          const baseSize = SIZE_TAIL + (SIZE_HEAD - SIZE_TAIL) * headness;
           const layerScale = s.layer === 0 ? 1 : 1.65;
           const depthSize = 1 + s.depth * (s.layer === 0 ? 0.18 : 0.52);
           const depthAlpha = 1 - s.depth * (s.layer === 0 ? 0.68 : 0.22);
@@ -402,55 +635,114 @@ export function Atmosphere() {
           colors[i3 + 1] = g;
           colors[i3 + 2] = b;
         }
-        geometry!.getAttribute("position").needsUpdate = true;
-        geometry!.getAttribute("color").needsUpdate = true;
-        geometry!.getAttribute("aSize").needsUpdate = true;
-        geometry!.getAttribute("aAlpha").needsUpdate = true;
+        trailGeometry.getAttribute("position").needsUpdate = true;
+        trailGeometry.getAttribute("color").needsUpdate = true;
+        trailGeometry.getAttribute("aSize").needsUpdate = true;
+        trailGeometry.getAttribute("aAlpha").needsUpdate = true;
+      };
+
+      const paint = () => {
+        if (!renderer) return;
+        voidUniforms.uTime.value = elapsed;
+        voidUniforms.uPointer.value.set(ptrX, ptrY);
+        writeBuffers();
+        renderer.render(scene, camera);
       };
 
       const tick = (ts: number) => {
         if (disposed || !renderer) return;
         raf = requestAnimationFrame(tick);
-        if (document.hidden || !allowTrail) return;
+        if (document.hidden) return;
 
         const dt = lastTs ? Math.min((ts - lastTs) / 1000, 0.05) : 0.016;
         lastTs = ts;
-        refreshDepthRects(ts);
-        const depthEase = 1 - Math.exp(-DEPTH_RESPONSE * dt);
+        if (!reduced) elapsed += dt;
 
-        for (let i = 0; i < maxTrail; i++) {
-          const s = slots[i];
-          if (!s.alive) continue;
-          s.depth += (depthAt(s.x, s.y) - s.depth) * depthEase;
-          s.age += dt;
-          if (s.age >= s.life) s.alive = false;
+        if (!reduced) {
+          const ease = 1 - Math.exp(-V.parallaxEase * dt);
+          ptrX += (ptrTX - ptrX) * ease;
+          ptrY += (ptrTY - ptrY) * ease;
         }
 
-        writeBuffers();
-        renderer.render(scene, camera);
+        if (allowTrail && maxTrail > 0) {
+          refreshDepthRects(ts);
+          const depthEase = 1 - Math.exp(-DEPTH_RESPONSE * dt);
+          for (let i = 0; i < maxTrail; i++) {
+            const s = slots[i];
+            if (!s.alive) continue;
+            s.depth += (depthAt(s.x, s.y) - s.depth) * depthEase;
+            s.age += dt;
+            if (s.age >= s.life) s.alive = false;
+          }
+        }
+
+        paint();
       };
 
-      const startTrailLoop = () => {
+      const startLoop = () => {
         if (disposed || raf) return;
         lastTs = 0;
         raf = requestAnimationFrame(tick);
       };
 
+      const stopLoop = () => {
+        cancelAnimationFrame(raf);
+        raf = 0;
+        lastTs = 0;
+      };
+
+      /**
+       * Reduced-motion: static grain + vignette (no RAF).
+       * Theatre: continuous loop for drift + trail aging.
+       */
+      const syncMotionMode = () => {
+        reduced = prefersReducedMotion();
+        const nextTheatre = canUseTheatreMotion();
+        syncVoidBudget();
+
+        if (nextTheatre !== theatre) {
+          theatre = nextTheatre;
+          if (theatre) {
+            buildTrail();
+            allowTrail = isBootDone();
+          } else {
+            disposeTrail();
+            allowTrail = false;
+          }
+        }
+
+        if (reduced) {
+          stopLoop();
+          elapsed = 0;
+          paint();
+        } else {
+          startLoop();
+        }
+      };
+
       onVisibility = () => {
         if (document.hidden) {
-          cancelAnimationFrame(raf);
-          raf = 0;
-          lastTs = 0;
-        } else if (allowTrail && !raf) {
-          startTrailLoop();
+          stopLoop();
+        } else if (!reduced) {
+          startLoop();
+        } else {
+          paint();
         }
       };
 
       onPointerMove = (e: PointerEvent) => {
-        if (!allowTrail || document.hidden || !pointerInside) return;
+        if (document.hidden || !pointerInside) return;
 
         const x = e.clientX;
         const y = e.clientY;
+
+        if (!reduced) {
+          ptrTX = (x / Math.max(viewW, 1)) * 2 - 1;
+          ptrTY = (y / Math.max(viewH, 1)) * 2 - 1;
+        }
+
+        if (!allowTrail || maxTrail === 0) return;
+
         const weight = spawnWeightAt(x, y, performance.now());
 
         if (!hasLast) {
@@ -491,6 +783,8 @@ export function Atmosphere() {
       onPointerLeave = () => {
         pointerInside = false;
         hasLast = false;
+        ptrTX = 0;
+        ptrTY = 0;
       };
 
       onPointerEnter = () => {
@@ -498,12 +792,25 @@ export function Atmosphere() {
       };
 
       onBootDone = () => {
-        allowTrail = true;
-        if (renderer) renderer.render(scene, camera);
-        startTrailLoop();
+        allowTrail = theatre;
+        paint();
+        if (!reduced) startLoop();
       };
 
-      onResize = resize;
+      onResize = () => {
+        resize();
+        if (reduced || document.hidden) paint();
+      };
+
+      onMotionChange = () => {
+        syncMotionMode();
+      };
+
+      if (disposed) return;
+
+      mqMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      mqMotion.addEventListener("change", onMotionChange);
+
       window.addEventListener("resize", onResize);
       document.addEventListener("visibilitychange", onVisibility);
       window.addEventListener("pointermove", onPointerMove, { passive: true });
@@ -512,18 +819,24 @@ export function Atmosphere() {
       document.documentElement.addEventListener("pointerleave", onPointerLeave);
       document.documentElement.addEventListener("pointerenter", onPointerEnter);
 
-      renderer.render(scene, camera);
+      paint();
 
-      if (allowTrail) {
-        startTrailLoop();
+      if (reduced) {
+        // Static presence only — no loop
       } else {
-        window.addEventListener(BOOT_DONE_EVENT, onBootDone);
+        startLoop();
+        if (!allowTrail) {
+          window.addEventListener(BOOT_DONE_EVENT, onBootDone);
+        }
       }
     })();
 
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
+      if (mqMotion && onMotionChange) {
+        mqMotion.removeEventListener("change", onMotionChange);
+      }
       if (onResize) window.removeEventListener("resize", onResize);
       if (onVisibility) {
         document.removeEventListener("visibilitychange", onVisibility);
@@ -551,16 +864,16 @@ export function Atmosphere() {
         window.removeEventListener(BOOT_DONE_EVENT, onBootDone);
       }
       glowMap?.dispose();
-      geometry?.dispose();
-      material?.dispose();
+      voidGeometry?.dispose();
+      voidMaterial?.dispose();
+      trailGeometry?.dispose();
+      trailMaterial?.dispose();
       if (renderer) {
         renderer.dispose();
         renderer.domElement.remove();
       }
     };
-  }, [active]);
-
-  if (!active) return null;
+  }, []);
 
   return (
     <div

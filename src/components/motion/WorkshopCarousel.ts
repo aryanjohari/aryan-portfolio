@@ -30,7 +30,6 @@ export type WorkshopProjectCard = {
   slug: string;
   title: string;
   hook: string;
-  status: string;
   missing: boolean;
   hue: number;
 };
@@ -165,7 +164,7 @@ function tracePillPath(
 }
 
 /**
- * Cream typography on pure alpha — status, title hero, hook, CTA pill on the
+ * Cream typography on pure alpha — title hero, hook, CTA pill on the
  * left; slug-hued visual placeholder pane on the right (same language as the
  * fallback cards). Stronger dark per-glyph halo keeps type legible on void.
  */
@@ -232,22 +231,14 @@ function paintFace(
   ctx.textBaseline = "top";
   ctx.textAlign = "left";
 
-  // Quiet status — top left
-  ctx.shadowColor = "rgba(3, 4, 7, 0.95)";
-  ctx.shadowBlur = Math.max(5, cssH * 0.028);
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = Math.max(1, cssH * 0.004);
-  ctx.fillStyle = "rgba(244, 240, 232, 0.78)";
-  ctx.font = `${Math.round(cssH * 0.052)}px ui-monospace, monospace`;
-  ctx.fillText(card.status.toLowerCase(), padX, padY);
-
   // Title — hero signal framed by edge light
   ctx.shadowColor = "rgba(3, 4, 7, 0.98)";
   ctx.shadowBlur = Math.max(8, cssH * 0.045);
+  ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = Math.max(1, cssH * 0.006);
   ctx.fillStyle = CREAM;
   ctx.font = `600 ${Math.round(cssH * 0.112)}px ui-monospace, monospace`;
-  let ty = padY + cssH * 0.095;
+  let ty = padY;
   ty = wrapText(ctx, card.title, padX, ty, colW, cssH * 0.13, 2);
 
   // Hook

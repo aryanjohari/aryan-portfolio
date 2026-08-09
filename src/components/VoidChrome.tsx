@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type MouseEvent,
@@ -13,13 +14,17 @@ import { flushSync } from "react-dom";
 
 import { HomeIdentity } from "@/components/motion/HomeIdentity";
 import { PortfolioGuide } from "@/components/PortfolioGuide";
+import { VoidNavigateContext } from "@/components/void-chrome-nav";
 import { MOTION, prefersReducedMotion } from "@/lib/motion";
 
 /**
  * Morph-first void chrome — see docs/void-chrome-transitions.md.
  * Home ↔ site: morph chrome, then router.push.
  * Site ↔ site: exit content, push, then entry shift.
+ * Consistent curtain: hold `.void-chrome-page` closed across push → enter.
  */
+
+export { useVoidChromeNavigate } from "@/components/void-chrome-nav";
 
 /** Site ↔ site exit translate (px). */
 const PAGE_EXIT_Y = -8;
@@ -172,8 +177,48 @@ function modeFromPath(pathname: string): ChromeMode {
   return pathname === "/" ? "home" : "site";
 }
 
+function isInAppChromePath(pathname: string): boolean {
+  return (
+    pathname === "/" ||
+    pathname === "/projects" ||
+    pathname === "/about" ||
+    pathname.startsWith("/projects/")
+  );
+}
+
 function isInAppChromeRoute(href: string): boolean {
-  return href === "/" || href === "/projects" || href === "/about";
+  const path = href.split("?")[0]?.split("#")[0] ?? "";
+  return isInAppChromePath(path);
+}
+
+/** Resolve same-origin in-app href for curtain navigation; skips hashes/external. */
+function resolveInAppHref(href: string): string | null {
+  if (
+    !href ||
+    href.startsWith("#") ||
+    href.startsWith("mailto:") ||
+    href.startsWith("tel:")
+  ) {
+    return null;
+  }
+
+  let pathWithSearch = href;
+  if (href.startsWith("http://") || href.startsWith("https://")) {
+    try {
+      const url = new URL(href);
+      if (url.origin !== window.location.origin) return null;
+      pathWithSearch = `${url.pathname}${url.search}`;
+    } catch {
+      return null;
+    }
+  }
+
+  const pathname = pathWithSearch.split("?")[0]?.split("#")[0] ?? "";
+  if (!isInAppChromePath(pathname)) return null;
+  const search = pathWithSearch.includes("?")
+    ? `?${pathWithSearch.split("?")[1]?.split("#")[0] ?? ""}`
+    : "";
+  return `${pathname}${search}`;
 }
 
 function isCoarseOrNarrow(): boolean {
@@ -334,36 +379,54 @@ export function VoidChrome({ children }: { children: ReactNode }) {
     };
   }, [mode, glyphsRevealed]);
 
-  async function tweenChrome(nextMode: ChromeMode): Promise<void> {
+  /**
+   * Serialized hybrid chrome morph (both directions, soft ~15% overlaps):
+   * Exit: ask → nav
+   * Name: FLIP + fontSize (ask remount while companions hidden)
+   * Enter: nav → ask
+   * Narrow/coarse: whole-chrome crossfade.
+   */
+  async function tweenChrome(
+    nextMode: ChromeMode,
+    opts?: { askMountKey?: string },
+  ): Promise<void> {
     const { gsap } = await import("gsap");
     const nameEl = nameRef.current;
     const navEl = navRef.current;
     const askEl = askRef.current;
     const root = rootRef.current;
-    const targets = [nameEl, navEl, askEl].filter(
-      (el): el is HTMLElement => Boolean(el),
-    );
     const morphDur = MOTION.chrome.morph;
     const morphEase = MOTION.chrome.ease;
-    const crossfadeDur = MOTION.chrome.crossfade;
+    const beat = MOTION.chrome.crossfade;
+    /** Soft overlap fraction between serial beats. */
+    const overlap = 0.15;
+    const overlapAt = (duration: number) => duration * (1 - overlap);
 
-    if (isCoarseOrNarrow() || targets.length < 3) {
+    const applyMode = () => {
+      flushSync(() => {
+        setMode(nextMode);
+        setGlyphsRevealed(true);
+        navSettledRef.current = true;
+        if (opts?.askMountKey !== undefined) {
+          setAskMountKey(opts.askMountKey);
+        }
+      });
+    };
+
+    if (isCoarseOrNarrow() || !nameEl || !navEl || !askEl) {
+      document.documentElement.dataset.chromeMorphing = "1";
       if (root) {
         await new Promise<void>((resolve) => {
           gsap.to(root, {
             opacity: 0,
-            duration: crossfadeDur,
+            duration: beat,
             ease: morphEase,
             onComplete: resolve,
           });
         });
       }
 
-      flushSync(() => {
-        setMode(nextMode);
-        setGlyphsRevealed(true);
-        navSettledRef.current = true;
-      });
+      applyMode();
       await nextFrame();
 
       if (root) {
@@ -373,51 +436,84 @@ export function VoidChrome({ children }: { children: ReactNode }) {
             { opacity: 0 },
             {
               opacity: 1,
-              duration: crossfadeDur,
+              duration: beat,
               ease: morphEase,
               onComplete: resolve,
             },
           );
         });
       }
+      delete document.documentElement.dataset.chromeMorphing;
       return;
     }
 
-    const nameLink = nameEl?.querySelector(".site-name") as HTMLElement | null;
-    const first = targets.map(readRect);
+    try {
+      await document.fonts.ready;
+    } catch {
+      /* use current metrics */
+    }
+
+    document.documentElement.dataset.chromeMorphing = "1";
+    const nameLink = nameEl.querySelector(".site-name") as HTMLElement | null;
+    const first = readRect(nameEl);
     const firstFont = nameLink
       ? parseFloat(getComputedStyle(nameLink).fontSize)
       : 0;
 
-    document.documentElement.dataset.chromeMorphing = "1";
+    /* Exit — ask, then nav (soft overlap). Name stays for FLIP. */
+    await new Promise<void>((resolve) => {
+      const tl = gsap.timeline({ onComplete: resolve });
+      tl.to(
+        askEl,
+        { opacity: 0, duration: beat, ease: "power2.in" },
+        0,
+      );
+      tl.to(
+        navEl,
+        { opacity: 0, duration: beat, ease: "power2.in" },
+        overlapAt(beat),
+      );
+    });
 
     /*
-     * Hide before mode swap so the end layout never paints (flash).
-     * visibility:hidden still yields correct getBoundingClientRect for "last".
+     * Hide name before mode swap so end layout never paints,
+     * remount ask while companions are still at opacity 0.
      */
-    gsap.set(targets, { visibility: "hidden" });
-
-    flushSync(() => {
-      setMode(nextMode);
-      setGlyphsRevealed(true);
-      navSettledRef.current = true;
-    });
+    gsap.set(nameEl, { visibility: "hidden" });
+    applyMode();
     await nextFrame();
 
-    const last = targets.map(readRect);
+    const last = readRect(nameEl);
     const lastFont = nameLink
       ? parseFloat(getComputedStyle(nameLink).fontSize)
       : 0;
 
-    /* Pin at FIRST (visible again), then tween to LAST. */
-    targets.forEach((el, i) => {
-      gsap.set(el, {
+    /*
+     * Hold the name grid slot while the real name is position:fixed,
+     * so nav/ask don’t reflow into the empty cell mid-FLIP.
+     */
+    const spacer = document.createElement("div");
+    spacer.className = "void-chrome-name-spacer";
+    spacer.setAttribute("aria-hidden", "true");
+    spacer.style.cssText = [
+      "grid-area:name",
+      `width:${Math.max(1, last.width)}px`,
+      `height:${Math.max(1, last.height)}px`,
+      `min-height:${Math.max(1, last.height)}px`,
+      "visibility:hidden",
+      "pointer-events:none",
+      "margin:0",
+    ].join(";");
+    nameEl.parentElement?.insertBefore(spacer, nameEl);
+
+    try {
+      gsap.set(nameEl, {
         position: "fixed",
-        left: first[i].left,
-        top: first[i].top,
-        width: first[i].width,
+        left: first.left,
+        top: first.top,
+        width: first.width,
         height: "auto",
-        minHeight: first[i].height,
+        minHeight: first.height,
         margin: 0,
         zIndex: 50,
         opacity: 1,
@@ -426,57 +522,82 @@ export function VoidChrome({ children }: { children: ReactNode }) {
         y: 0,
         transform: "none",
       });
-    });
-    if (nameLink && firstFont) {
-      gsap.set(nameLink, { fontSize: firstFont });
-    }
-
-    await new Promise<void>((resolve) => {
-      const tl = gsap.timeline({ onComplete: resolve });
-      targets.forEach((el, i) => {
-        tl.to(
-          el,
-          {
-            left: last[i].left,
-            top: last[i].top,
-            width: last[i].width,
-            minHeight: last[i].height,
-            duration: morphDur,
-            ease: morphEase,
-          },
-          0,
-        );
-      });
-      if (nameLink && lastFont) {
-        tl.to(
-          nameLink,
-          {
-            fontSize: lastFont,
-            duration: morphDur,
-            ease: morphEase,
-          },
-          0,
-        );
+      if (nameLink && firstFont) {
+        gsap.set(nameLink, { fontSize: firstFont });
       }
-    });
+      gsap.set([navEl, askEl], {
+        opacity: 0,
+        visibility: "visible",
+        x: 0,
+        y: 0,
+      });
 
-    /* Drop fixed geometry only — keep opacity so home rail doesn’t vanish. */
-    targets.forEach((el) => {
-      gsap.set(el, {
+      /* Name FLIP — alone, so it reads as the lead beat. */
+      await new Promise<void>((resolve) => {
+        const tl = gsap.timeline({ onComplete: resolve });
+        tl.to(
+          nameEl,
+          {
+            left: last.left,
+            top: last.top,
+            width: last.width,
+            minHeight: last.height,
+            duration: morphDur,
+            ease: morphEase,
+          },
+          0,
+        );
+        if (nameLink && lastFont) {
+          tl.to(
+            nameLink,
+            {
+              fontSize: lastFont,
+              duration: morphDur,
+              ease: morphEase,
+            },
+            0,
+          );
+        }
+      });
+
+      /* Unpin into the reserved slot, then drop the spacer. */
+      gsap.set(nameEl, {
         clearProps:
           "position,left,top,width,height,minHeight,margin,zIndex,x,y,transform",
       });
-    });
-    if (nameLink) {
-      gsap.set(nameLink, { clearProps: "fontSize" });
+      if (nameLink) {
+        gsap.set(nameLink, { clearProps: "fontSize" });
+      }
+    } finally {
+      spacer.remove();
     }
 
-    if (nextMode === "home" && navEl) {
+    /* Let the live grid settle one frame before companions fade in. */
+    await nextFrame();
+
+    /* Enter — nav, then ask (soft overlap). */
+    await new Promise<void>((resolve) => {
+      const tl = gsap.timeline({ onComplete: resolve });
+      tl.to(
+        navEl,
+        { opacity: 1, duration: beat, ease: "power2.out" },
+        0,
+      );
+      tl.to(
+        askEl,
+        { opacity: 1, duration: beat, ease: "power2.out" },
+        overlapAt(beat),
+      );
+    });
+
+    gsap.set([navEl, askEl], {
+      opacity: 1,
+      visibility: "visible",
+      clearProps: "x,y",
+    });
+
+    if (nextMode === "home") {
       gsap.set(navEl, { opacity: 1, visibility: "visible", x: 0, y: 0 });
-    } else {
-      targets.forEach((el) => {
-        gsap.set(el, { clearProps: "opacity,visibility" });
-      });
     }
 
     delete document.documentElement.dataset.chromeMorphing;
@@ -501,11 +622,25 @@ export function VoidChrome({ children }: { children: ReactNode }) {
     });
   }
 
+  /** Sync — page must not paint while we await gsap / router. */
+  function holdCurtainClosed(): void {
+    const content = contentRef.current;
+    if (!content) return;
+    content.style.opacity = "0";
+    content.style.pointerEvents = "none";
+    document.documentElement.dataset.pageCurtain = "1";
+  }
+
+  function clearCurtainFlag(): void {
+    delete document.documentElement.dataset.pageCurtain;
+  }
+
   async function settlePageContent(): Promise<void> {
     const content = contentRef.current;
     if (!content) return;
     const { gsap } = await import("gsap");
     gsap.killTweensOf(content);
+    clearCurtainFlag();
     gsap.set(content, { opacity: 1, y: 0, clearProps: "transform" });
     content.style.pointerEvents = "auto";
   }
@@ -522,14 +657,20 @@ export function VoidChrome({ children }: { children: ReactNode }) {
       duration: MOTION.chrome.pageExit,
       ease: "power2.in",
     });
+    holdCurtainClosed();
   }
 
   async function enterPageContent(): Promise<void> {
     const content = contentRef.current;
     if (!content) return;
+    holdCurtainClosed();
     window.scrollTo(0, 0);
+    const portal = document.querySelector<HTMLElement>("[data-void-scroll]");
+    if (portal) portal.scrollTop = 0;
+
     const { gsap } = await import("gsap");
     gsap.killTweensOf(content);
+    clearCurtainFlag();
     content.style.pointerEvents = "auto";
     await gsap.fromTo(
       content,
@@ -547,15 +688,17 @@ export function VoidChrome({ children }: { children: ReactNode }) {
   /**
    * Primary navigation: morph chrome when home ↔ site, then push.
    * Site ↔ site: exit content, then push; entry on pathname settle.
+   * Curtain stays closed from exit/morph through enter.
    */
   async function navigate(href: string): Promise<void> {
-    if (!isInAppChromeRoute(href)) {
+    const target = resolveInAppHref(href) ?? (isInAppChromeRoute(href) ? href : null);
+    if (!target) {
       window.location.assign(href);
       return;
     }
 
     if (
-      href === pathnameRef.current ||
+      target === pathnameRef.current ||
       morphingRef.current ||
       pageTransitioningRef.current
     ) {
@@ -563,17 +706,17 @@ export function VoidChrome({ children }: { children: ReactNode }) {
     }
 
     const fromMode = modeRef.current;
-    const toMode = modeFromPath(href);
+    const toMode = modeFromPath(target);
 
     if (prefersReducedMotion()) {
       flushSync(() => {
         setMode(toMode);
         setGlyphsRevealed(true);
         navSettledRef.current = true;
-        setAskMountKey(toMode === "site" ? `site:${href}` : "home");
+        setAskMountKey(toMode === "site" ? `site:${target}` : "home");
       });
-      pendingPushRef.current = href;
-      router.push(href);
+      pendingPushRef.current = target;
+      router.push(target);
       return;
     }
 
@@ -582,8 +725,9 @@ export function VoidChrome({ children }: { children: ReactNode }) {
       pageTransitioningRef.current = true;
       try {
         await exitPageContent();
-        pendingPushRef.current = href;
-        router.push(href);
+        holdCurtainClosed();
+        pendingPushRef.current = target;
+        router.push(target);
       } catch {
         await settlePageContent();
         pageTransitioningRef.current = false;
@@ -592,6 +736,7 @@ export function VoidChrome({ children }: { children: ReactNode }) {
     }
 
     morphingRef.current = true;
+    pageTransitioningRef.current = true;
     document.documentElement.dataset.chromeMorphing = "1";
 
     try {
@@ -600,12 +745,17 @@ export function VoidChrome({ children }: { children: ReactNode }) {
         await fadeContent(0, { pointerEvents: "none" });
       }
 
-      await tweenChrome(toMode);
+      await tweenChrome(toMode, {
+        askMountKey: toMode === "site" ? `site:${target}` : "home",
+      });
 
-      setAskMountKey(toMode === "site" ? `site:${href}` : "home");
-
-      pendingPushRef.current = href;
-      router.push(href);
+      /* Keep curtain closed while the next route mounts. */
+      holdCurtainClosed();
+      pendingPushRef.current = target;
+      router.push(target);
+    } catch {
+      await settlePageContent();
+      pageTransitioningRef.current = false;
     } finally {
       morphingRef.current = false;
       delete document.documentElement.dataset.chromeMorphing;
@@ -630,6 +780,36 @@ export function VoidChrome({ children }: { children: ReactNode }) {
     void navigate(href);
   }
 
+  function onContentNavigateClick(event: MouseEvent<HTMLDivElement>) {
+    if (event.defaultPrevented) return;
+    if (
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      event.button !== 0
+    ) {
+      return;
+    }
+    const anchor = (event.target as Element | null)?.closest?.("a[href]");
+    if (!anchor) return;
+    const href = anchor.getAttribute("href");
+    if (!href) return;
+    const target = resolveInAppHref(href);
+    if (!target) return;
+    event.preventDefault();
+    void navigate(target);
+  }
+
+  /* Pre-paint: hold curtain closed on site landings so back/forward can't flash. */
+  useLayoutEffect(() => {
+    if (initialPathSyncRef.current) return;
+    if (prevPathRef.current === pathname) return;
+    if (modeFromPath(pathname) !== "site") return;
+    if (prefersReducedMotion()) return;
+    holdCurtainClosed();
+  }, [pathname]);
+
   /* Pathname landed — settle content / sync chrome for back-forward & other Links. */
   useEffect(() => {
     if (initialPathSyncRef.current) {
@@ -640,6 +820,7 @@ export function VoidChrome({ children }: { children: ReactNode }) {
         contentRef.current.style.pointerEvents =
           pathMode === "home" ? "none" : "auto";
       }
+      clearCurtainFlag();
       return;
     }
 
@@ -693,12 +874,13 @@ export function VoidChrome({ children }: { children: ReactNode }) {
         }
       } else {
         setAskMountKey("home");
+        holdCurtainClosed();
         pageTransitioningRef.current = false;
       }
       return cleanupPageTween;
     }
 
-    /* Back/forward or Link outside VoidChrome. */
+    /* Back/forward or Link outside VoidChrome — curtain already closed in layout. */
     void (async () => {
       if (morphingRef.current || cancelled) return;
 
@@ -712,6 +894,8 @@ export function VoidChrome({ children }: { children: ReactNode }) {
           } else {
             await enterPageContent();
           }
+        } else {
+          holdCurtainClosed();
         }
         return;
       }
@@ -731,26 +915,25 @@ export function VoidChrome({ children }: { children: ReactNode }) {
           contentRef.current.style.pointerEvents =
             nextMode === "home" ? "none" : "auto";
         }
+        clearCurtainFlag();
         return;
       }
 
       morphingRef.current = true;
       try {
-        if (nextMode === "home" && contentRef.current) {
-          contentRef.current.style.opacity = "0";
-          contentRef.current.style.pointerEvents = "none";
-        }
-        await tweenChrome(nextMode);
+        holdCurtainClosed();
+        await tweenChrome(nextMode, {
+          askMountKey:
+            nextMode === "site" ? `site:${pathname}` : "home",
+        });
         if (cancelled) return;
-        setAskMountKey(
-          nextMode === "site" ? `site:${pathname}` : "home",
-        );
         if (nextMode === "site") {
-          await fadeContent(1, { pointerEvents: "auto" });
+          await enterPageContent();
         }
       } finally {
         morphingRef.current = false;
         delete document.documentElement.dataset.chromeMorphing;
+        pageTransitioningRef.current = false;
       }
     })();
 
@@ -761,7 +944,7 @@ export function VoidChrome({ children }: { children: ReactNode }) {
   const navRevealed = mode === "site" || glyphsRevealed;
 
   return (
-    <>
+    <VoidNavigateContext.Provider value={navigate}>
       <div
         ref={rootRef}
         className={`void-chrome void-chrome--${mode}`}
@@ -854,9 +1037,10 @@ export function VoidChrome({ children }: { children: ReactNode }) {
       <div
         ref={contentRef}
         className={`void-chrome-page${mode === "home" ? " void-chrome-page--home" : ""}`}
+        onClick={onContentNavigateClick}
       >
         {children}
       </div>
-    </>
+    </VoidNavigateContext.Provider>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 
 import { prefersReducedMotion } from "@/lib/motion";
 
@@ -11,54 +11,56 @@ const SECTIONS = [
   { id: "availability", label: "availability", num: "04" },
 ] as const;
 
+function getAboutScrollport(): HTMLElement | null {
+  return document.querySelector<HTMLElement>(
+    "[data-void-scroll].about-page, .about-page",
+  );
+}
+
+function scrollAboutToId(id: string) {
+  const target = document.getElementById(id);
+  if (!target) return;
+  target.scrollIntoView({
+    behavior: prefersReducedMotion() ? "auto" : "smooth",
+    block: "start",
+  });
+}
+
 /**
- * Sticky section anchor menu + soft heading fades.
- * Active link follows scroll; entrance stagger skipped under reduced-motion.
+ * Sticky section anchor menu + scroll-spy.
+ * Active link follows the about content scrollport; entrance stagger skipped under reduced-motion.
+ * Per-block text fades live in VoidScrollDrama / AboutScrollDrama (not here).
  */
 export function AboutAnchorNav() {
   const navRef = useRef<HTMLElement>(null);
-  const [activeId, setActiveId] = useState<string>(SECTIONS[0].id);
+  const [activeId, setActiveId] = useState<string>(() => {
+    if (typeof window === "undefined") return SECTIONS[0].id;
+    const hash = window.location.hash.replace(/^#/, "");
+    return SECTIONS.some((s) => s.id === hash) ? hash : SECTIONS[0].id;
+  });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (prefersReducedMotion()) {
-      setReady(true);
-      return;
-    }
+    if (prefersReducedMotion()) return;
     const id = window.requestAnimationFrame(() => setReady(true));
     return () => window.cancelAnimationFrame(id);
   }, []);
 
   useEffect(() => {
-    const reduced = prefersReducedMotion();
+    const hash = window.location.hash.replace(/^#/, "");
+    if (!hash || !SECTIONS.some((s) => s.id === hash)) return;
+    const id = window.requestAnimationFrame(() => scrollAboutToId(hash));
+    return () => window.cancelAnimationFrame(id);
+  }, []);
 
-    const headings = document.querySelectorAll<HTMLElement>(
-      ".about-section h2",
-    );
-    if (!reduced && headings.length > 0) {
-      headings.forEach((el) => el.classList.add("about-heading--fade"));
-    }
+  useEffect(() => {
+    const scrollport = getAboutScrollport();
 
     const sectionEls = SECTIONS.map((s) =>
       document.getElementById(s.id),
     ).filter((el): el is HTMLElement => el != null);
 
     if (sectionEls.length === 0) return;
-
-    const headingObserver = reduced
-      ? null
-      : new IntersectionObserver(
-          (entries) => {
-            for (const entry of entries) {
-              if (!entry.isIntersecting) continue;
-              entry.target.classList.add("is-visible");
-              headingObserver?.unobserve(entry.target);
-            }
-          },
-          { rootMargin: "0px 0px -8% 0px", threshold: 0.2 },
-        );
-
-    headings.forEach((el) => headingObserver?.observe(el));
 
     const sectionObserver = new IntersectionObserver(
       (entries) => {
@@ -69,6 +71,7 @@ export function AboutAnchorNav() {
         if (top?.id) setActiveId(top.id);
       },
       {
+        root: scrollport,
         rootMargin: "-20% 0px -55% 0px",
         threshold: [0.1, 0.35, 0.6],
       },
@@ -77,13 +80,16 @@ export function AboutAnchorNav() {
     sectionEls.forEach((el) => sectionObserver.observe(el));
 
     return () => {
-      headingObserver?.disconnect();
       sectionObserver.disconnect();
     };
   }, []);
 
-  const onJump = (id: string) => {
+  const onJump = (event: MouseEvent<HTMLAnchorElement>, id: string) => {
+    event.preventDefault();
     setActiveId(id);
+    const url = `${window.location.pathname}${window.location.search}#${id}`;
+    window.history.replaceState(null, "", url);
+    scrollAboutToId(id);
   };
 
   return (
@@ -112,7 +118,7 @@ export function AboutAnchorNav() {
                     : "about-anchor-link"
                 }
                 aria-current={isActive ? "location" : undefined}
-                onClick={() => onJump(section.id)}
+                onClick={(event) => onJump(event, section.id)}
               >
                 <span className="about-anchor-num">{section.num}</span>
                 <span className="about-anchor-text">{section.label}</span>

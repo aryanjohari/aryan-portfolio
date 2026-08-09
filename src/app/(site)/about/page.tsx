@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AboutAnchorNav } from "@/components/AboutAnchorNav";
+import { AboutScrollDrama } from "@/components/AboutScrollDrama";
 
 export const metadata: Metadata = {
   title: "About — Aryan Johari",
@@ -10,7 +11,8 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <article className="about-page">
+    <article className="about-page" data-void-scroll>
+      <AboutScrollDrama />
       <header className="about-intro">
         <h1 className="page-heading">about</h1>
         <p className="about-lede">

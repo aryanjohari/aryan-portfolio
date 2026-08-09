@@ -1,4 +1,5 @@
 import { ArchitectureJourney } from "@/components/ArchitectureJourney";
+import type { SurfacePresentation } from "@/components/void-window/types";
 import { buildBaseDiagramSvg } from "@/data/base-diagram";
 import type { ProjectDiagramData } from "@/lib/projects";
 
@@ -10,6 +11,7 @@ type ProjectDiagramProps = {
   githubRepoUrl: string;
   /** Repo branch for GitHub doc links. */
   branch?: string;
+  presentation?: SurfacePresentation;
 };
 
 function hasC4Surface(diagram: ProjectDiagramData): boolean {
@@ -27,7 +29,7 @@ export function hasArchitectureSurface(diagram: ProjectDiagramData): boolean {
   return hasC4Surface(diagram) || Boolean(diagram.graph);
 }
 
-function sourceCopy(diagram: ProjectDiagramData): string {
+export function architectureSourceCopy(diagram: ProjectDiagramData): string {
   if (hasC4Surface(diagram)) {
     const parts: string[] = [];
     if (diagram.c4?.context) parts.push("Context");
@@ -38,6 +40,7 @@ function sourceCopy(diagram: ProjectDiagramData): string {
   }
 
   if (diagram.graph) {
+    if (diagram.graph.summary?.trim()) return diagram.graph.summary.trim();
     if (diagram.graphSource === "github" && diagram.graphPath) {
       return `Owned architecture map from ${diagram.graphPath}`;
     }
@@ -63,17 +66,29 @@ export function ProjectDiagram({
   slug,
   githubRepoUrl,
   branch,
+  presentation = "full",
 }: ProjectDiagramProps) {
   if (hasC4Surface(diagram) || diagram.graph) {
     return (
       <ArchitectureJourney
         title={title}
         graph={diagram.graph}
-        sourceNote={sourceCopy(diagram)}
+        sourceNote={architectureSourceCopy(diagram)}
         slug={slug}
         c4={diagram.c4}
         githubRepoUrl={githubRepoUrl}
         branch={branch}
+        presentation={presentation}
+      />
+    );
+  }
+
+  if (presentation !== "full") {
+    return (
+      <div
+        className="project-diagram project-diagram--static"
+        data-surface-presentation={presentation}
+        dangerouslySetInnerHTML={{ __html: buildBaseDiagramSvg(title) }}
       />
     );
   }
@@ -89,7 +104,7 @@ export function ProjectDiagram({
         <h2 id="base-architecture-heading" className="project-exhibit-section-title">
           How it works
         </h2>
-        <p className="project-diagram-source">{sourceCopy(diagram)}</p>
+        <p className="project-diagram-source">{architectureSourceCopy(diagram)}</p>
       </div>
       <div
         className="project-diagram project-diagram--static"

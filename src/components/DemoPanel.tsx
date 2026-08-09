@@ -8,6 +8,11 @@ import type { DemoConfig } from "@/lib/projects";
 
 type DemoPanelProps = {
   demo?: DemoConfig;
+  /**
+   * canvas — iframe/exhibit body only (plate skim).
+   * tools / full — include sandbox chrome (dive / legacy).
+   */
+  presentation?: "canvas" | "tools" | "full";
 };
 
 const IFRAME_LOAD_TIMEOUT_MS = 8000;
@@ -44,9 +49,16 @@ function OpenInNewTabLink({ url, className }: { url: string; className?: string 
   );
 }
 
-function IframeDemo({ url }: { url: string }) {
+function IframeDemo({
+  url,
+  presentation,
+}: {
+  url: string;
+  presentation: "canvas" | "tools" | "full";
+}) {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const canvasOnly = presentation === "canvas";
 
   const clearLoadTimeout = useCallback(() => {
     if (timeoutRef.current) {
@@ -75,22 +87,31 @@ function IframeDemo({ url }: { url: string }) {
 
   return (
     <div
-      className="demo-panel demo-panel--iframe"
+      className={[
+        "demo-panel demo-panel--iframe",
+        canvasOnly ? "demo-panel--canvas" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       aria-label="Project demo sandbox"
     >
-      <div className="demo-panel-iframe-header">
-        <span className="demo-panel-label">sandbox</span>
-        <OpenInNewTabLink url={url} />
-      </div>
+      {!canvasOnly ? (
+        <div className="demo-panel-iframe-header">
+          <span className="demo-panel-label">sandbox</span>
+          <OpenInNewTabLink url={url} />
+        </div>
+      ) : null}
 
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="demo-panel-mobile-link"
-      >
-        open in new tab
-      </a>
+      {!canvasOnly ? (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="demo-panel-mobile-link"
+        >
+          open in new tab
+        </a>
+      ) : null}
 
       <div className="demo-panel-iframe-body">
         {status === "loading" && (
@@ -133,18 +154,32 @@ function IframeDemo({ url }: { url: string }) {
   );
 }
 
-function ExhibitDemo({ variant }: { variant: ExhibitVariant }) {
+function ExhibitDemo({
+  variant,
+  presentation,
+}: {
+  variant: ExhibitVariant;
+  presentation: "canvas" | "tools" | "full";
+}) {
   const content = getExhibitContent(variant);
+  const canvasOnly = presentation === "canvas";
 
   return (
     <div
-      className="demo-panel demo-panel--exhibit"
+      className={[
+        "demo-panel demo-panel--exhibit",
+        canvasOnly ? "demo-panel--canvas" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       aria-label={`Static exhibit — ${EXHIBIT_LABELS[variant]}`}
     >
-      <div className="demo-panel-exhibit-header">
-        <span className="demo-panel-label">exhibit</span>
-        <span className="demo-panel-exhibit-type">{EXHIBIT_LABELS[variant]}</span>
-      </div>
+      {!canvasOnly ? (
+        <div className="demo-panel-exhibit-header">
+          <span className="demo-panel-label">exhibit</span>
+          <span className="demo-panel-exhibit-type">{EXHIBIT_LABELS[variant]}</span>
+        </div>
+      ) : null}
       <pre className="demo-panel-exhibit-body">{content}</pre>
     </div>
   );
@@ -166,7 +201,10 @@ function ComingSoonDemo({ demo }: { demo: DemoConfig }) {
   );
 }
 
-export function DemoPanel({ demo }: DemoPanelProps) {
+export function DemoPanel({
+  demo,
+  presentation = "full",
+}: DemoPanelProps) {
   if (!demo) {
     return (
       <div className="demo-panel demo-panel--unwired" aria-label="Demo not wired">
@@ -180,11 +218,11 @@ export function DemoPanel({ demo }: DemoPanelProps) {
   }
 
   if (demo.type === "iframe") {
-    return <IframeDemo url={demo.url} />;
+    return <IframeDemo url={demo.url} presentation={presentation} />;
   }
 
   if (demo.type === "exhibit") {
-    return <ExhibitDemo variant={demo.variant} />;
+    return <ExhibitDemo variant={demo.variant} presentation={presentation} />;
   }
 
   return <ComingSoonDemo demo={demo} />;

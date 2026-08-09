@@ -198,6 +198,84 @@ export const MOTION = {
     envIntensityEnhanced: 1.05,
     envIntensityDefault: 0.8,
   },
+
+  /**
+   * Sitewide Atmosphere void presence — cream film over `#0a0a0a`
+   * clear: grain, bowl vignette, center wash, soft parallax fog. Quiet
+   * depth cue (stage sits under cream type + trail). Tunable here.
+   *
+   * `*Light` = coarse/short/narrow. Drift + breathe + parallax kill under
+   * `prefers-reduced-motion`; static grain/vignette/wash/fog stay.
+   */
+  void: {
+    /** Matches `:root --color-bg` / clear color */
+    clear: 0x0a0a0a,
+    /** Cream film for grain / wash / fog — same as `--color-text` */
+    overlay: 0xf4f0e8,
+    /** Near-black cool sink for bowl vignette edges */
+    deep: 0x05060a,
+    /** Film grain mix strength */
+    grainOpacity: 0.055,
+    grainOpacityLight: 0.034,
+    /**
+     * Pixel-space grain frequency — higher = finer speck.
+     * Light budget uses coarser grain.
+     */
+    grainScale: 0.85,
+    grainScaleLight: 0.45,
+    /** Edge bowl strength 0–1 */
+    vignette: 0.42,
+    vignetteLight: 0.32,
+    /** Distance falloff start (aspect-corrected NDC length) */
+    vignetteSoft: 0.42,
+    /** Soft center stage wash toward overlay */
+    wash: 0.12,
+    washLight: 0.07,
+    /** Soft multi-layer fog opacity */
+    fog: 0.09,
+    fogLight: 0.05,
+    /** Fog spatial scale (UV) — lower = larger soft blotches */
+    fogScale: 2.4,
+    fogScaleLight: 1.7,
+    /** Max fog UV parallax vs pointer (opposite direction) */
+    parallax: 0.028,
+    parallaxLight: 0.016,
+    /** Pointer → fog parallax ease (1/s) */
+    parallaxEase: 6,
+    /** UV drift speed (px-ish / sec) — killed under reduced-motion */
+    driftSpeed: 5.5,
+    /** Micro luminance breathe amplitude — killed under reduced-motion */
+    breatheAmp: 0.01,
+    /** Breathe frequency (Hz) */
+    breatheHz: 0.04,
+    /** Renderer DPR cap (trail + void share one canvas) */
+    dprCap: 1.5,
+  },
+
+  /**
+   * Continuous void-scroll portals (`[data-void-scroll]` on /about + slug).
+   * Edge dissolve size lives in CSS (`--void-dissolve`); these pace block fades.
+   */
+  voidScroll: {
+    /** ScrollTrigger scrub lag (seconds) for per-block enter/leave */
+    blockScrub: 0.2,
+    /** Fade-in / fade-out segment of the scrub timeline */
+    blockEdge: 0.22,
+    /** Hold fully visible in the readable mid-band */
+    blockHold: 0.56,
+    blockEnterY: 12,
+    blockLeaveY: -8,
+  },
+
+  /**
+   * Summoned matte plate over slug reading portal (proof / architecture).
+   * Rise from void → skim plate; Dive expands CSS layout; Esc layers out.
+   */
+  matte: {
+    summon: 0.55,
+    dive: 0.45,
+    exit: 0.35,
+  },
 } as const;
 
 export type MotionPace = "fast" | "medium" | "slow";

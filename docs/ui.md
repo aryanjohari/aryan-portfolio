@@ -4,28 +4,29 @@
 
 Ink + type tokens are defined in `src/lib/type-tokens.ts` (`TYPE`, `INK`) and mirrored as CSS custom properties in `src/app/globals.css`. Motion paces stay in `src/lib/motion-tokens.ts`.
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--color-bg` | `#0a0a0a` | Page / void background |
-| `--color-text` | `#f4f0e8` | Primary text (cream/off-white) |
-| `--color-border` | `rgba(244, 240, 232, 0.22)` | Soft light borders, table rules |
-| `--color-muted` | `#c4bfb6` | Secondary text, placeholders |
-| `--color-faint` | `rgba(244, 240, 232, 0.72)` | Soft secondary (idle, separators) |
-| `--color-accent-band` | `#161616` | Header accent background |
-| `--space-1` | `8px` | Base grid unit |
-| `--space-2` | `16px` | Standard padding |
-| `--space-3` | `24px` | Section gaps |
-| `--space-4` | `32px` | Page margins |
-| `--font-mono` | IBM Plex Mono | Only font family used |
-| `--type-body` | `1rem` | Body / primary copy |
-| `--type-meta` | `0.875rem` | Chrome, meta, secondary |
-| `--type-caption` | `0.8125rem` | Smallest allowed site type |
-| `--type-heading` | `1.125rem` | Quiet page headings (`> about`) |
-| `--type-title` | `clamp(1.5rem, 3vw, 2rem)` | Emphasized section titles |
-| `--type-display` | `clamp(2.35rem, 8.75vw, 5.5rem)` | Home identity |
-| `--motion-fast` | `0.2s` | CSS mirror of `MOTION.fast` |
-| `--motion-medium` | `0.45s` | CSS mirror of `MOTION.medium` |
-| `--motion-slow` | `0.6s` | CSS mirror of `MOTION.slow` |
+| Token                 | Value                            | Usage                             |
+| --------------------- | -------------------------------- | --------------------------------- |
+| `--color-bg`          | `#0a0a0a`                        | Page / void background            |
+| `--color-text`        | `#f4f0e8`                        | Primary text (cream/off-white)    |
+| `--color-border`      | `rgba(244, 240, 232, 0.22)`      | Soft light borders, table rules   |
+| `--color-muted`       | `#c4bfb6`                        | Secondary text, placeholders      |
+| `--color-faint`       | `rgba(244, 240, 232, 0.72)`      | Soft secondary (idle, separators) |
+| `--color-accent-band` | `#161616`                        | Header accent background          |
+| `--text-void-halo`    | soft downward cast shadow        | Lifts cream type above void       |
+| `--space-1`           | `8px`                            | Base grid unit                    |
+| `--space-2`           | `16px`                           | Standard padding                  |
+| `--space-3`           | `24px`                           | Section gaps                      |
+| `--space-4`           | `32px`                           | Page margins                      |
+| `--font-mono`         | IBM Plex Mono                    | Only font family used             |
+| `--type-body`         | `1rem`                           | Body / primary copy               |
+| `--type-meta`         | `0.875rem`                       | Chrome, meta, secondary           |
+| `--type-caption`      | `0.8125rem`                      | Smallest allowed site type        |
+| `--type-heading`      | `1.125rem`                       | Quiet page headings (`> about`)   |
+| `--type-title`        | `clamp(1.5rem, 3vw, 2rem)`       | Emphasized section titles         |
+| `--type-display`      | `clamp(2.35rem, 8.75vw, 5.5rem)` | Home identity                     |
+| `--motion-fast`       | `0.2s`                           | CSS mirror of `MOTION.fast`       |
+| `--motion-medium`     | `0.45s`                          | CSS mirror of `MOTION.medium`     |
+| `--motion-slow`       | `0.6s`                           | CSS mirror of `MOTION.slow`       |
 
 **Architecture diagram exception:** Do not restyle `.project-diagram*`, `.arch-*`, `.c4-*`, `.dg-*`, or Mermaid SVG labels with these type/ink tokens — those surfaces keep their own scale.
 
@@ -33,19 +34,21 @@ Ink + type tokens are defined in `src/lib/type-tokens.ts` (`TYPE`, `INK`) and mi
 
 Shared timing lives in `src/lib/motion-tokens.ts` (re-exported from `src/lib/motion.ts`). Use these for new UI animation — not one-off magic numbers.
 
-| Token | Value | Class of motion |
-|-------|-------|-----------------|
-| `MOTION.fast` | `0.2` s | Hovers, presses, small UI |
-| `MOTION.medium` | `0.45` s | Fades, panels, most enters |
-| `MOTION.slow` | `0.6` s | Larger section / page-ish moves |
-| `MOTION.chrome.morph` | `0.9` s | Home ↔ site void-chrome measure→tween (both directions) |
-| `MOTION.chrome.content` | `0.5` s | Page fade before (→home) / after (←home) morph |
-| `MOTION.chrome.pageExit` | `0.28` s | Site ↔ site content exit (opacity + slight y) before push |
-| `MOTION.chrome.pageEnter` | `0.4` s | Site ↔ site content entry after pathname settle |
-| `MOTION.ease` | `power2.out` | Default GSAP ease |
-| `MOTION.easeInOut` | `power2.inOut` | Symmetric GSAP ease |
-| `MOTION.chrome.ease` | `power2.inOut` | Chrome morph ease (mirrored) |
-| `MOTION.workshop.*` | spacing / z / angle / snap / drag / edge-glow layers | Workshop Three.js edge-glow tablet carousel |
+| Token                     | Value                                                | Class of motion                                           |
+| ------------------------- | ---------------------------------------------------- | --------------------------------------------------------- |
+| `MOTION.fast`             | `0.2` s                                              | Hovers, presses, small UI                                 |
+| `MOTION.medium`           | `0.45` s                                             | Fades, panels, most enters                                |
+| `MOTION.slow`             | `0.6` s                                              | Larger section / page-ish moves                           |
+| `MOTION.chrome.morph`     | `0.9` s                                              | Home ↔ site void-chrome measure→tween (both directions)   |
+| `MOTION.chrome.content`   | `0.5` s                                              | Page fade before (→home) / after (←home) morph            |
+| `MOTION.chrome.pageExit`  | `0.28` s                                             | Site ↔ site content exit (opacity + slight y) before push |
+| `MOTION.chrome.pageEnter` | `0.4` s                                              | Site ↔ site content entry after pathname settle           |
+| `MOTION.ease`             | `power2.out`                                         | Default GSAP ease                                         |
+| `MOTION.easeInOut`        | `power2.inOut`                                       | Symmetric GSAP ease                                       |
+| `MOTION.chrome.ease`      | `power2.inOut`                                       | Chrome morph ease (mirrored)                              |
+| `MOTION.workshop.*`       | spacing / z / angle / snap / drag / edge-glow layers | Workshop Three.js edge-glow tablet carousel               |
+| `MOTION.void.*`           | grain / vignette / wash / fog / parallax             | Atmosphere void presence (sitewide WebGL behind content)   |
+| `MOTION.voidScroll.*`     | block scrub / edge / hold / y offsets                | Per-block fades inside `[data-void-scroll]` portals       |
 
 Helpers: `motionDuration("fast" \| "medium" \| "slow")`, `motionDurationCss(...)` for `"0.45s"`-style strings. CSS transitions should use `--motion-*` so changing a pace stays consistent.
 
@@ -55,6 +58,8 @@ Helpers: `motionDuration("fast" \| "medium" \| "slow")`, `motionDurationCss(...)
 - `MOTION.scramble` — home name scramble (~2.15s)
 - `MOTION.boot` — boot theatre clock (type/hold/wipe/exit fade, etc.)
 - `MOTION.workshop` — not cinematic; 3D carousel spacing / depth / snap / drag / hover tilt for `ProjectGallery` (paces still use `fast` / `medium`)
+- `MOTION.void` — Atmosphere depth pack: grain / bowl vignette / center wash / soft fog + parallax (`*Light` = coarse/short/narrow)
+- `MOTION.voidScroll` — not cinematic; scrub paces for continuous void-scroll block fades (`VoidScrollDrama`)
 
 **Reduced motion:** Tokens do not override a11y. Keep gating with `prefersReducedMotion()` — skip the tween or use zero duration as components already do.
 
@@ -66,28 +71,28 @@ Helpers: `motionDuration("fast" \| "medium" \| "slow")`, `motionDurationCss(...)
 - **No display fonts, no sans-serif fallbacks in the shell**
 - **Root:** 17px (`TYPE.rootPx`) — rem scale baseline
 - **Scale:** `--type-body` / `--type-meta` / `--type-caption` / `--type-heading` / `--type-title` / `--type-display` (see Design tokens). Do not ship site UI below `--type-caption`.
-- **Ink:** `--color-text` primary, `--color-muted` secondary, `--color-faint` soft secondary — avoid one-off low-opacity cream rgba for copy
+- **Ink:** `--color-text` primary, `--color-muted` secondary, `--color-faint` soft secondary — avoid one-off low-opacity cream rgba for copy. Soft downward `--text-void-halo` on `body` lifts cream type off the Atmosphere void (not cream glow; ask-bar keeps its own rim/box-shadow)
 - **Weight:** 400 regular, 600 for headings and nav emphasis
 - **Exception:** Architecture diagram surfaces keep their own label sizes/colours
 
 ## Visual rules
 
-- Flat surfaces only — no box-shadow, no backdrop-blur, no gradients except header accent and workshop project visual placeholders (slug-hashed void panes, on fallback cards and inside WebGL tablet content). Workshop **WebGL** projects are quiet **edge-glow tablets** — cream type on alpha framed by a light-drawn beveled rim; plates are near-transparent at center and bloom only at silhouette (Fresnel). No tinted glass fill, no colour splash, **no `transmission`**, no ice-shard spectacle, no glowing monograms.
+- Flat surfaces only — no box-shadow (except the home / mini ask float instrument), no backdrop-blur, no gradients except header accent and workshop project visual placeholders (slug-hashed void panes, on fallback cards and inside WebGL tablet content). Workshop **WebGL** projects are quiet **edge-glow tablets** — cream type on alpha framed by a light-drawn beveled rim; plates are near-transparent at center and bloom only at silhouette (Fresnel). No tinted glass fill, no colour splash, **no `transmission`**, no ice-shard spectacle, no glowing monograms.
 - 1px solid borders using `--color-border`
 - **No scroll hijacking of the whole site, no smooth-scroll libraries, no workshop page pin.** Workshop carousel is drag/swipe (+ arrows / keyboard) inside its own canvas stage. `/projects` locks to a **one-viewport shell** (`overflow: hidden` on html/body + flex-filled stage) so the page itself does not scroll; reduced-motion fallback cards may scroll **inside** the gallery. Footer stays compact in the flex column. Chrome morph (home ↔ site) remains the intentional route transition; do not add full-page takeover transitions.
-- Texture/grain/scanline **only** on the site header accent band and workshop fallback cards (same family as header accent); WebGL tablet content planes are clean cream typography on pure alpha, sealed between glass layers
+- Soft film grain lives in the sitewide Atmosphere void (`MOTION.void`); header accent/scanline and workshop fallback cards keep the same quiet grain family if denser chrome returns. WebGL tablet content planes stay clean cream typography on pure alpha
 - Links: underline on hover, no colour change
 
 ## Enhanced motion (theatre + desktop extras)
 
 Two gates in `src/lib/motion.ts` (both server-safe → `false`). Shared paces/eases: see **Motion language** above (`src/lib/motion-tokens.ts`).
 
-| Gate | When | Used for |
-|------|------|----------|
-| `canUseTheatreMotion()` | **not** `prefers-reduced-motion: reduce` (any viewport / pointer) | Boot theatre, Atmosphere trail, boot-cover visibility |
-| `canUseEnhancedMotion()` | `min-width: 1024px` + `pointer: fine` + not reduced-motion | Workshop slab bevel/DPR budget + hover tilt (`MOTION.workshop`), dense particle budgets |
+| Gate                     | When                                                              | Used for                                                                                |
+| ------------------------ | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `canUseTheatreMotion()`  | **not** `prefers-reduced-motion: reduce` (any viewport / pointer) | Boot theatre, Atmosphere trail + void drift, boot-cover visibility                      |
+| `canUseEnhancedMotion()` | `min-width: 1024px` + `pointer: fine` + not reduced-motion        | Workshop slab bevel/DPR budget + hover tilt (`MOTION.workshop`), dense particle budgets |
 
-- **Atmosphere** (`src/components/motion/Atmosphere.tsx`) — site-wide fixed full-viewport canvas behind `.site-shell` (`pointer-events: none`, `z-index: 0`). Near-black clear `#0a0a0a`; soft red↔blue pointer/touch trail (desktop pool 200, mobile/light ~90; DPR ≤1.5, `low-power`). Idle until `portfolio:boot-done`; weaker spawn near `.void-chrome--home .portfolio-guide-float` when present (home ask bar); pause/dispose on unmount and `document.hidden`. Touch drives the trail via `pointermove`. `.site-shell` is transparent so the void shows through on all routes.
+- **Atmosphere** (`src/components/motion/Atmosphere.tsx`) — site-wide fixed full-viewport canvas behind `.site-shell` (`pointer-events: none`, `z-index: 0`). Always mounts: near-black void (`#0a0a0a`) with quiet in-WebGL cream presence (`MOTION.void.overlay` `#f4f0e8`: grain, bowl vignette → `#05060a`, center wash, soft 3-layer fog with pointer parallax; light budget on coarse/short/narrow). Soft red↔blue pointer/touch trail when theatre motion allows (desktop pool 200, mobile/light ~90; DPR ≤1.5, `low-power`); trail waits for `portfolio:boot-done`. Drift / breathe / fog parallax when motion is allowed; `prefers-reduced-motion` keeps **static** grain + vignette + wash + fog (no trail/drift/parallax). Content depth-maps the trail core. Pause RAF when `document.hidden`; dispose on unmount. Touch drives the trail via `pointermove`. `.site-shell` is transparent so the void shows through on all routes. Workshop canvas still stacks above this layer. Cream type uses soft dark `--text-void-halo` for wash legibility.
 - **Boot cover:** SSR `#boot-cover` (`#0a0a0a`, above `.site-shell`) prevents any pre-hydrate flash before client BootOverlay. A `beforeInteractive` script sets `data-boot-cover-skip` on `<html>` **only when reduced-motion** so CSS hides the cover without removing the node (avoids hydration mismatch); BootOverlay calls `removeBootCover()` after its route-specific layer mounts. Three/GSAP stay client-only and are not required for the dark cover.
 - **BootOverlay** (`src/components/motion/BootOverlay.tsx`) — route-gated with `usePathname()`. A direct load of `/` gets the existing dark boot theatre (~8s) on phone, tablet, and desktop. Direct loads of every non-home route get only a viewport-bound near-black “void wake”: a centered thin line and `MOTION.medium` (0.45s) fade into the already-rendered site. The wake has no particles, typing, ask measurement, or chrome morph. Reduced-motion removes the cover immediately. The root-mounted overlay records its initial boot, so client navigation replays neither sequence.
   - **Colours (boot-local):** near-black background `#0a0a0a`, cream text `#f4f0e8`.
@@ -96,9 +101,30 @@ Two gates in `src/lib/motion.ts` (both server-safe → `false`). Shared paces/ea
   - **Field (simple arc):** void roam only (`p` 0–0.4) → all agents gather on **one center frame** around the typed line (`p` 0.4–0.75) → that frame morphs to measured `.void-chrome--home .portfolio-guide-float` (`p` 0.75–1) → lines-only settle. Every home ask measurement uses that scoped selector and can never select the compact non-home mini ask. Perimeter is a **rounded rect / pill** from computed `border-radius` (same outline as the ask bar). No header/footer rail redirects. Typed line is pinned to the ask-bar center; measure ask (+ padded `[data-boot-line]`); single centered-bar fallback if needed. Soft exit: hold aligned frame ~0.4s, then longer overlay fade onto the same void + ask home. Skip stays fast. Depth while roaming; circular nodes while moving.
   - **Perf:** Desktop enhanced: 160 agents, trail 24, DPR ≤2. Mobile / coarse / narrow (not enhanced): ~80 agents, trail 14, DPR ≤1.5. Always `powerPreference: "low-power"`; pause when `document.hidden`; dispose on unmount.
   - **Skip:** tap/click anywhere or Escape; short fade then unmount. Hint: “tap to enter” on coarse pointer, “click to enter” otherwise.
-  - **Reduced-motion:** no boot theatre, no Atmosphere — site shows immediately. Boot always ends with `signalBootDone()` (`data-boot-done` + `portfolio:boot-done`) so home presence (name scramble, section-link reveal) can sync.
+  - **Reduced-motion:** no boot theatre; Atmosphere stays as static void presence (grain + vignette, no trail/drift) — site shows immediately. Boot always ends with `signalBootDone()` (`data-boot-done` + `portfolio:boot-done`) so home presence (name scramble, section-link reveal) can sync.
 - Wired once via `MotionScaffold` in root `layout.tsx` (`dynamic(..., { ssr: false })`). Do not import three/gsap outside client motion modules and page-local clients that already use GSAP (`ProjectGallery`). No Framer Motion.
-- **About anchors** (`AboutAnchorNav`) — sticky section menu with scroll-spy active state + staggered entrance; soft `h2` fade on enter. No pin/scrub. Static when `prefers-reduced-motion`.
+- **About anchors** (`AboutAnchorNav`) — sticky section menu with scroll-spy active state + staggered entrance. Per-block text fades live in `VoidScrollDrama` / `AboutScrollDrama`. Static when `prefers-reduced-motion`.
+
+## Void-scroll portal (opt-in)
+
+Shared continuous-read pattern over the fixed Atmosphere void. **Not sitewide** — home instrument and `/projects` carousel keep their own viewport locks.
+
+**Enable (opt-in marker):** put `data-void-scroll` on the content scrollport.
+
+| Route | Status | Scrollport |
+| ----- | ------ | ---------- |
+| `/about` | Enabled | `.about-page[data-void-scroll]` |
+| `/projects/[slug]` | Enabled | `.project-exhibit-motion[data-void-scroll]` |
+| `/` | Do not enable | Home ask theatre |
+| `/projects` | Do not enable | One-viewport workshop carousel |
+
+**Contract**
+
+1. `:has([data-void-scroll])` locks `html`/`body` + shell so chrome header and site footer stay put; the marked node is the only vertical scrollport (scrollbar hidden; wheel/touch/anchors still work).
+2. CSS mask dissolve uses `--void-dissolve` / `--void-fade-top` / `--void-fade-bottom` (~14vh eased band). Where `animation-timeline: scroll()` is supported, edge fades mute at scroll start/end. `prefers-reduced-motion`: shorter static soft edges, no block motion.
+3. `VoidScrollDrama` (optional) adds quiet bidirectional GSAP fades on readable blocks with `scroller` = the portal. Mark heavy nested tools with `data-void-scroll-exempt` (demo stage, C4 stage/viewer, path-story). Block scrubbing pauses while the pointer is over an exempt node.
+4. Overlays (guide history, mini ask sheet) stay outside / above the portal.
+5. No snap chapters, Lenis, fullPage, or sitewide smooth-scroll hijack.
 
 ## Header accent texture
 
@@ -108,10 +134,10 @@ Applied via `.site-header-accent` / `.void-chrome-accent` on `VoidChrome`. Accen
 
 Single persistent client shell: `VoidChrome` in root `layout.tsx` (`html[data-void-chrome="home|site"]`).
 
-| Mode | Layout |
-|------|--------|
-| `home` (`/`) | Hero name (scramble once after boot) · centered ask + invite + reply · glyph rail/row (workshop · about · resume) |
-| `site` (all other routes) | Compact bar: smaller name · `home · workshop · about · resume` · mini ask top-right |
+| Mode                      | Layout                                                                                                            |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `home` (`/`)              | Hero name (scramble once after boot) · centered ask + invite + reply · glyph rail/row (workshop · about · resume) |
+| `site` (all other routes) | Compact bar: smaller name · `home · workshop · about · resume` · mini ask top-right                               |
 
 **Morph (morph-first):** Chrome nav intercepts in-app clicks. Home ↔ site: measure→tween name/nav/ask (`MOTION.chrome.morph`), **then** `router.push`, then soft content fade. Site ↔ site: **exit → push → entry** shift on `.void-chrome-page` (`MOTION.chrome.pageExit` / `pageEnter`). See `docs/void-chrome-transitions.md`. Narrow/coarse: matched crossfade. `prefers-reduced-motion`: instant mode + push.
 
@@ -123,12 +149,12 @@ Boot → home theatre is unchanged (`BootOverlay` / ask-bar measure).
 
 ### Link map
 
-| Link | URL | Page |
-|------|-----|------|
-| Nav `home` | `/` | Minimal void: identity + ask + footer |
-| Nav `workshop` | `/workshop` | Void-glass project tablet carousel (drag / arrows / dots / keyboard) |
-| Nav `about` | `/about` | Void blog read: philosophy, background, education, availability |
-| Nav `resume` | `/resume.pdf` | PDF download |
+| Link           | URL           | Page                                                                 |
+| -------------- | ------------- | -------------------------------------------------------------------- |
+| Nav `home`     | `/`           | Minimal void: identity + ask + footer                                |
+| Nav `workshop` | `/workshop`   | Void-glass project tablet carousel (drag / arrows / dots / keyboard) |
+| Nav `about`    | `/about`      | Void blog read: philosophy, background, education, availability      |
+| Nav `resume`   | `/resume.pdf` | PDF download                                                         |
 
 Do **not** link to `/index` anywhere — it aliases to `/` on some hosts. `/index` redirects to `/workshop` for old bookmarks only.
 
@@ -189,13 +215,13 @@ Immersive project gallery — no featured demos. Same void site chrome as other 
 
 **Responsive framing:** stage size comes from the flex leftover (not a fixed `54dvh`/`46dvh` budget). On every host resize a **ResizeObserver** + **camera fit pass** dollies the camera so the active tablet occupies `fitWidthFrac`/`fitHeightFrac` of the frame (whichever axis binds, clamped `cameraZMin..cameraZMax`) — the tablet stays proportionate when the shell reflows.
 
-**Page chrome:** same house pattern as About — `> projects` + one short lede (*Selected projects — drag to browse.*). Carousel chrome is a single typographic row — borderless `←  02 / 05  →` (current index bright, total muted); no dots. Keyboard ←/→ / Home / End still jump; drag remains primary.
+**Page chrome:** same house pattern as About — `> projects` + one short lede (_Selected projects — drag to browse._). Carousel chrome is a single typographic row — borderless `←  02 / 05  →` (current index bright, total muted); no dots. Keyboard ←/→ / Home / End still jump; drag remains primary.
 
 **Entrance / exit:** after WebGL mounts, tablets start extinguished and deep, then **rim-ignite** (contour + Fresnel ease up) while **depth-assemble** fans spacing/coverflow to rest; content plane fades in a beat later (`playEnter`, ~0.7s, `MOTION.workshop.enter*`). Intro copy + chrome get a quiet local opacity settle (`MOTION.medium`) so they don’t pop against the stage. On leave, `playExit` extinguishes the rim (~0.22s) while the canvas is still connected, then dispose. Reduced-motion uses the DOM fallback (no WebGL enter). VoidChrome’s page fade still owns the route-level transition — this is a stage-local secondary beat, not a second full-page fade.
 
 Each tablet is **five meshes**, back → front:
 
-0. **Void shade** — flat `ShapeGeometry` pane inset just inside the contour, near-black (`#04050a`) at low opacity, `depthWrite: false`. Because the workshop canvas composites *over* the Atmosphere canvas, this is the only occlusion cue available without merging canvases: it deepens the Atmosphere trail passing behind the body (~40% on the active tablet, ~26% on neighbors, faded further by index distance so overlapping panes never stack into a wall). Black rather than grey — against the bare void it is nearly invisible, so the tablet never reads as a filled card.
+0. **Void shade** — flat `ShapeGeometry` pane inset just inside the contour, near-black (`#04050a`) at low opacity, `depthWrite: false`. Because the workshop canvas composites _over_ the Atmosphere canvas, this is the only occlusion cue available without merging canvases: it deepens the Atmosphere trail passing behind the body (~40% on the active tablet, ~26% on neighbors, faded further by index distance so overlapping panes never stack into a wall). Black rather than grey — against the bare void it is nearly invisible, so the tablet never reads as a filled card.
 1. **Back plate** — Fresnel-only `ShaderMaterial` silhouette (no face fill); Atmosphere reads straight through.
 2. **Thin beveled rim** — primary light-drawn contour (`opacity` ~0.78 + soft cream emissive); the only depth-writing layer so near edge correctly covers type.
 3. **Content plane** — pure-alpha CanvasTexture at mid-Z. Left column: quiet status, cream title (hero), hook, and an **“open project ↗” pill** (1px cream border, no fill). Right column: **slug-hued visual placeholder pane** (same void-pane language as the fallback cards; swaps to a real screenshot via `drawImage` later). Stronger dark per-glyph halo for legibility on void. No monogram.
@@ -254,24 +280,28 @@ Exhibit panels match iframe sandbox height. Body scrolls on mobile.
 
 Single-column **case study** inside the wider project shell (`max-width: 1400px`). Story text stays ~72ch; diagram/stage can stretch wider. Shares the same void site chrome (mini ask included).
 
-**Flow:** Hero → quiet stack glyphs → one primary middle chapter → optional secondary → quiet continue.
+**Scroll feel:** Same shared void-scroll portal as About (`data-void-scroll` on `.project-exhibit-motion`) — continuous read over fixed Atmosphere void, edge dissolve, quiet per-block fades on rail/rest copy (`VoidScrollDrama` + `EXHIBIT_VOID_SCROLL_BLOCKS`). Hero entry stays with `ProjectExhibitMotion` (not double-faded). Proof/architecture canvases live in inline matte plates (`data-void-scroll-exempt`); Dive expands that plate. Overlay chrome stays outside the portal.
+
+**Flow:** Hero → quiet stack glyphs → Proof / Architecture surface sections (when present) → quiet continue.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ name · nav · mini ask                                        │
 ├──────────────────────────────────────────────────────────────┤
-│  live demo | exhibit | research                              │
 │  Title                                                       │
 │  one primary CTA (+ quiet secondary) · lede…                 │
 │                                                              │
-│  status whisper · stack glyphs/tags                          │
+│  stack glyphs/tags                                           │
 │                                                              │
-│  Primary middle (by project type):                           │
-│    visual  → Proof / demo                                    │
-│    systems → Architecture / How it works                     │
+│  Proof                                                       │
+│  short lede…                                                 │
+│  ┌─ matte plate (iframe / exhibit canvas) ─────── Dive ─┐  │
+│  └──────────────────────────────────────────────────────┘  │
 │                                                              │
-│  Secondary (only when it exists & adds signal):              │
-│    the other of proof ↔ architecture                         │
+│  Architecture                                                │
+│  source / system note…                                       │
+│  ┌─ matte plate (C4 / graph canvas) ──────────── Dive ─┐   │
+│  └──────────────────────────────────────────────────────┘  │
 │                                                              │
 │  Continue — ← projects · Next: … →                           │
 ├──────────────────────────────────────────────────────────────┤
@@ -279,11 +309,13 @@ Single-column **case study** inside the wider project shell (`max-width: 1400px`
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**Hero CTAs:** One clear primary — **Open live demo ↗** for visual projects, **GitHub** for systems/research. Docs stay quiet secondary. No full-bleed status/stack/links strip; stack is a quiet tag row under the hero with status as a meta whisper.
+**Inline matte plates:** Section title + lede stay on the page. The plate holds only the canvas (iframe or architecture diagram) — cream rim, void interior, look-only until Dive. **Dive** expands that same plate to fullscreen tools (demo chrome / C4 nav). Esc / backdrop / Close returns to the page plate. No summon-then-dive two-step. Tokens: `MOTION.matte`. Components: `ExhibitSurfaces`, `MattePanel`.
 
-**Proof:** Only when a wired `demo` exists (iframe exhibit or registry sample). No ghost Proof heading / summary-only Result block.
+**Hero CTAs:** One clear primary — **Open live demo ↗** (external tab) for visual projects, **GitHub** for systems/research. Docs stay quiet secondary. No status/badge chrome; stack is a quiet tag row under the hero.
 
-**Architecture:** Only when C4 or an owned graph IR is available. Base Input→Core→Output fallback is not shown as a chapter. Height/spacing matches the page rhythm (not a second homepage / bolted-on docs app). C4 zoom/dive behavior unchanged.
+**Proof:** Only when a wired `demo` exists. Page copy + plate canvas; interactive tools after Dive.
+
+**Architecture:** Only when C4 or an owned graph IR is available. Page lede from architecture source note; plate is canvas-only; Dive adds tool chrome (level nav / path). Base Input→Core→Output fallback is not offered as a surface.
 
 **Continue:** Quiet navigation only (back to projects + next project). No repeated Demo/GitHub/Docs action farm.
 
@@ -295,21 +327,28 @@ Single-column **case study** inside the wider project shell (`max-width: 1400px`
 
 Hire / who-why page — **clear blog-style read**, not a guided dossier, not a second gallery. Quiet void site chrome (same mini ask as workshop). Atmosphere trail may show behind (`pointer-events: none`).
 
+**Scroll feel:** Shared void-scroll portal — shell locks to one viewport like workshop; void chrome header + site footer stay put; `.about-page[data-void-scroll]` is the continuous content scrollport over the fixed Atmosphere void (scrollbar hidden). Soft CSS mask dissolve (`--void-dissolve`, ~14vh eased band) fades content into the void at the top/bottom of that reading window; where `animation-timeline: scroll()` is supported, top/bottom fades open/close with scroll position (muted at start/end). `AboutScrollDrama` → `VoidScrollDrama` adds quiet bidirectional GSAP fades on section `h2` / paragraphs / pullquote (`scroller: [data-void-scroll]`). Shorter static edge + no block motion under `prefers-reduced-motion`. Not snap chapters / hard gates. Anchor hash jumps scroll the about scrollport (scroll-margin accounts for dissolve + sticky nav). See **Void-scroll portal (opt-in)** above.
+
 **Layout**
+
 1. **Intro** — `> about` + short lede.
-2. **Anchor menu** — sticky section nav (01–04) with scroll-spy highlight + entrance stagger; desktop side rail, mobile sticky top strip.
-3. **Sections** — philosophy → background → education → availability; wider measure (~78ch), clear `h2` hierarchy, generous spacing; philosophy pull-quote; soft heading fade on scroll enter (static under reduced-motion). Hire details live in the availability section, not a top badge.
-4. **Footer** — resume CTA + ask/workshop links.
+2. **Anchor menu** — sticky section nav (01–04) with scroll-spy highlight + entrance stagger; desktop side rail, mobile sticky top strip (sticky offset parks below the dissolve edge).
+3. **Sections** — philosophy → background → education → availability; wider measure (~78ch), clear `h2` hierarchy, generous spacing; philosophy pull-quote; per-block enter/leave fades while scrolling (static under reduced-motion). Hire details live in the availability section, not a top badge.
+4. **In-page footer** — resume CTA + ask/workshop links (inside the scrollport). Site contacts footer stays pinned under the shell.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ aryan johari (quiet)   home · workshop · about · …   [ask] │
+│ aryan johari (quiet)   home · workshop · about · …   [ask] │ ← fixed
 ├─────────────────────────────────────────────────────────────┤
+│  ░ dissolve ░                                               │
 │  > about                                                    │
-│  01 philosophy  │  philosophy                               │
+│  01 philosophy  │  philosophy          ← scrolls continuously│
 │  02 background  │  “I think in systems…”                    │
 │  03 education   │  background / education / availability    │
 │  04 availability│  [download resume.pdf]                    │
+│  ░ dissolve ░                                               │
+├─────────────────────────────────────────────────────────────┤
+│ email · github · linkedin                                   │ ← fixed
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -317,40 +356,44 @@ Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **
 
 ## Components
 
-| Component | File | Responsibility |
-|-----------|------|----------------|
-| `MotionScaffold` | `src/components/motion/MotionScaffold.tsx` | Client-only Atmosphere + BootOverlay |
-| `Atmosphere` | `src/components/motion/Atmosphere.tsx` | Site-wide void + soft pointer/touch trail (post-boot; light budget on mobile) |
-| `BootOverlay` | `src/components/motion/BootOverlay.tsx` | Full home theatre or short non-home void wake; no client-navigation replay |
-| `BootField` | `src/components/motion/BootField.ts` | Home-only void roam → one center frame → scoped home ask-bar morph |
-| `HomeIdentity` | `src/components/motion/HomeIdentity.tsx` | Home soft-scramble hero name (once per load; no under-name role) |
-| `HomeFooterChrome` | `src/components/motion/HomeFooterChrome.tsx` | Home contacts only (always visible) |
-| `AboutAnchorNav` | `src/components/AboutAnchorNav.tsx` | About sticky section anchors + scroll-spy + heading fades |
-| `VoidChrome` | `src/components/VoidChrome.tsx` | Persistent home/site void chrome; morph-first nav then `router.push` |
-| `SiteFooter` | `src/components/SiteFooter.tsx` | Contacts; home uses HomeFooterChrome |
-| `FeaturedDemos` | `src/components/FeaturedDemos.tsx` | Featured projects with wired demos |
-| `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Home ask + invite/reply; mini ask + panel on site chrome |
-| `ProjectGallery` | `src/components/ProjectGallery.tsx` | Workshop Three.js edge-glow tablet carousel (drag/snap; DOM a11y + fallback) |
-| `WorkshopCarousel` | `src/components/motion/WorkshopCarousel.ts` | Page-local transparent WebGL factory for edge-glow tablets — Fresnel plates / type / rim (dispose on unmount) |
-| `ProjectExhibit` | `src/components/ProjectExhibit.tsx` | Case study shell: hero → stack → primary/secondary chapters → continue |
-| `ProjectDiagram` | `src/components/ProjectDiagram.tsx` | How it works when C4/owned graph exists (`hasArchitectureSurface`) |
-| `ArchitectureJourney` | `src/components/ArchitectureJourney.tsx` | Selects the unified C4 path or owned-graph fallback |
-| `C4ArchitectureExplorer` | `src/components/C4ArchitectureExplorer.tsx` | Full-bleed C1 → C2 → C3 state and navigation |
-| `C4DiagramViewer` | `src/components/C4DiagramViewer.tsx` | Live C4 SVG fit, pan, touch pinch, zoom, and fullscreen |
-| `ArchitectureGraphView` | `src/components/ArchitectureGraphView.tsx` | Owned IR → SVG fallback with highlighted path |
-| `MermaidDiagram` | `src/components/MermaidDiagram.tsx` | Client Mermaid renderer with normalized C4 zoom activators |
-| `DemoPanel` | `src/components/DemoPanel.tsx` | Exhibit sandbox (and unused iframe helper) |
+| Component                | File                                         | Responsibility                                                                                                |
+| ------------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `MotionScaffold`         | `src/components/motion/MotionScaffold.tsx`   | Client-only Atmosphere + BootOverlay                                                                          |
+| `Atmosphere`             | `src/components/motion/Atmosphere.tsx`       | Site-wide void + soft pointer/touch trail (post-boot; light budget on mobile)                                 |
+| `BootOverlay`            | `src/components/motion/BootOverlay.tsx`      | Full home theatre or short non-home void wake; no client-navigation replay                                    |
+| `BootField`              | `src/components/motion/BootField.ts`         | Home-only void roam → one center frame → scoped home ask-bar morph                                            |
+| `HomeIdentity`           | `src/components/motion/HomeIdentity.tsx`     | Home soft-scramble hero name (once per load; no under-name role)                                              |
+| `HomeFooterChrome`       | `src/components/motion/HomeFooterChrome.tsx` | Home contacts only (always visible)                                                                           |
+| `AboutAnchorNav`         | `src/components/AboutAnchorNav.tsx`          | About sticky section anchors + scroll-spy (scrolls about `[data-void-scroll]`)                |
+| `AboutScrollDrama`       | `src/components/AboutScrollDrama.tsx`        | About thin wrapper → `VoidScrollDrama` with about block selectors                             |
+| `VoidScrollDrama`        | `src/components/VoidScrollDrama.tsx`         | Shared per-block enter/leave fades via ScrollTrigger on `[data-void-scroll]`                  |
+| `VoidChrome`             | `src/components/VoidChrome.tsx`              | Persistent home/site void chrome; morph-first nav then `router.push`                                          |
+| `SiteFooter`             | `src/components/SiteFooter.tsx`              | Contacts; home uses HomeFooterChrome                                                                          |
+| `FeaturedDemos`          | `src/components/FeaturedDemos.tsx`           | Featured projects with wired demos                                                                            |
+| `PortfolioGuide`         | `src/components/PortfolioGuide.tsx`          | Home ask + invite/reply; mini ask + panel on site chrome                                                      |
+| `ProjectGallery`         | `src/components/ProjectGallery.tsx`          | Workshop Three.js edge-glow tablet carousel (drag/snap; DOM a11y + fallback)                                  |
+| `WorkshopCarousel`       | `src/components/motion/WorkshopCarousel.ts`  | Page-local transparent WebGL factory for edge-glow tablets — Fresnel plates / type / rim (dispose on unmount) |
+| `ProjectExhibit`         | `src/components/ProjectExhibit.tsx`          | Case study shell: hero → stack → surface sections → continue                  |
+| `ExhibitSurfaces`        | `src/components/ExhibitSurfaceInvites.tsx`   | Proof/architecture sections: page copy + inline matte plates + Dive           |
+| `MattePanel`             | `src/components/void-window/MattePanel.tsx`   | Cream-rim void tablet chrome for canvas skim + dive                           |
+| `ProjectDiagram`         | `src/components/ProjectDiagram.tsx`          | How it works when C4/owned graph exists (`hasArchitectureSurface`)            |
+| `ArchitectureJourney`    | `src/components/ArchitectureJourney.tsx`     | Selects the unified C4 path or owned-graph fallback                                                           |
+| `C4ArchitectureExplorer` | `src/components/C4ArchitectureExplorer.tsx`  | Full-bleed C1 → C2 → C3 state and navigation                                                                  |
+| `C4DiagramViewer`        | `src/components/C4DiagramViewer.tsx`         | Live C4 SVG fit, pan, touch pinch, zoom, and fullscreen                                                       |
+| `ArchitectureGraphView`  | `src/components/ArchitectureGraphView.tsx`   | Owned IR → SVG fallback with highlighted path                                                                 |
+| `MermaidDiagram`         | `src/components/MermaidDiagram.tsx`          | Client Mermaid renderer with normalized C4 zoom activators                                                    |
+| `DemoPanel`              | `src/components/DemoPanel.tsx`               | Exhibit sandbox (and unused iframe helper)                                                                    |
 
 ## Responsive rules
 
-| Breakpoint | Behaviour |
-|------------|-----------|
-| `≤ 767px` | Site chrome stacks: name → nav → full-width mini ask; short placeholder (`ask · explain…`); home ask send ≥44px; exhibit title/stack/CTAs stay inside gutters (`overflow-wrap`, stacked actions) |
-| `< 1024px` | Exhibit stacks; architecture path story above full-width graph when present; C4 dive/zoom uses fullscreen viewer (`100dvh` + safe-area); workshop carousel drag/touch; home glyphs under-ask until reveal |
-| `≥ 860px` | About: sticky side rail + scroll thumb (mobile uses sticky top strip with 2×2 section grid) |
-| `≥ 1024px` | Home right-rail glyphs; about/main content up to ~1100px shell; project exhibit asymmetric 12-col hero + sticky path rail |
-| `max-height: 600px` | Home: tighter pad/type + smaller live-reply budget; workshop: shrink intro/footer so stage survives |
-| All | Shell / header / footer / history overlay / mini sheet respect `env(safe-area-inset-*)`; no horizontal page overflow (`overflow-x: clip`); `prefers-reduced-motion` skips graph entrance + uses workshop DOM fallback |
+| Breakpoint          | Behaviour                                                                                                                                                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `≤ 767px`           | Site chrome stacks: name → nav → full-width mini ask; short placeholder (`ask · explain…`); home ask send ≥44px; exhibit title/stack/CTAs stay inside gutters (`overflow-wrap`, stacked actions)                      |
+| `< 1024px`          | Exhibit stacks; architecture path story above full-width graph when present; C4 dive/zoom uses fullscreen viewer (`100dvh` + safe-area); workshop carousel drag/touch; home glyphs under-ask until reveal             |
+| `≥ 860px`           | About: sticky side rail + scroll thumb (mobile uses sticky top strip with 2×2 section grid)                                                                                                                           |
+| `≥ 1024px`          | Home right-rail glyphs; about/main content up to ~1100px shell; project exhibit asymmetric 12-col hero + sticky path rail                                                                                             |
+| `max-height: 600px` | Home: tighter pad/type + smaller live-reply budget; workshop: shrink intro/footer so stage survives                                                                                                                   |
+| All                 | Shell / header / footer / history overlay / mini sheet respect `env(safe-area-inset-*)`; no horizontal page overflow (`overflow-x: clip`); `prefers-reduced-motion` skips graph entrance + uses workshop DOM fallback |
 
 **Phone composition (void-preserving):** prefer type scale, flex/`minmax(0)`, chrome density, and camera fit — do not invent a separate mobile IA or card-app chrome. History glyph hit area ≥44px (quiet icon); history panel uses `dvh` + safe-area padding.
 

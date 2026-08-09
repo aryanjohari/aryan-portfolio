@@ -608,6 +608,7 @@ export function C4DiagramViewer({
       ref={rootRef}
       className={`c4-viewer${expanded ? " is-expanded" : ""}`}
       data-c4-level={levelLabel.toLowerCase()}
+      data-void-scroll-exempt
       role={expanded ? "dialog" : "group"}
       aria-modal={expanded ? "true" : undefined}
       aria-label={expanded ? `${levelLabel} diagram full screen` : `${levelLabel} diagram viewer`}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono } from "next/font/google";
+import { IBM_Plex_Mono, Rubik_Dirt } from "next/font/google";
 import Script from "next/script";
 
 import { MotionScaffold } from "@/components/motion/MotionScaffold";
@@ -12,6 +12,12 @@ const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "600"],
   variable: "--font-mono",
+});
+
+const rubikDirt = Rubik_Dirt({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-display",
 });
 
 export const metadata: Metadata = {
@@ -34,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${ibmPlexMono.variable} antialiased`}
+        className={`${ibmPlexMono.variable} ${rubikDirt.variable} antialiased`}
         suppressHydrationWarning
       >
         <Script

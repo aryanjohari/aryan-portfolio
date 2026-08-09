@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { C4DiagramViewer } from "@/components/C4DiagramViewer";
 import type { MermaidZoomActivator } from "@/components/MermaidDiagram";
+import type { SurfacePresentation } from "@/components/void-window/types";
 import type {
   ProjectC4Data,
   ProjectC4Doc,
@@ -21,6 +22,8 @@ type C4ArchitectureExplorerProps = {
   sourceNote: string;
   githubRepoUrl: string;
   branch?: string;
+  /** canvas = stage only; tools = stage + nav; full = page headers too. */
+  presentation?: SurfacePresentation;
 };
 
 function hasContent(doc: ProjectC4Doc | undefined): boolean {
@@ -32,7 +35,8 @@ function hasDiagram(doc: ProjectC4Doc | undefined): boolean {
 }
 
 function initialView(c4: ProjectC4Data): C4View {
-  if (c4.defaultLevel === "context" && hasDiagram(c4.context)) return { level: "context" };
+  if (c4.defaultLevel === "context" && hasDiagram(c4.context))
+    return { level: "context" };
   if (c4.defaultLevel === "containers" && hasDiagram(c4.containers)) {
     return { level: "containers" };
   }
@@ -42,7 +46,11 @@ function initialView(c4: ProjectC4Data): C4View {
   return { level: "containers" };
 }
 
-function githubBlobUrl(repoUrl: string, path: string | undefined, branch: string): string | undefined {
+function githubBlobUrl(
+  repoUrl: string,
+  path: string | undefined,
+  branch: string,
+): string | undefined {
   if (!path) return undefined;
   return `${repoUrl.replace(/\/$/, "")}/blob/${branch}/${path}`;
 }
@@ -52,7 +60,10 @@ function docsPath(path: string | undefined): string | undefined {
   return path.replace(/\.(?:mmd|mermaid)$/i, ".md");
 }
 
-function extractCaption(markdown: string | undefined, fallback: string): string {
+function extractCaption(
+  markdown: string | undefined,
+  fallback: string,
+): string {
   if (!markdown?.trim()) return fallback;
   const prose = markdown
     .split("\n")
@@ -72,7 +83,10 @@ function extractCaption(markdown: string | undefined, fallback: string): string 
   return prose.length > 220 ? `${prose.slice(0, 219)}…` : prose;
 }
 
-function componentIdForZoom(c4: ProjectC4Data, zoom: ProjectC4ZoomTarget): string | undefined {
+function componentIdForZoom(
+  c4: ProjectC4Data,
+  zoom: ProjectC4ZoomTarget,
+): string | undefined {
   if (zoom.componentId) return zoom.componentId;
   return c4.diveTargets.find(
     (target) =>
@@ -88,6 +102,7 @@ export function C4ArchitectureExplorer({
   sourceNote,
   githubRepoUrl,
   branch = "main",
+  presentation = "full",
 }: C4ArchitectureExplorerProps) {
   const [view, setView] = useState<C4View>(() => initialView(c4));
   const [direction, setDirection] = useState<"in" | "out">("in");
@@ -103,7 +118,11 @@ export function C4ArchitectureExplorer({
         ? c4.containers
         : c4.components[view.targetId];
   const levelLabel =
-    view.level === "context" ? "Context" : view.level === "containers" ? "Containers" : "Components";
+    view.level === "context"
+      ? "Context"
+      : view.level === "containers"
+        ? "Containers"
+        : "Components";
 
   const currentZooms = useMemo(
     () =>
@@ -128,7 +147,9 @@ export function C4ArchitectureExplorer({
         return [
           {
             id: zoom.id,
-            labels: zoom.matchLabels.length ? zoom.matchLabels : [zoom.label, zoom.id],
+            labels: zoom.matchLabels.length
+              ? zoom.matchLabels
+              : [zoom.label, zoom.id],
             whisper: "View inside",
           },
         ];
@@ -185,9 +206,15 @@ export function C4ArchitectureExplorer({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      // Matte dive owns Escape when not on the page-owned surface.
+      if (presentation !== "full" && event.key === "Escape") return;
       if ((event.key === "Escape" || event.key === "Backspace") && canBack) {
         const target = event.target as HTMLElement | null;
-        if (event.key === "Backspace" && target?.matches("input, textarea, [contenteditable]")) return;
+        if (
+          event.key === "Backspace" &&
+          target?.matches("input, textarea, [contenteditable]")
+        )
+          return;
         event.preventDefault();
         goBack();
       }
@@ -198,80 +225,116 @@ export function C4ArchitectureExplorer({
 
   return (
     <section
-      className="arch-journey-section arch-c4-explorer"
-      aria-labelledby="architecture-overview-heading"
+      className={[
+        "arch-journey-section arch-c4-explorer",
+        presentation !== "full" ? `arch-surface--${presentation}` : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-labelledby={
+        presentation === "full" ? "architecture-overview-heading" : undefined
+      }
+      aria-label={presentation === "full" ? undefined : `Architecture for ${title}`}
       data-exhibit-act="diagram"
       data-diagram-mode="c4"
       data-arch-level={view.level}
+      data-surface-presentation={presentation}
     >
-      <header className="arch-overview-header project-exhibit-rail">
-        <nav className="arch-c4-breadcrumb" aria-label="Architecture level">
-          <span aria-current={view.level === "context" ? "page" : undefined}>Context</span>
-          {view.level !== "context" ? (
-            <>
-              <span aria-hidden="true">/</span>
-              <span aria-current={view.level === "containers" ? "page" : undefined}>Containers</span>
-            </>
-          ) : null}
-          {view.level === "components" ? (
-            <>
-              <span aria-hidden="true">/</span>
-              <span aria-current="page">{componentTarget?.label ?? view.targetId}</span>
-            </>
-          ) : null}
-        </nav>
-        <h2 id="architecture-overview-heading" className="project-exhibit-section-title">
-          How it works
-        </h2>
-        <p className="arch-overview-summary">{summary}</p>
-        <p className="arch-overview-source">{sourceNote}</p>
-      </header>
+      {presentation === "full" ? (
+        <header className="arch-overview-header project-exhibit-rail">
+          <nav className="arch-c4-breadcrumb" aria-label="Architecture level">
+            <span aria-current={view.level === "context" ? "page" : undefined}>
+              Context
+            </span>
+            {view.level !== "context" ? (
+              <>
+                <span aria-hidden="true">/</span>
+                <span
+                  aria-current={
+                    view.level === "containers" ? "page" : undefined
+                  }
+                >
+                  Containers
+                </span>
+              </>
+            ) : null}
+            {view.level === "components" ? (
+              <>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">
+                  {componentTarget?.label ?? view.targetId}
+                </span>
+              </>
+            ) : null}
+          </nav>
+          <h2
+            id="architecture-overview-heading"
+            className="project-exhibit-section-title"
+          >
+            How it works
+          </h2>
+          <p className="arch-overview-summary">{summary}</p>
+          <p className="arch-overview-source">{sourceNote}</p>
+        </header>
+      ) : null}
 
       <div className="arch-c4-layout">
-        <div className="arch-c4-navigation">
-          <div className="arch-c4-navigation-actions">
-            <button type="button" className="arch-c4-nav-button" disabled={!canBack} onClick={goBack}>
-              ← Back
-            </button>
-            <button
-              type="button"
-              className="arch-c4-nav-button"
-              disabled={!canReset}
-              onClick={() => navigate({ level: "context" }, "out")}
-            >
-              Reset
-            </button>
+        {presentation !== "canvas" ? (
+          <div className="arch-c4-navigation">
+            <div className="arch-c4-navigation-actions">
+              <button
+                type="button"
+                className="arch-c4-nav-button"
+                disabled={!canBack}
+                onClick={goBack}
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                className="arch-c4-nav-button"
+                disabled={!canReset}
+                onClick={() => navigate({ level: "context" }, "out")}
+              >
+                Reset
+              </button>
+            </div>
+            <p>
+              <strong>{levelLabel}</strong>
+              <span>
+                {currentZooms.some((zoom) =>
+                  activators.some((activator) => activator.id === zoom.id),
+                )
+                  ? "Select a marked node to view inside."
+                  : "Drag to pan, or use the view controls to inspect the diagram."}
+              </span>
+            </p>
+            {docsHref ? (
+              <a href={docsHref} target="_blank" rel="noopener noreferrer">
+                View docs ↗
+              </a>
+            ) : null}
           </div>
-          <p>
-            <strong>{levelLabel}</strong>
-            <span>
-              {currentZooms.some((zoom) =>
-                activators.some((activator) => activator.id === zoom.id),
-              )
-                ? "Select a marked node to view inside."
-                : "Drag to pan, or use the view controls to inspect the diagram."}
-            </span>
-          </p>
-          {docsHref ? (
-            <a href={docsHref} target="_blank" rel="noopener noreferrer">
-              View docs ↗
-            </a>
-          ) : null}
-        </div>
+        ) : null}
 
-        <div className={`arch-c4-stage arch-c4-stage--${direction}`}>
+        <div
+          className={`arch-c4-stage arch-c4-stage--${direction}`}
+          data-void-scroll-exempt
+        >
           {currentDoc?.mermaid ? (
             <C4DiagramViewer
               key={`${view.level}-${view.level === "components" ? view.targetId : ""}`}
               source={currentDoc.mermaid}
               ariaLabel={`${levelLabel} diagram for ${
-                view.level === "components" ? componentTarget?.label ?? title : title
+                view.level === "components"
+                  ? (componentTarget?.label ?? title)
+                  : title
               }`}
               levelLabel={levelLabel}
-              activators={activators}
-              onActivate={activateZoom}
+              activators={presentation === "canvas" ? [] : activators}
+              onActivate={presentation === "canvas" ? undefined : activateZoom}
               fallbackHref={docsHref}
-              allowFullscreen
+              allowFullscreen={presentation === "full"}
             />
           ) : (
             <p className="arch-dive-fallback" role="status">
@@ -289,11 +352,16 @@ export function C4ArchitectureExplorer({
           )}
         </div>
 
-        {currentZooms.length > 0 ? (
-          <ul className="arch-c4-zoom-list" aria-label="Available deeper architecture views">
+        {presentation !== "canvas" && currentZooms.length > 0 ? (
+          <ul
+            className="arch-c4-zoom-list"
+            aria-label="Available deeper architecture views"
+          >
             {currentZooms.map((zoom) => {
               const targetId =
-                zoom.toLevel === "components" ? componentIdForZoom(c4, zoom) : undefined;
+                zoom.toLevel === "components"
+                  ? componentIdForZoom(c4, zoom)
+                  : undefined;
               const available =
                 zoom.toLevel === "containers"
                   ? hasDiagram(c4.containers)
@@ -304,7 +372,11 @@ export function C4ArchitectureExplorer({
                     type="button"
                     className="arch-c4-zoom-chip"
                     disabled={!available}
-                    title={available ? `View inside ${zoom.label}` : "Component diagram unavailable"}
+                    title={
+                      available
+                        ? `View inside ${zoom.label}`
+                        : "Component diagram unavailable"
+                    }
                     onClick={() => activateZoom(zoom.id)}
                   >
                     {zoom.label}

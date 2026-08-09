@@ -4,11 +4,11 @@
 
 Leaving `/` and returning should feel like **one intentional motion**:
 
-1. Shared chrome (name · nav · ask) morphs between home and site layouts  
-2. **Then** the destination page content appears  
-3. Reverse on the way home  
+1. Shared chrome (name · nav · ask) morphs between home and site layouts
+2. **Then** the destination page content appears
+3. Reverse on the way home
 
-Chrome stays outside page bodies. Home’s route body is empty — the chrome *is* the home page.
+Chrome stays outside page bodies. Home’s route body is empty — the chrome _is_ the home page.
 
 ## Why the old logic was wrong
 
@@ -26,7 +26,7 @@ Problems:
 - **Navigation and animation were decoupled.** The page was already mounted (and often running effects) while chrome tried to fake a morph.
 - **Opacity:0 was a bandage** for “content arrived too early,” not a real sequence.
 - **Home ↔ site layout systems differ** (hero + fixed glyph rail vs compact top bar). Post-route FLIP/measure-tween fought fixed positioning and competing nav entrance tweens → jagged reverse morphs.
-- It looked “bolted on” because it *was* bolted on after the router.
+- It looked “bolted on” because it _was_ bolted on after the router.
 
 ## New logic (morph-first, then push)
 
@@ -50,23 +50,40 @@ click in-app nav (home / workshop / about)
 
 `resume.pdf` and external URLs are not intercepted (full navigation / download).
 
-### Ownership
+### Hybrid chrome morph (home ↔ site)
 
-| Concern | Owner |
-|---------|--------|
-| Chrome layout mode (`home` \| `site`) | `VoidChrome` state (set **during** morph, before push) |
-| URL / `{children}` | Next App Router (`router.push` **after** morph / exit) |
-| Content visibility | `.void-chrome-page` opacity (+ y on site↔site) after settle |
-| Browser back/forward | Pathname sync: if mode ≠ path mode and not mid-morph, run morph then settle (or instant if reduced-motion). Same-mode: entry only (no exit). |
+Desktop / fine pointer — serialized with soft ~15% overlaps:
+
+1. Fade **ask** out, then **nav** out.
+2. Switch chrome mode; remount ask **while companions are hidden**.
+3. FLIP the **name** only (position + `fontSize`), with an in-flow **spacer** holding the destination name slot so nav/ask don’t reflow.
+4. Unpin name into the reserved slot, drop spacer, wait one frame.
+5. Fade **nav** in, then **ask** in.
+
+Narrow / coarse: whole-chrome opacity crossfade (ask remounted mid-fade when hidden).
+
+Do not FLIP nav or ask — those geometry changes were the snap source.
+
+| Concern                               | Owner                                                                                                                                        |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chrome layout mode (`home` \| `site`) | `VoidChrome` state (set **during** morph, before push)                                                                                       |
+| URL / `{children}`                    | Next App Router (`router.push` **after** morph / exit)                                                                                       |
+| Content visibility                    | `.void-chrome-page` opacity (+ y on site↔site) after settle                                                                                  |
+| Browser back/forward                  | Pathname sync: if mode ≠ path mode and not mid-morph, run morph then settle (or instant if reduced-motion). Same-mode: entry only (no exit). |
 
 ### Transition matrix
 
-| From → To | Behavior |
-|-----------|----------|
-| `/` → `/workshop` etc. | Morph home→site, **then** push, content entry |
-| `/workshop` → `/` | Fade content out, morph site→home, **then** push (home body is empty) |
+| From → To                     | Behavior                                                                |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `/` → `/workshop` etc.        | Morph home→site, **then** push, content entry                           |
+| `/workshop` → `/`             | Fade content out, morph site→home, **then** push (home body is empty)   |
 | `/workshop` → `/about` (etc.) | Site chrome stays; **exit → push → entry** shift on `.void-chrome-page` |
-| Reduced motion | Instant mode + push; no morph / no exit-entry motion |
+| `/projects` → `/projects/*`   | Same site↔site curtain (slugs are in-app chrome routes)                 |
+| Reduced motion                | Instant mode + push; no morph / no exit-entry motion                    |
+
+### Consistent curtain
+
+Across exit/morph → `router.push` → enter, `.void-chrome-page` stays closed via inline opacity + `html[data-page-curtain]` (CSS `opacity: 0 !important`). The flag clears only when entry animation starts (or settle under reduced motion). A `useLayoutEffect` also closes the curtain before paint on site landings so back/forward cannot flash full content. In-app content links and `useVoidChromeNavigate()` share this path.
 
 ## Site ↔ site content transition
 
@@ -99,6 +116,6 @@ The whole `.void-chrome-page` animates as one block so nested mount effects (`Pr
 
 ## Related
 
-- UI spec: `docs/ui.md` (void chrome section)  
-- Tokens: `MOTION.chrome` in `src/lib/motion-tokens.ts`  
+- UI spec: `docs/ui.md` (void chrome section)
+- Tokens: `MOTION.chrome` in `src/lib/motion-tokens.ts`
 - Shell: `src/components/VoidChrome.tsx`

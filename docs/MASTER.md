@@ -25,29 +25,29 @@ Visitors should understand what a project does, see its stack and status, and tr
 
 ## Routes
 
-| Route | Purpose |
-|-------|---------|
-| `/` | Home — slim intro + portfolio guide (primary interaction) |
-| `/workshop` | Workshop index — full project table only |
-| `/about` | Void blog read: philosophy, background, education, availability, resume |
-| `/projects/[slug]` | Exhibit page: hero, CTAs, optional exhibit stage, story, How it works diagram, details |
-| `/resume.pdf` | Static PDF in `public/resume.pdf` (not committed by default) |
+| Route              | Purpose                                                                                |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| `/`                | Home — slim intro + portfolio guide (primary interaction)                              |
+| `/workshop`        | Workshop index — full project table only                                               |
+| `/about`           | Void blog read (void-scroll portal): philosophy, background, education, availability, resume |
+| `/projects/[slug]` | Exhibit (void-scroll portal): hero, CTAs, optional stage, How it works, continue             |
+| `/resume.pdf`      | Static PDF in `public/resume.pdf` (not committed by default)                           |
 
 **Routing note:** Never link to `/index` in nav or copy — Next.js/Vercel may alias it to `/`. Legacy `/index` URLs redirect permanently to `/workshop` via `next.config.ts`.
 
 ## Documentation index
 
-| Document | Purpose |
-|----------|---------|
-| [architecture.md](./architecture.md) | Data flow, build strategy, folder structure, security |
-| [contract.md](./contract.md) | `portfolio.yaml` schema, validation, examples |
-| [create-portfolio-yaml.md](./create-portfolio-yaml.md) | Cursor prompt to generate portfolio.yaml in project repos |
+| Document                                                   | Purpose                                                              |
+| ---------------------------------------------------------- | -------------------------------------------------------------------- |
+| [architecture.md](./architecture.md)                       | Data flow, build strategy, folder structure, security                |
+| [contract.md](./contract.md)                               | `portfolio.yaml` schema, validation, examples                        |
+| [create-portfolio-yaml.md](./create-portfolio-yaml.md)     | Cursor prompt to generate portfolio.yaml in project repos            |
 | [streamline-project-docs.md](./streamline-project-docs.md) | Cursor prompt to streamline GitHub + portfolio docs in project repos |
-| [ui.md](./ui.md) | Design tokens, wireframes, components, responsive rules |
-| [void-chrome-transitions.md](./void-chrome-transitions.md) | Morph-first home ↔ site chrome navigation (why + how) |
-| [registry.md](./registry.md) | How to add/remove projects and wire demos |
-| [v2-roadmap.md](./v2-roadmap.md) | v2 workshop phases (homepage narrative, guide, remaining demos) |
-| [guide.md](./guide.md) | Portfolio guide API, context build, env setup, testing |
+| [ui.md](./ui.md)                                           | Design tokens, wireframes, components, responsive rules              |
+| [void-chrome-transitions.md](./void-chrome-transitions.md) | Morph-first home ↔ site chrome navigation (why + how)                |
+| [registry.md](./registry.md)                               | How to add/remove projects and wire demos                            |
+| [v2-roadmap.md](./v2-roadmap.md)                           | v2 workshop phases (homepage narrative, guide, remaining demos)      |
+| [guide.md](./guide.md)                                     | Portfolio guide API, context build, env setup, testing               |
 
 ## Current phase
 

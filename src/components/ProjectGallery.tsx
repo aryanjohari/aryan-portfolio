@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   useEffect,
   useId,
@@ -14,6 +13,7 @@ import {
 } from "react";
 
 import type { WorkshopCarouselHandle } from "@/components/motion/WorkshopCarousel";
+import { useVoidChromeNavigate } from "@/components/void-chrome-nav";
 import type { Project } from "@/lib/projects";
 import {
   canUseEnhancedMotion,
@@ -85,9 +85,8 @@ function FallbackCard({ project }: { project: Project }) {
         >
           {indexHook(project)}
         </p>
-        <p className="project-gallery-fallback-status">
-          {project.status}
-          {missing && (
+        {missing ? (
+          <p className="project-gallery-fallback-status">
             <span
               className="content-warn"
               title={project.contentMessage ?? "portfolio.yaml issue"}
@@ -95,8 +94,8 @@ function FallbackCard({ project }: { project: Project }) {
             >
               ⚠
             </span>
-          )}
-        </p>
+          </p>
+        ) : null}
         <Link
           href={`/projects/${project.slug}`}
           className="project-gallery-fallback-open"
@@ -114,7 +113,7 @@ function FallbackCard({ project }: { project: Project }) {
  * Mount plays rim-ignite + depth-assemble; unmount extinguishes then disposes.
  */
 export function ProjectGallery({ projects }: ProjectGalleryProps) {
-  const router = useRouter();
+  const navigate = useVoidChromeNavigate();
   const hostRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<WorkshopCarouselHandle | null>(null);
   const gsapRef = useRef<typeof import("gsap").gsap | null>(null);
@@ -172,7 +171,6 @@ export function ProjectGallery({ projects }: ProjectGalleryProps) {
             slug: p.slug,
             title: p.title,
             hook: indexHook(p),
-            status: p.status,
             missing: p.contentStatus !== "ok",
             hue: slugHue(p.slug),
           })),
@@ -339,7 +337,7 @@ export function ProjectGallery({ projects }: ProjectGalleryProps) {
       const project = projects[activeIndex];
       if (!project) return;
       event.preventDefault();
-      router.push(`/projects/${project.slug}`);
+      void navigate(`/projects/${project.slug}`);
     }
   }
 
@@ -402,7 +400,7 @@ export function ProjectGallery({ projects }: ProjectGalleryProps) {
 
     if (!drag.moved) {
       const slug = carouselRef.current?.pick(event.clientX, event.clientY);
-      if (slug) router.push(`/projects/${slug}`);
+      if (slug) void navigate(`/projects/${slug}`);
       return;
     }
 

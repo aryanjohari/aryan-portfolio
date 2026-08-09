@@ -25,12 +25,11 @@ export const HERO_ENTRY = {
   titleDuration: 0.55,
   ledeStaggerIn: 0.07,
   ledeDuration: 0.5,
-  badgeDuration: 0.4,
   buttonStaggerIn: 0.055,
   buttonDuration: 0.4,
-  titleAt: 0.06,
-  buttonsAt: 0.18,
-  ledeAt: 0.32,
+  titleAt: 0,
+  buttonsAt: 0.12,
+  ledeAt: 0.26,
   hoverX: 3,
   hoverDuration: MOTION.fast,
 } as const;
@@ -64,7 +63,6 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
       }
       if (cancelled || !root) return;
 
-      const badge = root.querySelector<HTMLElement>("[data-exhibit-hero-badge]");
       const title = root.querySelector<HTMLElement>("[data-exhibit-hero-title]");
       const lede = root.querySelector<HTMLElement>("[data-exhibit-hero-lede]");
       const actions = root.querySelector<HTMLElement>("[data-exhibit-actions]");
@@ -72,7 +70,7 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
         ? Array.from(actions.querySelectorAll<HTMLElement>(".project-exhibit-action"))
         : [];
 
-      const heroPieces = [badge, title, lede, actions].filter(
+      const heroPieces = [title, lede, actions].filter(
         (el): el is HTMLElement => Boolean(el),
       );
 
@@ -91,7 +89,7 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
         });
 
         mm.add("(prefers-reduced-motion: no-preference)", () => {
-          addHeroEntry(gsap, SplitText, { badge, title, lede, buttons });
+          addHeroEntry(gsap, SplitText, { title, lede, buttons });
           const unbindHover = buttons.length > 0 ? bindButtonHovers(gsap, buttons) : null;
           return () => {
             unbindHover?.();
@@ -110,7 +108,7 @@ export function ProjectExhibitMotion({ children }: ProjectExhibitMotionProps) {
   }, []);
 
   return (
-    <div ref={rootRef} className="project-exhibit-motion">
+    <div ref={rootRef} className="project-exhibit-motion" data-void-scroll>
       {children}
     </div>
   );
@@ -120,15 +118,13 @@ function addHeroEntry(
   gsap: GsapLike,
   SplitText: SplitTextLike,
   els: {
-    badge: HTMLElement | null;
     title: HTMLElement | null;
     lede: HTMLElement | null;
     buttons: HTMLElement[];
   },
 ) {
-  const { badge, title, lede, buttons } = els;
+  const { title, lede, buttons } = els;
 
-  if (badge) gsap.set(badge, { autoAlpha: 0, y: 10 });
   if (title) gsap.set(title, { autoAlpha: 1 });
   if (lede) gsap.set(lede, { autoAlpha: 1 });
   if (buttons.length) gsap.set(buttons, { autoAlpha: 0, y: 12 });
@@ -164,10 +160,6 @@ function addHeroEntry(
   }
 
   const tl = gsap.timeline({ defaults: { ease: MOTION.ease } });
-
-  if (badge) {
-    tl.to(badge, { autoAlpha: 1, y: 0, duration: HERO_ENTRY.badgeDuration }, 0);
-  }
 
   if (titleSplit?.words?.length) {
     tl.to(

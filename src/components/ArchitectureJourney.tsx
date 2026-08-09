@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { ArchitectureGraphView } from "@/components/ArchitectureGraphView";
 import { C4ArchitectureExplorer } from "@/components/C4ArchitectureExplorer";
+import type { SurfacePresentation } from "@/components/void-window/types";
 import type { ArchitectureGraph } from "@/lib/architecture-graph";
 import { resolveArchitectureSkin } from "@/lib/architecture-graph";
 import { resolveTourStepsFromGraph } from "@/lib/architecture-walkthrough";
@@ -18,6 +19,7 @@ type ArchitectureJourneyProps = {
   c4?: ProjectC4Data;
   githubRepoUrl: string;
   branch?: string;
+  presentation?: SurfacePresentation;
 };
 
 function hasC4Surface(c4: ProjectC4Data | undefined): c4 is ProjectC4Data {
@@ -42,6 +44,7 @@ export function ArchitectureJourney({
   c4,
   githubRepoUrl,
   branch = "main",
+  presentation = "full",
 }: ArchitectureJourneyProps) {
   if (hasC4Surface(c4)) {
     return (
@@ -51,6 +54,7 @@ export function ArchitectureJourney({
         sourceNote={sourceNote}
         githubRepoUrl={githubRepoUrl}
         branch={branch}
+        presentation={presentation}
       />
     );
   }
@@ -61,6 +65,7 @@ export function ArchitectureJourney({
       graph={graph}
       sourceNote={sourceNote}
       slug={slug}
+      presentation={presentation}
     />
   );
 }
@@ -70,7 +75,11 @@ function OwnedArchitectureFallback({
   graph,
   sourceNote,
   slug,
-}: Pick<ArchitectureJourneyProps, "title" | "graph" | "sourceNote" | "slug">) {
+  presentation = "full",
+}: Pick<
+  ArchitectureJourneyProps,
+  "title" | "graph" | "sourceNote" | "slug" | "presentation"
+>) {
   const skin = graph ? resolveArchitectureSkin(graph, slug) : undefined;
   const steps = useMemo(() => (graph ? resolveTourStepsFromGraph(graph) : []), [graph]);
   const [activeBeatId, setActiveBeatId] = useState<string | null>(steps[0]?.id ?? null);
@@ -82,16 +91,29 @@ function OwnedArchitectureFallback({
   if (!graph) {
     return (
       <section
-        className="arch-journey-section"
-        aria-labelledby="architecture-overview-heading"
+        className={[
+          "arch-journey-section",
+          presentation !== "full" ? `arch-surface--${presentation}` : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-labelledby={
+          presentation === "full" ? "architecture-overview-heading" : undefined
+        }
+        aria-label={
+          presentation === "full" ? undefined : `Architecture for ${title}`
+        }
         data-exhibit-act="diagram"
         data-diagram-mode="owned"
+        data-surface-presentation={presentation}
       >
-        <div className="arch-overview-header project-exhibit-rail">
-          <h2 id="architecture-overview-heading" className="project-exhibit-section-title">
-            How it works
-          </h2>
-        </div>
+        {presentation === "full" ? (
+          <div className="arch-overview-header project-exhibit-rail">
+            <h2 id="architecture-overview-heading" className="project-exhibit-section-title">
+              How it works
+            </h2>
+          </div>
+        ) : null}
         <p className="arch-dive-fallback project-exhibit-rail" role="status">
           Architecture docs are not available for this project yet.
         </p>
@@ -103,26 +125,44 @@ function OwnedArchitectureFallback({
     graph.summary?.trim() ||
     (graph.title ? `Here’s how ${graph.title} works end to end.` : "Here’s how the system works.");
 
+  const showPath = presentation === "full" || presentation === "tools";
+  const showHeader = presentation === "full";
+
   return (
     <section
-      className="arch-journey-section"
-      aria-labelledby="architecture-overview-heading"
+      className={[
+        "arch-journey-section",
+        presentation !== "full" ? `arch-surface--${presentation}` : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-labelledby={
+        showHeader ? "architecture-overview-heading" : undefined
+      }
+      aria-label={showHeader ? undefined : `Architecture for ${title}`}
       data-exhibit-act="diagram"
       data-diagram-mode="owned"
       data-arch-skin={skin}
+      data-surface-presentation={presentation}
     >
-      <div className="arch-overview-header project-exhibit-rail">
-        <h2 id="architecture-overview-heading" className="project-exhibit-section-title">
-          How it works
-        </h2>
-        <p className="arch-overview-summary">{summary}</p>
-        {sourceNote ? <p className="arch-overview-source">{sourceNote}</p> : null}
-        {graph.notes ? <p className="arch-overview-source">{graph.notes}</p> : null}
-      </div>
+      {showHeader ? (
+        <div className="arch-overview-header project-exhibit-rail">
+          <h2 id="architecture-overview-heading" className="project-exhibit-section-title">
+            How it works
+          </h2>
+          <p className="arch-overview-summary">{summary}</p>
+          {sourceNote ? <p className="arch-overview-source">{sourceNote}</p> : null}
+          {graph.notes ? <p className="arch-overview-source">{graph.notes}</p> : null}
+        </div>
+      ) : null}
 
       <div className="arch-overview-layout">
-        {steps.length > 0 ? (
-          <ol className="arch-path-story" aria-label="Architecture path">
+        {showPath && steps.length > 0 ? (
+          <ol
+            className="arch-path-story"
+            aria-label="Architecture path"
+            data-void-scroll-exempt
+          >
             {steps.map((step, index) => {
               const isActive = step.id === activeBeatId;
               return (
@@ -160,7 +200,7 @@ function OwnedArchitectureFallback({
           </ol>
         ) : null}
 
-        <div className="arch-overview-stage">
+        <div className="arch-overview-stage" data-void-scroll-exempt>
           <div className="arch-overview-graph">
             <ArchitectureGraphView
               graph={graph}

@@ -45,21 +45,21 @@ Parse YAML, validate against [contract.md](./contract.md), write results to `src
 
 **Per-repo error handling** — build continues even when individual repos fail:
 
-| Status | Meaning |
-|--------|---------|
-| `ok` | Valid portfolio.yaml fetched |
+| Status         | Meaning                                              |
+| -------------- | ---------------------------------------------------- |
+| `ok`           | Valid portfolio.yaml fetched                         |
 | `missing_yaml` | File not found (expected for repos without yaml yet) |
-| `invalid_yaml` | Parse or validation failure |
-| `fetch_error` | Network or auth error |
+| `invalid_yaml` | Parse or validation failure                          |
+| `fetch_error`  | Network or auth error                                |
 
 **Dev fallback:** set `PORTFOLIO_FETCH_SKIP=true` to skip fetch and use `src/lib/mock-projects.ts` instead.
 
 ### Environment variables
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `GITHUB_TOKEN` | For private repos | GitHub API access during fetch |
-| `PORTFOLIO_FETCH_SKIP` | No | Skip fetch; use mock data (dev only) |
+| Variable               | Required          | Purpose                              |
+| ---------------------- | ----------------- | ------------------------------------ |
+| `GITHUB_TOKEN`         | For private repos | GitHub API access during fetch       |
+| `PORTFOLIO_FETCH_SKIP` | No                | Skip fetch; use mock data (dev only) |
 
 Copy [`.env.example`](../.env.example) to `.env.local` for local development. On Vercel, add `GITHUB_TOKEN` in project environment variables (Production + Preview). Never expose the token in client code.
 
@@ -85,12 +85,12 @@ Demo wiring is independent of yaml fetch status — iframe demos work even when 
 
 ### Demo types
 
-| Type | Use case | Client exposure |
-|------|----------|-----------------|
-| `iframe` | Deployed frontend (e.g. Background Studio) | Public URL only |
-| `api` | Interactive API playground (e.g. PII Gateway) | Proxy path only; keys server-side |
-| `exhibit` | Static artifacts (e.g. GSTF metrics, Grad-CAM images) | Public asset path |
-| `edge` | Proxied edge device (e.g. ADA Pi status) | Proxy path only; device URL server-side |
+| Type      | Use case                                              | Client exposure                         |
+| --------- | ----------------------------------------------------- | --------------------------------------- |
+| `iframe`  | Deployed frontend (e.g. Background Studio)            | Public URL only                         |
+| `api`     | Interactive API playground (e.g. PII Gateway)         | Proxy path only; keys server-side       |
+| `exhibit` | Static artifacts (e.g. GSTF metrics, Grad-CAM images) | Public asset path                       |
+| `edge`    | Proxied edge device (e.g. ADA Pi status)              | Proxy path only; device URL server-side |
 
 ## Build and revalidation
 
@@ -172,8 +172,8 @@ Runtime stack:
 
 ## Phase roadmap
 
-| Phase | Scope |
-|-------|-------|
-| 1 (done) | Static shell, mock data, docs, placeholder demo panel |
+| Phase       | Scope                                                                 |
+| ----------- | --------------------------------------------------------------------- |
+| 1 (done)    | Static shell, mock data, docs, placeholder demo panel                 |
 | 2 (partial) | GitHub YAML fetch at build time, content status UI, iframe demos live |
-| 3 | Deploy hooks, exhibit assets, edge proxy for ADA, API proxies |
+| 3           | Deploy hooks, exhibit assets, edge proxy for ADA, API proxies         |

@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-07-30T09:30:45.174Z",
+  "fetchedAt": "2026-08-09T03:41:30.449Z",
   "results": [
     {
       "slug": "background-studio",
@@ -27,7 +27,7 @@
         "slug": "background-studio",
         "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-07-30T09:30:38.969Z",
+      "fetchedAt": "2026-08-09T03:41:16.764Z",
       "diagram": {
         "source": "github",
         "path": "docs/c4/2-containers.mmd",
@@ -340,7 +340,7 @@
         },
         "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-07-30T09:30:39.759Z",
+      "fetchedAt": "2026-08-09T03:41:19.153Z",
       "diagram": {
         "source": "github",
         "path": "docs/c4/2-containers.mmd",
@@ -752,7 +752,7 @@
         },
         "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-07-30T09:30:40.506Z",
+      "fetchedAt": "2026-08-09T03:41:21.633Z",
       "diagram": {
         "source": "github",
         "path": "docs/c4/2-containers.mmd",
@@ -1072,7 +1072,7 @@
         },
         "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-07-30T09:30:41.131Z",
+      "fetchedAt": "2026-08-09T03:41:23.815Z",
       "diagram": {
         "source": "github",
         "path": "docs/c4/2-containers.mmd",
@@ -1572,7 +1572,7 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-07-30T09:30:42.347Z",
+      "fetchedAt": "2026-08-09T03:41:27.567Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",
