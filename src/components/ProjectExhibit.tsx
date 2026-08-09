@@ -4,7 +4,10 @@ import type { Project } from "@/lib/projects";
 import { contentNoticeHeading, getAllProjects } from "@/lib/projects";
 
 import { DemoPanel } from "@/components/DemoPanel";
-import { ProjectDiagram } from "@/components/ProjectDiagram";
+import {
+  hasArchitectureSurface,
+  ProjectDiagram,
+} from "@/components/ProjectDiagram";
 import { ProjectExhibitMotion } from "@/components/ProjectExhibitMotion";
 
 type ProjectExhibitProps = {
@@ -12,6 +15,7 @@ type ProjectExhibitProps = {
 };
 
 type ExhibitBadge = "live demo" | "exhibit" | "research";
+type PrimaryChapter = "demo" | "architecture";
 
 function resolveLiveDemoUrl(project: Project): string | undefined {
   if (project.demo?.type === "iframe") {
@@ -37,11 +41,7 @@ function exhibitDescription(project: Project): string {
   return project.summary.trim();
 }
 
-/**
- * Visual / live demos lead with the demo CTA.
- * Systems / research lead with GitHub (docs next when present).
- */
-/** Visual projects lead with demo; systems/research lead with GitHub (+ docs). */
+/** Visual projects have a live demo URL; systems/research do not. */
 function isVisualProject(liveDemoUrl: string | undefined): boolean {
   return Boolean(liveDemoUrl);
 }
@@ -62,17 +62,125 @@ function StackTags({ stack }: { stack: string[] }) {
   );
 }
 
-/** Project case study shell: hero → strip → architecture → proof → coda. */
+function ProofChapter({
+  project,
+  hasContent,
+  secondary,
+}: {
+  project: Project;
+  hasContent: boolean;
+  secondary?: boolean;
+}) {
+  const showStage = Boolean(project.demo);
+
+  return (
+    <section
+      className={[
+        "project-exhibit-proof project-exhibit-chapter",
+        showStage ? "project-exhibit-proof--stage" : "",
+        secondary ? "project-exhibit-chapter--secondary" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-labelledby="project-proof-heading"
+      data-exhibit-act="stage"
+    >
+      <div className="project-exhibit-proof-heading project-exhibit-rail">
+        <h2 id="project-proof-heading" className="project-exhibit-section-title">
+          Proof
+        </h2>
+      </div>
+
+      {!hasContent ? (
+        <aside className="content-notice project-exhibit-rail" role="status">
+          <p className="content-notice-heading">{contentNoticeHeading(project.contentStatus)}</p>
+          {project.contentMessage ? (
+            <p className="content-notice-message">{project.contentMessage}</p>
+          ) : null}
+          <a
+            href={`https://github.com/${project.repo}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="content-notice-link"
+          >
+            View repository on GitHub
+          </a>
+        </aside>
+      ) : null}
+
+      {showStage ? (
+        <div className="project-exhibit-stage" aria-label="Project proof">
+          <DemoPanel demo={project.demo} />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function ArchitectureChapter({
+  project,
+  secondary,
+}: {
+  project: Project;
+  secondary?: boolean;
+}) {
+  return (
+    <div
+      className={[
+        "project-exhibit-how project-exhibit-chapter",
+        secondary ? "project-exhibit-chapter--secondary" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      data-exhibit-act="how"
+    >
+      <ProjectDiagram
+        title={project.title}
+        diagram={project.diagram}
+        slug={project.slug}
+        githubRepoUrl={project.links.github}
+        branch={project.branch}
+      />
+    </div>
+  );
+}
+
+/** Project case study: hero → stack → primary middle → optional secondary → continue. */
 export function ProjectExhibit({ project }: ProjectExhibitProps) {
   const hasContent = project.contentStatus === "ok";
   const liveDemoUrl = resolveLiveDemoUrl(project);
   const badge = resolveBadge(project);
-  const showProofStage = Boolean(project.demo);
   const visual = isVisualProject(liveDemoUrl);
+  const hasArchitecture = hasArchitectureSurface(project.diagram);
+  const showProof = Boolean(project.demo);
+  const primaryChapter: PrimaryChapter = visual ? "demo" : "architecture";
   const projects = getAllProjects();
   const projectIndex = projects.findIndex((item) => item.slug === project.slug);
   const nextProject =
     projectIndex >= 0 ? projects[(projectIndex + 1) % projects.length] : undefined;
+
+  const proofChapter =
+    showProof ? (
+      <ProofChapter
+        key="proof"
+        project={project}
+        hasContent={hasContent}
+        secondary={primaryChapter !== "demo"}
+      />
+    ) : null;
+
+  const architectureChapter = hasArchitecture ? (
+    <ArchitectureChapter
+      key="architecture"
+      project={project}
+      secondary={primaryChapter !== "architecture"}
+    />
+  ) : null;
+
+  const middleChapters =
+    primaryChapter === "demo"
+      ? [proofChapter, architectureChapter]
+      : [architectureChapter, proofChapter];
 
   return (
     <ProjectExhibitMotion>
@@ -92,18 +200,18 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
             aria-label="Project actions"
             data-exhibit-actions
           >
-            {liveDemoUrl && (
+            {liveDemoUrl ? (
               <a
                 href={liveDemoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`project-exhibit-action${
-                  visual ? " project-exhibit-action--primary" : ""
+                  visual ? " project-exhibit-action--primary" : " project-exhibit-action--quiet"
                 }`}
               >
                 Open live demo ↗
               </a>
-            )}
+            ) : null}
             <a
               href={project.links.github}
               target="_blank"
@@ -114,100 +222,54 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
             >
               GitHub
             </a>
-            {project.links.docs && (
+            {project.links.docs ? (
               <a
                 href={project.links.docs}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`project-exhibit-action${
-                  !visual ? " project-exhibit-action--primary" : ""
-                }`}
+                className="project-exhibit-action project-exhibit-action--quiet"
               >
                 Docs
               </a>
-            )}
+            ) : null}
           </nav>
           <p className="project-exhibit-lede" data-exhibit-hero-lede>
             {exhibitDescription(project)}
           </p>
         </header>
 
-        <section className="project-exhibit-strip" aria-label="Project summary">
-          <p className="project-exhibit-strip-status">
-            <span>Status</span>
-            <strong>{project.status}</strong>
+        <section
+          className="project-exhibit-stack project-exhibit-rail"
+          aria-label="Stack and status"
+        >
+          <p className="project-exhibit-stack-status">
+            <span className="visually-hidden">Status</span>
+            {project.status}
           </p>
-          <div className="project-exhibit-strip-stack">
-            <span className="project-exhibit-strip-label">Stack</span>
+          <div className="project-exhibit-stack-glyphs">
             <StackTags stack={project.stack} />
           </div>
-          <nav className="project-exhibit-strip-links" aria-label="Key project links">
-            {liveDemoUrl ? (
-              <a href={liveDemoUrl} target="_blank" rel="noopener noreferrer">
-                Demo ↗
-              </a>
-            ) : null}
-            <a href={project.links.github} target="_blank" rel="noopener noreferrer">
-              GitHub ↗
-            </a>
-            {project.links.docs ? (
-              <a href={project.links.docs} target="_blank" rel="noopener noreferrer">
-                Docs ↗
-              </a>
-            ) : null}
-          </nav>
         </section>
 
-        <div className="project-exhibit-how" data-exhibit-act="how">
-          <ProjectDiagram
-            title={project.title}
-            diagram={project.diagram}
-            slug={project.slug}
-            githubRepoUrl={project.links.github}
-            branch={project.branch}
-          />
-        </div>
-
         <div className="project-exhibit-rest" data-exhibit-rest>
-          <section
-            className={`project-exhibit-proof${showProofStage ? " project-exhibit-proof--stage" : ""}`}
-            aria-labelledby="project-proof-heading"
-            data-exhibit-act="stage"
-          >
-            <div className="project-exhibit-proof-heading project-exhibit-rail">
-              <h2 id="project-proof-heading" className="project-exhibit-section-title">
-                Proof
-              </h2>
-            </div>
+          {middleChapters}
 
-            {!hasContent ? (
-              <aside className="content-notice project-exhibit-rail" role="status">
-                <p className="content-notice-heading">{contentNoticeHeading(project.contentStatus)}</p>
-                {project.contentMessage ? (
-                  <p className="content-notice-message">{project.contentMessage}</p>
-                ) : null}
-                <a
-                  href={`https://github.com/${project.repo}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="content-notice-link"
-                >
-                  View repository on GitHub
-                </a>
-              </aside>
-            ) : null}
-
-            {showProofStage ? (
-              <div className="project-exhibit-stage" aria-label="Project proof">
-              <DemoPanel demo={project.demo} />
-              </div>
-            ) : (
-              <div className="project-exhibit-proof-note">
-                <p className="project-exhibit-proof-kicker">Result</p>
-                <p>{project.summary}</p>
-              </div>
-            )}
-          </section>
+          {!hasContent && !showProof ? (
+            <aside className="content-notice project-exhibit-rail" role="status">
+              <p className="content-notice-heading">{contentNoticeHeading(project.contentStatus)}</p>
+              {project.contentMessage ? (
+                <p className="content-notice-message">{project.contentMessage}</p>
+              ) : null}
+              <a
+                href={`https://github.com/${project.repo}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="content-notice-link"
+              >
+                View repository on GitHub
+              </a>
+            </aside>
+          ) : null}
 
           <section
             className="project-exhibit-coda project-exhibit-rail"
@@ -217,26 +279,14 @@ export function ProjectExhibit({ project }: ProjectExhibitProps) {
             <h2 id="project-coda-heading" className="project-exhibit-section-title" data-exhibit-coda-item>
               Continue
             </h2>
-            <div className="project-exhibit-coda-links">
-              <div className="project-exhibit-coda-resources">
-                <a href={project.links.github} target="_blank" rel="noopener noreferrer">
-                  GitHub ↗
-                </a>
-                {project.links.docs ? (
-                  <a href={project.links.docs} target="_blank" rel="noopener noreferrer">
-                    Docs ↗
-                  </a>
-                ) : null}
-              </div>
-              <nav className="project-exhibit-coda-nav" aria-label="Project navigation">
-                <Link href="/projects">← Back to projects</Link>
-                {nextProject && nextProject.slug !== project.slug ? (
-                  <Link href={`/projects/${nextProject.slug}`}>
-                    Next: {nextProject.title} →
-                  </Link>
-                ) : null}
-              </nav>
-            </div>
+            <nav className="project-exhibit-coda-nav" aria-label="Project navigation">
+              <Link href="/projects">← Back to projects</Link>
+              {nextProject && nextProject.slug !== project.slug ? (
+                <Link href={`/projects/${nextProject.slug}`}>
+                  Next: {nextProject.title} →
+                </Link>
+              ) : null}
+            </nav>
           </section>
         </div>
       </article>

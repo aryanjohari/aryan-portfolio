@@ -88,7 +88,7 @@ When both routes share chrome mode `site` (workshop ↔ about ↔ `/projects/[sl
 
 The whole `.void-chrome-page` animates as one block so nested mount effects (`ProjectGallery`, `AboutAnchorNav`, `ProjectDiagram`) are not remounted or delayed.
 
-**Workshop gallery (page-local, not chrome):** `/workshop` mounts a self-contained Three.js edge-glow tablet carousel (`WorkshopCarousel`) inside `ProjectGallery`. It is independent of Atmosphere and BootField — separate canvas, disposed when leaving the page. CSS fake-3D coverflow + ScrollTrigger pin/scrub was dropped because it never read as real depth and the pin path failed twice; drag/snap is the primary control. See `docs/ui.md` Workshop section.
+**Workshop gallery (page-local, not chrome):** `/projects` (legacy `/workshop` redirect) mounts a self-contained Three.js edge-glow tablet carousel (`WorkshopCarousel`) inside `ProjectGallery`. It is independent of Atmosphere and BootField — separate canvas, disposed when leaving the page. CSS fake-3D coverflow + ScrollTrigger pin/scrub was dropped; the route is a **one-viewport flex shell** (no page scroll) with drag/snap as the primary control. See `docs/ui.md` Workshop section.
 
 ## Implementation notes
 

@@ -1416,7 +1416,36 @@ button.portfolio-guide-hint--focus:disabled {
   }
 }
 
-/* Workshop — horizontal coverflow tablets (vertical scroll pin-scrub) */
+/* Workshop — one-viewport shell; horizontal drag carousel (no page scroll) */
+
+html:has(.workshop-page),
+body:has(.workshop-page) {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+@supports (height: 100dvh) {
+  html:has(.workshop-page),
+  body:has(.workshop-page) {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+}
+
+body:has(.workshop-page) .site-shell {
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body:has(.workshop-page) .void-chrome-page {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
 
 body:has(.workshop-page) .site-main,
 body:has(.workshop-page) .site-footer,
@@ -1431,7 +1460,10 @@ body:has(.workshop-page) .site-footer-sep {
 }
 
 body:has(.workshop-page) .site-footer {
+  flex-shrink: 0;
   border-top: 1px solid var(--color-border);
+  padding: var(--space-1) var(--space-4)
+    calc(var(--space-1) + env(safe-area-inset-bottom, 0px));
 }
 
 body:has(.workshop-page) .site-main {
@@ -1440,9 +1472,12 @@ body:has(.workshop-page) .site-main {
   padding-top: var(--space-2);
   padding-left: 0;
   padding-right: 0;
+  padding-bottom: 0;
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .workshop-page {
@@ -1452,12 +1487,14 @@ body:has(.workshop-page) .site-main {
   min-height: 0;
   width: 100%;
   gap: var(--space-2);
-  padding-bottom: calc(var(--space-4) * 1.5);
+  padding-bottom: 0;
+  overflow: hidden;
 }
 
 .workshop-intro {
+  flex-shrink: 0;
   margin: 0 auto;
-  margin-bottom: var(--space-1);
+  margin-bottom: 0;
   padding: 0 clamp(1.25rem, 4vw, 2.75rem);
   max-width: 42rem;
   width: 100%;
@@ -1483,9 +1520,12 @@ body:has(.workshop-page) .site-main {
 .project-gallery {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: var(--space-2);
   width: 100%;
   outline: none;
+  overflow: hidden;
 }
 
 .project-gallery:focus-visible {
@@ -1501,6 +1541,7 @@ body:has(.workshop-page) .site-main {
 }
 
 .project-gallery-chrome {
+  flex-shrink: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1579,14 +1620,16 @@ body:has(.workshop-page) .site-main {
   font-weight: 400;
 }
 
-/* Transparent stage: the workshop canvas layers over the fixed Atmosphere
-   canvas (z-index 0) while staying below void chrome (z-index 3). */
+/* Transparent stage: fills leftover viewport after intro/chrome/footer.
+   Canvas layers over Atmosphere (z-index 0), below void chrome (z-index 3).
+   ResizeObserver on the host keeps the WebGL buffer matched to flex size. */
 .project-gallery-stage {
   position: relative;
   z-index: 1;
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  min-height: min(54dvh, 30rem);
-  height: min(54dvh, 30rem);
+  height: auto;
   overflow: hidden;
   background: transparent;
   touch-action: none;
@@ -1604,11 +1647,18 @@ body:has(.workshop-page) .site-main {
   cursor: grabbing;
 }
 
-/* Static DOM cards — reduced-motion / no-WebGL */
+/* Static DOM cards — reduced-motion / no-WebGL: scroll inside the shell */
+.project-gallery--fallback {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 .project-gallery-fallback-list {
   list-style: none;
   margin: 0 auto;
-  padding: 0 clamp(1.25rem, 4vw, 2.75rem);
+  padding: 0 clamp(1.25rem, 4vw, 2.75rem)
+    calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
   max-width: 42rem;
   width: 100%;
   box-sizing: border-box;
@@ -1717,10 +1767,31 @@ body:has(.workshop-page) .site-main {
   color: var(--color-text);
 }
 
-@media (max-width: 767px) {
-  .project-gallery-stage {
-    min-height: min(46dvh, 24rem);
-    height: min(46dvh, 24rem);
+/* Short viewports: keep intro + chrome, shrink chrome budget so stage survives */
+@media (max-height: 520px) {
+  body:has(.workshop-page) .site-main {
+    padding-top: var(--space-1);
+  }
+
+  .workshop-page {
+    gap: var(--space-1);
+  }
+
+  .workshop-page .page-heading {
+    margin-bottom: 0.15rem;
+  }
+
+  .workshop-lede {
+    font-size: var(--type-caption);
+  }
+
+  .project-gallery {
+    gap: 0.15rem;
+  }
+
+  body:has(.workshop-page) .site-footer {
+    padding-top: 0.35rem;
+    padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -1769,7 +1840,7 @@ body:has(.workshop-page) .site-main {
   color: var(--color-muted);
 }
 
-/* Project exhibit layout — hero → how it works → stack/details (normal scroll) */
+/* Project exhibit layout — hero → stack → middle chapter(s) → continue */
 
 .project-exhibit {
   display: flex;
@@ -1810,9 +1881,9 @@ body:has(.workshop-page) .site-main {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  min-height: min(52dvh, calc(100dvh - 8rem));
+  min-height: min(42dvh, calc(100dvh - 10rem));
   justify-content: flex-start;
-  padding-block: var(--space-3) var(--space-4);
+  padding-block: var(--space-3) var(--space-3);
   box-sizing: border-box;
 }
 
@@ -1827,9 +1898,9 @@ body:has(.workshop-page) .site-main {
     column-gap: clamp(var(--space-3), 4vw, var(--space-4));
     row-gap: var(--space-2);
     align-content: start;
-    min-height: min(58dvh, calc(100dvh - 6.5rem));
-    padding-block: clamp(var(--space-3), 4vh, var(--space-4)) var(--space-4);
-    padding-top: clamp(2.5rem, 8vh, 5.5rem);
+    min-height: min(48dvh, calc(100dvh - 8rem));
+    padding-block: clamp(var(--space-3), 4vh, var(--space-4)) var(--space-3);
+    padding-top: clamp(2rem, 6vh, 4.5rem);
   }
 }
 
@@ -2114,9 +2185,9 @@ body:has(.workshop-page) .site-main {
 .arch-overview-graph {
   min-width: 0;
   width: 100%;
-  /* Stage tall enough to fit full viewBox without crop or microscopic nodes */
-  min-height: min(46dvh, 400px);
-  height: clamp(280px, 48dvh, 520px);
+  /* Fitted stage — tall enough to read, not a second homepage */
+  min-height: min(36dvh, 320px);
+  height: clamp(240px, 40dvh, 420px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2148,13 +2219,13 @@ body:has(.workshop-page) .site-main {
 
   .arch-overview-graph {
     order: 1;
-    height: clamp(360px, 52dvh, 580px);
-    min-height: 360px;
+    height: clamp(280px, 42dvh, 460px);
+    min-height: 280px;
   }
 
   .arch-path-story {
     order: 2;
-    max-height: clamp(360px, 52dvh, 580px);
+    max-height: clamp(280px, 42dvh, 460px);
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-right: 0.15rem;
@@ -2414,8 +2485,8 @@ body:has(.workshop-page) .site-main {
   min-width: 44px;
   min-height: 44px;
   padding: 0.35rem 0.7rem;
-  border: 1px solid rgba(244, 240, 232, 0.2);
-  background: rgba(244, 240, 232, 0.02);
+  border: 1px solid rgba(244, 240, 232, 0.12);
+  background: transparent;
   color: #f4f0e8;
   font: inherit;
   font-size: 0.75rem;
@@ -2454,8 +2525,8 @@ body:has(.workshop-page) .site-main {
 .c4-viewer-stage {
   position: relative;
   width: 100%;
-  height: var(--c4-stage-height, clamp(28rem, 64dvh, 48rem));
-  min-height: 22rem;
+  height: var(--c4-stage-height, clamp(22rem, 48dvh, 36rem));
+  min-height: 18rem;
   overflow: hidden;
   overscroll-behavior: contain;
   touch-action: none;
@@ -2774,8 +2845,8 @@ body:has(.workshop-page) .site-main {
   }
 
   .c4-viewer-stage {
-    height: clamp(22rem, 56dvh, 34rem);
-    min-height: 22rem;
+    height: clamp(18rem, 46dvh, 28rem);
+    min-height: 18rem;
   }
 
   .c4-viewer-fullscreen {
@@ -2951,8 +3022,8 @@ body:has(.workshop-page) .site-main {
   }
 
   .c4-viewer-stage {
-    height: var(--c4-stage-height, clamp(22rem, 56dvh, 34rem));
-    min-height: 22rem;
+    height: var(--c4-stage-height, clamp(18rem, 46dvh, 28rem));
+    min-height: 18rem;
   }
 }
 
@@ -2992,8 +3063,8 @@ body:has(.workshop-page) .site-main {
   }
 
   .arch-overview-graph {
-    height: clamp(260px, 44dvh, 420px);
-    min-height: 260px;
+    height: clamp(240px, 40dvh, 360px);
+    min-height: 240px;
   }
 
   .arch-graph-label {
@@ -4010,69 +4081,50 @@ body:has(.about-page) .site-main {
   box-sizing: border-box;
 }
 
-.project-exhibit-strip {
-  width: calc(100% + (var(--project-page-gutter) * 2));
-  margin-inline: calc(var(--project-page-gutter) * -1);
-  padding: 0.8rem var(--project-page-gutter);
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-2) clamp(var(--space-2), 3vw, var(--space-4));
-  border-block: 1px solid var(--color-border);
+/* Quiet stack glyphs under the hero — not a full-bleed link strip */
+.project-exhibit-stack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  padding-block: 0 var(--space-3);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid rgba(242, 240, 235, 0.08);
   box-sizing: border-box;
 }
 
-.project-exhibit-strip-status,
-.project-exhibit-strip-stack {
+.project-exhibit-stack-status {
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-width: 0;
-}
-
-.project-exhibit-strip-status span,
-.project-exhibit-strip-label {
+  flex: 0 0 auto;
   color: var(--color-muted);
   font-size: var(--type-caption);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.project-exhibit-strip-status strong {
-  font-size: var(--type-meta);
-  font-weight: 400;
+  letter-spacing: 0.06em;
   text-transform: lowercase;
+  opacity: 0.85;
 }
 
-.project-exhibit-strip-stack .stack-tags {
+.project-exhibit-stack-glyphs {
   min-width: 0;
-  flex-wrap: nowrap;
-  gap: 0.35rem;
-  overflow: hidden;
+  flex: 1 1 auto;
 }
 
-.project-exhibit-strip-stack .stack-tag {
+.project-exhibit-stack .stack-tags {
+  gap: 0.35rem;
+}
+
+.project-exhibit-stack .stack-tag {
   padding-inline: 0.45rem;
   border-color: rgba(242, 240, 235, 0.1);
   font-size: var(--type-caption);
-}
-
-.project-exhibit-strip-links,
-.project-exhibit-coda-resources,
-.project-exhibit-coda-nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.project-exhibit-strip-links {
-  white-space: nowrap;
-  font-size: var(--type-meta);
+  color: var(--color-muted);
 }
 
 .project-exhibit-how {
-  padding-block: clamp(4rem, 9vw, 8rem);
+  padding-block: clamp(3rem, 7vw, 6rem);
+}
+
+.project-exhibit-chapter--secondary.project-exhibit-how {
+  padding-block: clamp(2.5rem, 6vw, 5rem);
 }
 
 .arch-journey-section {
@@ -4080,7 +4132,7 @@ body:has(.about-page) .site-main {
 }
 
 .arch-overview-header {
-  margin-bottom: clamp(var(--space-3), 5vw, 4rem);
+  margin-bottom: clamp(var(--space-2), 3vw, var(--space-3));
   max-width: min(100%, 72rem);
 }
 
@@ -4102,9 +4154,9 @@ body:has(.about-page) .site-main {
   padding: var(--space-2);
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: rgba(10, 10, 10, 0.94);
-  border: 1px solid var(--color-border);
-  backdrop-filter: blur(8px);
+  background: rgba(10, 10, 10, 0.55);
+  border: 1px solid rgba(242, 240, 235, 0.08);
+  backdrop-filter: blur(4px);
 }
 
 .arch-path-beat {
@@ -4125,14 +4177,14 @@ body:has(.about-page) .site-main {
   grid-column: 3 / -1;
   grid-row: 1;
   min-width: 0;
-  border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.012);
+  border: 1px solid rgba(242, 240, 235, 0.1);
+  background: rgba(255, 255, 255, 0.01);
 }
 
 .arch-overview-graph {
   width: 100%;
-  height: clamp(32rem, 68dvh, 48rem);
-  min-height: 32rem;
+  height: clamp(22rem, 46dvh, 36rem);
+  min-height: 22rem;
   padding: clamp(var(--space-2), 2.5vw, var(--space-4));
   padding-left: clamp(5rem, 13vw, 13rem);
   border: 0;
@@ -4146,8 +4198,8 @@ body:has(.about-page) .site-main {
   min-height: 4.5rem;
   padding: 0.75rem clamp(var(--space-2), 2vw, var(--space-3));
   padding-left: clamp(5rem, 13vw, 13rem);
-  border-top: 1px solid var(--color-border);
-  background: var(--color-bg);
+  border-top: 1px solid rgba(242, 240, 235, 0.08);
+  background: transparent;
 }
 
 .project-exhibit-rest {
@@ -4157,7 +4209,11 @@ body:has(.about-page) .site-main {
 }
 
 .project-exhibit-proof {
-  padding-block: clamp(3.5rem, 8vw, 7rem);
+  padding-block: clamp(3rem, 7vw, 6rem);
+}
+
+.project-exhibit-chapter--secondary.project-exhibit-proof {
+  padding-block: clamp(2.5rem, 6vw, 5rem);
 }
 
 .project-exhibit-proof-heading {
@@ -4204,16 +4260,12 @@ body:has(.about-page) .site-main {
   border-top: 1px solid var(--color-border);
 }
 
-.project-exhibit-coda-links {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
 .project-exhibit-coda-nav {
-  justify-content: flex-end;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .project-exhibit-coda a {
@@ -4238,12 +4290,12 @@ body:has(.about-page) .site-main {
     max-width: min(100%, 92rem);
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-template-rows: auto minmax(8rem, 1fr) auto;
+    grid-template-rows: auto minmax(5rem, 1fr) auto;
     grid-template-areas: none;
     column-gap: clamp(var(--space-2), 2vw, var(--space-4));
     row-gap: var(--space-2);
     align-content: stretch;
-    min-height: min(72dvh, 52rem);
+    min-height: min(56dvh, 40rem);
   }
 
   .project-exhibit-badge {
@@ -4282,24 +4334,10 @@ body:has(.about-page) .site-main {
     min-height: auto;
   }
 
-  .project-exhibit-strip {
-    grid-template-columns: auto 1fr;
-  }
-
-  .project-exhibit-strip-stack {
-    justify-self: end;
-  }
-
-  .project-exhibit-strip-stack .stack-tags {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    overflow: visible;
-  }
-
-  .project-exhibit-strip-links {
-    grid-column: 1 / -1;
-    padding-top: 0.65rem;
-    border-top: 1px solid rgba(242, 240, 235, 0.08);
+  .project-exhibit-stack {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
   }
 
   .arch-overview-layout {
@@ -4325,8 +4363,8 @@ body:has(.about-page) .site-main {
   }
 
   .arch-overview-graph {
-    height: clamp(22rem, 55dvh, 36rem);
-    min-height: 22rem;
+    height: clamp(18rem, 46dvh, 30rem);
+    min-height: 18rem;
     padding: var(--space-2);
   }
 
@@ -4338,7 +4376,7 @@ body:has(.about-page) .site-main {
 @media (max-width: 767px) {
   .project-exhibit-hero {
     gap: var(--space-3);
-    padding-block: 3rem 4rem;
+    padding-block: 2.5rem 2rem;
   }
 
   .project-title {
@@ -4356,32 +4394,17 @@ body:has(.about-page) .site-main {
     justify-content: center;
   }
 
-  .project-exhibit-strip {
-    grid-template-columns: 1fr;
-    gap: 0.65rem;
-  }
-
-  .project-exhibit-strip-stack {
-    justify-self: stretch;
-    align-items: flex-start;
-  }
-
-  .project-exhibit-strip-stack .stack-tags {
-    justify-content: flex-start;
-  }
-
-  .project-exhibit-strip-links {
-    grid-column: 1;
-    flex-wrap: wrap;
+  .project-exhibit-stack {
+    padding-bottom: var(--space-2);
   }
 
   .project-exhibit-how {
-    padding-block: 4rem;
+    padding-block: 3rem;
   }
 
   .arch-overview-graph {
-    height: clamp(18rem, 46dvh, 28rem);
-    min-height: 18rem;
+    height: clamp(16rem, 42dvh, 24rem);
+    min-height: 16rem;
     padding: var(--space-1);
   }
 
@@ -4391,7 +4414,7 @@ body:has(.about-page) .site-main {
   }
 
   .project-exhibit-proof {
-    padding-block: 4rem;
+    padding-block: 3rem;
   }
 
   .project-exhibit-stage .demo-panel,
@@ -4404,11 +4427,9 @@ body:has(.about-page) .site-main {
     padding-inline: var(--space-2) 0;
   }
 
-  .project-exhibit-coda-links {
-    flex-direction: column;
-  }
-
   .project-exhibit-coda-nav {
+    flex-direction: column;
+    align-items: flex-start;
     justify-content: flex-start;
   }
 }

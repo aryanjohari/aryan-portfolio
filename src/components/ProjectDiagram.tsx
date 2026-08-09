@@ -22,6 +22,11 @@ function hasC4Surface(diagram: ProjectDiagramData): boolean {
   );
 }
 
+/** True when the project has a real C4 or owned-graph architecture surface (not the base fallback). */
+export function hasArchitectureSurface(diagram: ProjectDiagramData): boolean {
+  return hasC4Surface(diagram) || Boolean(diagram.graph);
+}
+
 function sourceCopy(diagram: ProjectDiagramData): string {
   if (hasC4Surface(diagram)) {
     const parts: string[] = [];

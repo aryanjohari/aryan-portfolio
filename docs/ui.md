@@ -74,7 +74,7 @@ Helpers: `motionDuration("fast" \| "medium" \| "slow")`, `motionDurationCss(...)
 
 - Flat surfaces only — no box-shadow, no backdrop-blur, no gradients except header accent and workshop project visual placeholders (slug-hashed void panes, on fallback cards and inside WebGL tablet content). Workshop **WebGL** projects are quiet **edge-glow tablets** — cream type on alpha framed by a light-drawn beveled rim; plates are near-transparent at center and bloom only at silhouette (Fresnel). No tinted glass fill, no colour splash, **no `transmission`**, no ice-shard spectacle, no glowing monograms.
 - 1px solid borders using `--color-border`
-- **No scroll hijacking of the whole site, no smooth-scroll libraries, no workshop page pin.** Workshop carousel is drag/swipe (+ arrows / dots / keyboard) inside its own canvas stage; the footer stays in normal document flow below. Chrome morph (home ↔ site) remains the intentional route transition; do not add full-page takeover transitions.
+- **No scroll hijacking of the whole site, no smooth-scroll libraries, no workshop page pin.** Workshop carousel is drag/swipe (+ arrows / keyboard) inside its own canvas stage. `/projects` locks to a **one-viewport shell** (`overflow: hidden` on html/body + flex-filled stage) so the page itself does not scroll; reduced-motion fallback cards may scroll **inside** the gallery. Footer stays compact in the flex column. Chrome morph (home ↔ site) remains the intentional route transition; do not add full-page takeover transitions.
 - Texture/grain/scanline **only** on the site header accent band and workshop fallback cards (same family as header accent); WebGL tablet content planes are clean cream typography on pure alpha, sealed between glass layers
 - Links: underline on hover, no colour change
 
@@ -177,17 +177,19 @@ Editorial composition (desktop): oversized name top-left · centered ask + invit
 
 **FeaturedDemos CSS classes:** `.featured-demos`, `.featured-demo-row`, `.featured-demo-title`, `.featured-demo-summary`, `.featured-demo-action`
 
-### Workshop (`/workshop`)
+### Workshop (`/projects`, redirects from `/workshop`)
 
-Immersive project gallery — no featured demos. Same void site chrome as other non-home routes (compact name + nav + mini ask). Intro sits above a **self-contained Three.js stage**; footer remains reachable in normal document flow (no page pin).
+Immersive project gallery — no featured demos. Same void site chrome as other non-home routes (compact name + nav + mini ask). Intro sits above a **self-contained Three.js stage**.
+
+**One-viewport shell:** `body:has(.workshop-page)` locks html/body + `.site-shell` to `100dvh` with `overflow: hidden`. Flex column: void header (natural) → `.void-chrome-page` / `.site-main` / `.workshop-page` / `.project-gallery` (`flex: 1; min-height: 0`) → compact footer in flow. `.project-gallery-stage` is **`flex: 1`** (not a fixed `dvh` height) so it fills leftover space after intro + chrome + footer. Short viewports (`max-height: 520px`) tighten gaps/padding. No page pin/scrub — layout overflow was the old micro-scroll bug, not intentional vertical scrub.
 
 **Transparent stage over Atmosphere:** the workshop owns its **own WebGL canvas** (`src/components/motion/WorkshopCarousel.ts`) which is transparent and layered over the site-wide Atmosphere canvas — never merged with it. `scene.background = null`, `WebGLRenderer({ alpha: true, premultipliedAlpha: true })`, `setClearColor(0x000000, 0)`, and `.project-gallery-stage` + canvas backgrounds are transparent. Stacking: Atmosphere `position: fixed; z-index: 0` → `.site-shell` / `.project-gallery-stage` `z-index: 1` → void chrome `z-index: 3`. Atmosphere trail reads **through** each tablet (near-zero fill) but is **deepened** behind the body by the per-tablet void shade, so the stack still reads as depth instead of the trail sliding over the glass. **No `transmission`** — Fresnel edge glow + rim contour keep the stage cheap and coherent with the quiet void.
 
 **Gallery (`ProjectGallery`):** horizontal **WebGL edge-glow tablet carousel**. Active tablet centered with a small resting tilt so thickness / contour light read; neighbors offset on X, pushed back on Z, rotated away on Y (real coverflow). Footprint ~4.55×2.9, spacing ~4.15, volume depth ~0.72. Every layer shares one slug-seeded **softly chipped rectangular** outline. Smooth normals so the Fresnel silhouette stays continuous (not faceted wire noise).
 
-**Responsive framing:** stage height is `min(54dvh, 30rem)` desktop / `min(46dvh, 24rem)` mobile so the footer stays reachable without scrolling past a giant stage. On every resize a **camera fit pass** dollies the camera so the active tablet occupies `fitWidthFrac`/`fitHeightFrac` of the frame (whichever axis binds, clamped `cameraZMin..cameraZMax`) — the tablet stays proportionate on short desktop stages and phones instead of a fixed world size cropping the frame.
+**Responsive framing:** stage size comes from the flex leftover (not a fixed `54dvh`/`46dvh` budget). On every host resize a **ResizeObserver** + **camera fit pass** dollies the camera so the active tablet occupies `fitWidthFrac`/`fitHeightFrac` of the frame (whichever axis binds, clamped `cameraZMin..cameraZMax`) — the tablet stays proportionate when the shell reflows.
 
-**Page chrome:** same house pattern as About — `> workshop` + one short lede (*Selected projects — drag to browse.*). Carousel chrome is a single typographic row — borderless `←  02 / 05  →` (current index bright, total muted); no dots. Keyboard ←/→ / Home / End still jump; drag remains primary.
+**Page chrome:** same house pattern as About — `> projects` + one short lede (*Selected projects — drag to browse.*). Carousel chrome is a single typographic row — borderless `←  02 / 05  →` (current index bright, total muted); no dots. Keyboard ←/→ / Home / End still jump; drag remains primary.
 
 **Entrance / exit:** after WebGL mounts, tablets start extinguished and deep, then **rim-ignite** (contour + Fresnel ease up) while **depth-assemble** fans spacing/coverflow to rest; content plane fades in a beat later (`playEnter`, ~0.7s, `MOTION.workshop.enter*`). Intro copy + chrome get a quiet local opacity settle (`MOTION.medium`) so they don’t pop against the stage. On leave, `playExit` extinguishes the rim (~0.22s) while the canvas is still connected, then dispose. Reduced-motion uses the DOM fallback (no WebGL enter). VoidChrome’s page fade still owns the route-level transition — this is a stage-local secondary beat, not a second full-page fade.
 
@@ -223,8 +225,9 @@ Each tablet is **five meshes**, back → front:
 │           │ Title · hook             │  cream type framed  │
 │           │ status · open project    │  by light contour   │
 │      (Atmosphere reads THROUGH the empty body)              │
+│      stage = flex leftover of one viewport                  │
 │                                                             │
-│ footer (normal flow below stage)                            │
+│ footer (compact, still in the flex column)                  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -249,7 +252,9 @@ Exhibit panels match iframe sandbox height. Body scrolls on mobile.
 
 ### Project page (`/projects/[slug]`)
 
-Single-column **exhibit** inside the wider project shell (`max-width: 1400px`). Story text stays ~72ch; diagram/stage can stretch wider. Shares the same void site chrome (mini ask included).
+Single-column **case study** inside the wider project shell (`max-width: 1400px`). Story text stays ~72ch; diagram/stage can stretch wider. Shares the same void site chrome (mini ask included).
+
+**Flow:** Hero → quiet stack glyphs → one primary middle chapter → optional secondary → quiet continue.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -257,25 +262,34 @@ Single-column **exhibit** inside the wider project shell (`max-width: 1400px`). 
 ├──────────────────────────────────────────────────────────────┤
 │  live demo | exhibit | research                              │
 │  Title                                                       │
-│  CTAs · full description lede…                               │
+│  one primary CTA (+ quiet secondary) · lede…                 │
 │                                                              │
-│  How it works                                                │
-│  ┌ fitted Containers map ────────────┐  path beats (rail)   │
-│  │ click marked nodes to Dive        │  (mobile: beats first)│
-│  └───────────────────────────────────┘                       │
-│  [Dive into architecture]                                    │
+│  status whisper · stack glyphs/tags                          │
 │                                                              │
-│  Stack + Details                                             │
+│  Primary middle (by project type):                           │
+│    visual  → Proof / demo                                    │
+│    systems → Architecture / How it works                     │
+│                                                              │
+│  Secondary (only when it exists & adds signal):              │
+│    the other of proof ↔ architecture                         │
+│                                                              │
+│  Continue — ← projects · Next: … →                           │
 ├──────────────────────────────────────────────────────────────┤
 │ footer                                                       │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**Live / iframe:** primary action is **Open live demo ↗** (new tab). No full-page iframe hero on the slug page. Workshop cards stay the short hook; this page is the deeper exhibit.
+**Hero CTAs:** One clear primary — **Open live demo ↗** for visual projects, **GitHub** for systems/research. Docs stay quiet secondary. No full-bleed status/stack/links strip; stack is a quiet tag row under the hero with status as a meta whisper.
 
-**Exhibit registry demos:** Stage still renders `DemoPanel` with static sample content (after How it works when present).
+**Proof:** Only when a wired `demo` exists (iframe exhibit or registry sample). No ghost Proof heading / summary-only Result block.
 
-**Diagram:** Every slug shows How it works. Owned graph IR renders as a fitted Containers overview with selectable path beats (node highlight, no camera). When `diagram.c4.diveTargets` is present, Dive opens a sheet/modal with C3 mermaid + caption. Missing IR uses the base flowchart. There is no pinned scroll or Mermaid walkthrough on the overview.
+**Architecture:** Only when C4 or an owned graph IR is available. Base Input→Core→Output fallback is not shown as a chapter. Height/spacing matches the page rhythm (not a second homepage / bolted-on docs app). C4 zoom/dive behavior unchanged.
+
+**Continue:** Quiet navigation only (back to projects + next project). No repeated Demo/GitHub/Docs action farm.
+
+**Live / iframe:** Primary action opens the live demo in a new tab. No full-page iframe hero on the slug page. Workshop cards stay the short hook; this page is the deeper exhibit.
+
+**Exhibit registry demos:** Stage still renders `DemoPanel` with static sample content — primary for visual projects, secondary after architecture for systems when present.
 
 ### About (`/about`) — void blog read
 
@@ -318,8 +332,8 @@ Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **
 | `PortfolioGuide` | `src/components/PortfolioGuide.tsx` | Home ask + invite/reply; mini ask + panel on site chrome |
 | `ProjectGallery` | `src/components/ProjectGallery.tsx` | Workshop Three.js edge-glow tablet carousel (drag/snap; DOM a11y + fallback) |
 | `WorkshopCarousel` | `src/components/motion/WorkshopCarousel.ts` | Page-local transparent WebGL factory for edge-glow tablets — Fresnel plates / type / rim (dispose on unmount) |
-| `ProjectExhibit` | `src/components/ProjectExhibit.tsx` | Project exhibit: hero, How it works, stack, details |
-| `ProjectDiagram` | `src/components/ProjectDiagram.tsx` | How it works — C4 explorer, owned fitted graph, or static base SVG |
+| `ProjectExhibit` | `src/components/ProjectExhibit.tsx` | Case study shell: hero → stack → primary/secondary chapters → continue |
+| `ProjectDiagram` | `src/components/ProjectDiagram.tsx` | How it works when C4/owned graph exists (`hasArchitectureSurface`) |
 | `ArchitectureJourney` | `src/components/ArchitectureJourney.tsx` | Selects the unified C4 path or owned-graph fallback |
 | `C4ArchitectureExplorer` | `src/components/C4ArchitectureExplorer.tsx` | Full-bleed C1 → C2 → C3 state and navigation |
 | `C4DiagramViewer` | `src/components/C4DiagramViewer.tsx` | Live C4 SVG fit, pan, touch pinch, zoom, and fullscreen |
@@ -331,8 +345,8 @@ Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **
 
 | Breakpoint | Behaviour |
 |------------|-----------|
-| `< 1024px` | Exhibit stacks; How it works shows path story above full-width graph; Dive is a full-viewport sheet; workshop carousel drag/touch; ask send ≥44px |
-| `≥ 1024px` | Index/about: 960px max-width. Project pages: wide shell; How it works = graph + story rail; Dive = side modal panel |
+| `< 1024px` | Exhibit stacks; architecture path story above full-width graph when present; Dive is a full-viewport sheet; workshop carousel drag/touch; ask send ≥44px |
+| `≥ 1024px` | Index/about: 960px max-width. Project pages: wide shell; architecture = graph + story rail; Dive = side modal panel |
 | All | Shell / header / footer respect `env(safe-area-inset-*)`; no horizontal page overflow (`overflow-x: clip`); `prefers-reduced-motion` skips graph/dive entrance |
 
 ## Demo panel states
