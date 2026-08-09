@@ -269,7 +269,7 @@ export const MOTION = {
 
   /**
    * Summoned matte plate over slug reading portal (proof / architecture).
-   * Rise from void → skim plate; Dive expands CSS layout; Esc layers out.
+   * Rise from void → skim plate; Dive portals ~80% viewport tools shell; Esc layers out.
    */
   matte: {
     summon: 0.55,

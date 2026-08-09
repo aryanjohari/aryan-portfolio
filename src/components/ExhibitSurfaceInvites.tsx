@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { DemoPanel } from "@/components/DemoPanel";
 import {
@@ -108,12 +109,12 @@ export function ExhibitSurfaces({
           <div
             className={`exhibit-stage-grid${duo ? " exhibit-stage-grid--duo" : ""}`}
           >
-            {surfaces.map((id) => (
+            {surfaces.map((surfaceId) => (
               <ExhibitStageColumn
-                key={id}
-                id={id}
+                key={surfaceId}
+                id={surfaceId}
                 project={project}
-                primary={id === primary}
+                primary={surfaceId === primary}
               />
             ))}
           </div>
@@ -134,12 +135,17 @@ function ExhibitStageColumn({
 }) {
   const copy = SURFACE_COPY[id];
   const titleId = useId();
-  const slotRef = useRef<HTMLDivElement>(null);
+  const diveRootRef = useRef<HTMLDivElement>(null);
   const [dive, setDive] = useState(false);
+  const [canPortal, setCanPortal] = useState(false);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const lede = id === "proof" ? proofLede(project) : architectureLede(project);
   const presentation = dive ? "tools" : "canvas";
+
+  useEffect(() => {
+    setCanPortal(true);
+  }, []);
 
   useEffect(() => {
     if (!dive) return;
@@ -158,9 +164,11 @@ function ExhibitStageColumn({
     };
     window.addEventListener("keydown", onKey, true);
 
-    const closeBtn =
-      slotRef.current?.querySelector<HTMLElement>(".matte-panel-close");
-    closeBtn?.focus();
+    queueMicrotask(() => {
+      diveRootRef.current
+        ?.querySelector<HTMLElement>(".matte-panel-close")
+        ?.focus();
+    });
 
     return () => {
       window.removeEventListener("keydown", onKey, true);
@@ -170,6 +178,66 @@ function ExhibitStageColumn({
       previousFocusRef.current = null;
     };
   }, [dive]);
+
+  const surface = (
+    <div
+      className="matte-surface-host"
+      data-matte-surface={id}
+      data-void-scroll-exempt
+    >
+      {id === "proof" ? (
+        <DemoPanel demo={project.demo} presentation={presentation} />
+      ) : (
+        <ProjectDiagram
+          title={project.title}
+          diagram={project.diagram}
+          slug={project.slug}
+          githubRepoUrl={project.links.github}
+          branch={project.branch}
+          presentation={presentation}
+        />
+      )}
+    </div>
+  );
+
+  const divePortal =
+    canPortal && dive
+      ? createPortal(
+          <div
+            ref={diveRootRef}
+            className="exhibit-matte-dive"
+            data-void-scroll-exempt
+          >
+            <button
+              type="button"
+              className="exhibit-matte-backdrop"
+              aria-label="Return to story"
+              tabIndex={-1}
+              onClick={() => setDive(false)}
+            />
+            <div
+              className="exhibit-matte-frame exhibit-matte-frame--dive"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={titleId}
+            >
+              <span id={titleId} className="visually-hidden">
+                {copy.title}
+              </span>
+              <MattePanel
+                title={copy.title}
+                invitation={copy.invitation}
+                layer="dive"
+                onDive={() => setDive(true)}
+                onClose={() => setDive(false)}
+              >
+                {surface}
+              </MattePanel>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
 
   return (
     <article
@@ -191,61 +259,26 @@ function ExhibitStageColumn({
       </div>
 
       <div
-        ref={slotRef}
-        className={`exhibit-matte-slot${dive ? " is-dive" : ""}`}
+        className={`exhibit-matte-slot${dive ? " is-holding" : ""}`}
         data-void-scroll-exempt
       >
         {dive ? (
-          <button
-            type="button"
-            className="exhibit-matte-backdrop"
-            aria-label="Return to story"
-            tabIndex={-1}
-            onClick={() => setDive(false)}
-          />
-        ) : null}
-        <div
-          className="exhibit-matte-frame"
-          role={dive ? "dialog" : undefined}
-          aria-modal={dive ? true : undefined}
-          aria-labelledby={dive ? titleId : undefined}
-        >
-          {dive ? (
-            <span id={titleId} className="visually-hidden">
-              {copy.title}
-            </span>
-          ) : null}
-          <MattePanel
-            title={copy.title}
-            invitation={copy.invitation}
-            layer={dive ? "dive" : "plate"}
-            onDive={() => setDive(true)}
-            onClose={() => setDive(false)}
-          >
-            <div
-              className="matte-surface-host"
-              data-matte-surface={id}
-              data-void-scroll-exempt
+          <div className="exhibit-matte-slot-spacer" aria-hidden="true" />
+        ) : (
+          <div className="exhibit-matte-frame">
+            <MattePanel
+              title={copy.title}
+              invitation={copy.invitation}
+              layer="plate"
+              onDive={() => setDive(true)}
+              onClose={() => setDive(false)}
             >
-              {id === "proof" ? (
-                <DemoPanel
-                  demo={project.demo}
-                  presentation={presentation}
-                />
-              ) : (
-                <ProjectDiagram
-                  title={project.title}
-                  diagram={project.diagram}
-                  slug={project.slug}
-                  githubRepoUrl={project.links.github}
-                  branch={project.branch}
-                  presentation={presentation}
-                />
-              )}
-            </div>
-          </MattePanel>
-        </div>
+              {surface}
+            </MattePanel>
+          </div>
+        )}
       </div>
+      {divePortal}
     </article>
   );
 }

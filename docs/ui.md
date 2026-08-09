@@ -103,7 +103,7 @@ Two gates in `src/lib/motion.ts` (both server-safe → `false`). Shared paces/ea
   - **Skip:** tap/click anywhere or Escape; short fade then unmount. Hint: “tap to enter” on coarse pointer, “click to enter” otherwise.
   - **Reduced-motion:** no boot theatre; Atmosphere stays as static void presence (grain + vignette, no trail/drift) — site shows immediately. Boot always ends with `signalBootDone()` (`data-boot-done` + `portfolio:boot-done`) so home presence (name scramble, section-link reveal) can sync.
 - Wired once via `MotionScaffold` in root `layout.tsx` (`dynamic(..., { ssr: false })`). Do not import three/gsap outside client motion modules and page-local clients that already use GSAP (`ProjectGallery`). No Framer Motion.
-- **About anchors** (`AboutAnchorNav`) — sticky section menu with scroll-spy active state + staggered entrance. Per-block text fades live in `VoidScrollDrama` / `AboutScrollDrama`. Static when `prefers-reduced-motion`.
+- **About** — single-column ~48rem reading measure; section blocks still fade via `VoidScrollDrama` / `AboutScrollDrama`. No sticky section anchors.
 
 ## Void-scroll portal (opt-in)
 
@@ -280,7 +280,7 @@ Exhibit panels match iframe sandbox height. Body scrolls on mobile.
 
 Single-column **case study** inside the wider project shell (`max-width: 1400px`). Story text stays ~72ch; diagram/stage can stretch wider. Shares the same void site chrome (mini ask included).
 
-**Scroll feel:** Same shared void-scroll portal as About (`data-void-scroll` on `.project-exhibit-motion`) — continuous read over fixed Atmosphere void, edge dissolve, quiet per-block fades on rail/rest copy (`VoidScrollDrama` + `EXHIBIT_VOID_SCROLL_BLOCKS`). Hero entry stays with `ProjectExhibitMotion` (not double-faded). Proof/architecture canvases live in inline matte plates (`data-void-scroll-exempt`); Dive expands that plate. Overlay chrome stays outside the portal.
+**Scroll feel:** Same shared void-scroll portal as About (`data-void-scroll` on `.project-exhibit-motion`) — continuous read over fixed Atmosphere void, edge dissolve, quiet per-block fades on rail/rest copy (`VoidScrollDrama` + `EXHIBIT_VOID_SCROLL_BLOCKS`). Hero entry stays with `ProjectExhibitMotion` (not double-faded). Proof/architecture canvases live in inline matte plates (`data-void-scroll-exempt`); Dive portals that surface to `document.body` (~80vw × 80dvh, centered). Overlay chrome stays outside the portal.
 
 **Flow:** Hero → quiet stack glyphs → Proof / Architecture surface sections (when present) → quiet continue.
 
@@ -309,7 +309,7 @@ Single-column **case study** inside the wider project shell (`max-width: 1400px`
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**Inline matte plates:** Section title + lede stay on the page. The plate holds only the canvas (iframe or architecture diagram) — cream rim, void interior, look-only until Dive. **Dive** expands that same plate to fullscreen tools (demo chrome / C4 nav). Esc / backdrop / Close returns to the page plate. No summon-then-dive two-step. Tokens: `MOTION.matte`. Components: `ExhibitSurfaces`, `MattePanel`.
+**Inline matte plates:** Section title + lede stay on the page. The plate holds only the canvas (iframe or architecture diagram) — cream rim, void interior, look-only until Dive. **Dive** portals a tools-mode matte to `document.body` (~80% viewport, centered) so `position: fixed` is not trapped by stage column transforms or the void-scroll mask; a plate-sized spacer keeps page layout. Esc / backdrop / Close returns to the page plate. No summon-then-dive two-step. Tokens: `MOTION.matte`. Components: `ExhibitSurfaces`, `MattePanel`.
 
 **Hero CTAs:** One clear primary — **Open live demo ↗** (external tab) for visual projects, **GitHub** for systems/research. Docs stay quiet secondary. No status/badge chrome; stack is a quiet tag row under the hero.
 
@@ -364,7 +364,6 @@ Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **
 | `BootField`              | `src/components/motion/BootField.ts`         | Home-only void roam → one center frame → scoped home ask-bar morph                                            |
 | `HomeIdentity`           | `src/components/motion/HomeIdentity.tsx`     | Home soft-scramble hero name (once per load; no under-name role)                                              |
 | `HomeFooterChrome`       | `src/components/motion/HomeFooterChrome.tsx` | Home contacts only (always visible)                                                                           |
-| `AboutAnchorNav`         | `src/components/AboutAnchorNav.tsx`          | About sticky section anchors + scroll-spy (scrolls about `[data-void-scroll]`)                |
 | `AboutScrollDrama`       | `src/components/AboutScrollDrama.tsx`        | About thin wrapper → `VoidScrollDrama` with about block selectors                             |
 | `VoidScrollDrama`        | `src/components/VoidScrollDrama.tsx`         | Shared per-block enter/leave fades via ScrollTrigger on `[data-void-scroll]`                  |
 | `VoidChrome`             | `src/components/VoidChrome.tsx`              | Persistent home/site void chrome; morph-first nav then `router.push`                                          |
