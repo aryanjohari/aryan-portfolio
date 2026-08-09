@@ -1044,7 +1044,7 @@ function PortfolioGuideInner({
                   onChange={(event) => setMessage(event.target.value)}
                   placeholder={
                     isMini
-                      ? "ask · explain · go somewhere…"
+                      ? "ask · explain…"
                       : "ask · explain this page · or say where to go…"
                   }
                   maxLength={500}

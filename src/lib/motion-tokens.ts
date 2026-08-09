@@ -104,9 +104,9 @@ export const MOTION = {
      * (whichever axis binds), clamped to a sane dolly range. Keeps the
      * carousel proportionate on short desktop stages and phones alike.
      */
-    fitWidthFrac: 0.6,
-    fitHeightFrac: 0.68,
-    cameraZMin: 5.15,
+    fitWidthFrac: 0.68,
+    fitHeightFrac: 0.74,
+    cameraZMin: 4.85,
     cameraZMax: 10,
 
     /**

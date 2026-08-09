@@ -115,7 +115,7 @@ Single persistent client shell: `VoidChrome` in root `layout.tsx` (`html[data-vo
 
 **Morph (morph-first):** Chrome nav intercepts in-app clicks. Home ↔ site: measure→tween name/nav/ask (`MOTION.chrome.morph`), **then** `router.push`, then soft content fade. Site ↔ site: **exit → push → entry** shift on `.void-chrome-page` (`MOTION.chrome.pageExit` / `pageEnter`). See `docs/void-chrome-transitions.md`. Narrow/coarse: matched crossfade. `prefers-reduced-motion`: instant mode + push.
 
-**Mini ask:** Compact wireframe input only (no capability hint row — those remain home-only); live reply (whisper + more/less below the clipped text) + optional confirm chip in a non-layout-breaking panel that opens on a new ask, not on session hydrate (dropdown under the bar; fixed bottom sheet on small screens). Full transcript mounts only from a quiet glyph → void **Chat history** overlay (same pattern on home; closed by default). Remounts on site navigations via `remountKey`; transcript rehydrates from `sessionStorage` without auto-opening the mini panel or history.
+**Mini ask:** Compact wireframe input only (no capability hint row — those remain home-only); live reply (whisper + more/less below the clipped text) + optional confirm chip in a non-layout-breaking panel that opens on a new ask, not on session hydrate (dropdown under the bar; fixed bottom sheet on small screens with safe-area). Mini placeholder stays short (`ask · explain…`). On phones (≤767px) site chrome stacks name → nav → full-width ask so the pill never fights the brand. Full transcript mounts only from a quiet glyph → void **Chat history** overlay (same pattern on home; closed by default; ≥44px hit target; overlay padded with safe-area + `dvh`). Remounts on site navigations via `remountKey`; transcript rehydrates from `sessionStorage` without auto-opening the mini panel or history.
 
 Boot → home theatre is unchanged (`BootOverlay` / ask-bar measure).
 
@@ -181,7 +181,7 @@ Editorial composition (desktop): oversized name top-left · centered ask + invit
 
 Immersive project gallery — no featured demos. Same void site chrome as other non-home routes (compact name + nav + mini ask). Intro sits above a **self-contained Three.js stage**.
 
-**One-viewport shell:** `body:has(.workshop-page)` locks html/body + `.site-shell` to `100dvh` with `overflow: hidden`. Flex column: void header (natural) → `.void-chrome-page` / `.site-main` / `.workshop-page` / `.project-gallery` (`flex: 1; min-height: 0`) → compact footer in flow. `.project-gallery-stage` is **`flex: 1`** (not a fixed `dvh` height) so it fills leftover space after intro + chrome + footer. Short viewports (`max-height: 520px`) tighten gaps/padding. No page pin/scrub — layout overflow was the old micro-scroll bug, not intentional vertical scrub.
+**One-viewport shell:** `body:has(.workshop-page)` locks html/body + `.site-shell` to `100dvh` with `overflow: hidden`. Flex column: void header (natural) → `.void-chrome-page` / `.site-main` / `.workshop-page` / `.project-gallery` (`flex: 1; min-height: 0`) → compact footer in flow. `.project-gallery-stage` is **`flex: 1`** (not a fixed `dvh` height) so it fills leftover space after intro + chrome + footer. Short viewports (`max-height: 600px`) tighten gaps/padding. Reduced-motion / no-WebGL uses a quiet DOM fallback list (hairline separators, same ink — not a nested card stack). No page pin/scrub — layout overflow was the old micro-scroll bug, not intentional vertical scrub.
 
 **Transparent stage over Atmosphere:** the workshop owns its **own WebGL canvas** (`src/components/motion/WorkshopCarousel.ts`) which is transparent and layered over the site-wide Atmosphere canvas — never merged with it. `scene.background = null`, `WebGLRenderer({ alpha: true, premultipliedAlpha: true })`, `setClearColor(0x000000, 0)`, and `.project-gallery-stage` + canvas backgrounds are transparent. Stacking: Atmosphere `position: fixed; z-index: 0` → `.site-shell` / `.project-gallery-stage` `z-index: 1` → void chrome `z-index: 3`. Atmosphere trail reads **through** each tablet (near-zero fill) but is **deepened** behind the body by the per-tablet void shade, so the stack still reads as depth instead of the trail sliding over the glass. **No `transmission`** — Fresnel edge glow + rim contour keep the stage cheap and coherent with the quiet void.
 
@@ -345,9 +345,14 @@ Facts stay aligned with resume / guide context (GSTF held-out FaceForensics++ **
 
 | Breakpoint | Behaviour |
 |------------|-----------|
-| `< 1024px` | Exhibit stacks; architecture path story above full-width graph when present; Dive is a full-viewport sheet; workshop carousel drag/touch; ask send ≥44px |
-| `≥ 1024px` | Index/about: 960px max-width. Project pages: wide shell; architecture = graph + story rail; Dive = side modal panel |
-| All | Shell / header / footer respect `env(safe-area-inset-*)`; no horizontal page overflow (`overflow-x: clip`); `prefers-reduced-motion` skips graph/dive entrance |
+| `≤ 767px` | Site chrome stacks: name → nav → full-width mini ask; short placeholder (`ask · explain…`); home ask send ≥44px; exhibit title/stack/CTAs stay inside gutters (`overflow-wrap`, stacked actions) |
+| `< 1024px` | Exhibit stacks; architecture path story above full-width graph when present; C4 dive/zoom uses fullscreen viewer (`100dvh` + safe-area); workshop carousel drag/touch; home glyphs under-ask until reveal |
+| `≥ 860px` | About: sticky side rail + scroll thumb (mobile uses sticky top strip with 2×2 section grid) |
+| `≥ 1024px` | Home right-rail glyphs; about/main content up to ~1100px shell; project exhibit asymmetric 12-col hero + sticky path rail |
+| `max-height: 600px` | Home: tighter pad/type + smaller live-reply budget; workshop: shrink intro/footer so stage survives |
+| All | Shell / header / footer / history overlay / mini sheet respect `env(safe-area-inset-*)`; no horizontal page overflow (`overflow-x: clip`); `prefers-reduced-motion` skips graph entrance + uses workshop DOM fallback |
+
+**Phone composition (void-preserving):** prefer type scale, flex/`minmax(0)`, chrome density, and camera fit — do not invent a separate mobile IA or card-app chrome. History glyph hit area ≥44px (quiet icon); history panel uses `dvh` + safe-area padding.
 
 ## Demo panel states
 

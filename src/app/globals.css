@@ -215,17 +215,22 @@ html[data-boot-cover-skip] #boot-cover {
 
 .void-chrome--site .void-chrome-inner {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, auto);
   grid-template-areas: "name nav ask";
   align-items: center;
   gap: var(--space-2) var(--space-3);
   padding: calc(clamp(0.85rem, 2vw, 1.25rem) + env(safe-area-inset-top, 0px))
     clamp(1rem, 3.5vw, 2.5rem)
     clamp(0.75rem, 1.5vw, 1rem);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .void-chrome--site .void-chrome-name {
   grid-area: name;
+  min-width: 0;
 }
 
 .void-chrome--site .void-chrome-name .site-name {
@@ -273,6 +278,8 @@ html[data-boot-cover-skip] #boot-cover {
   grid-area: ask;
   justify-self: end;
   width: min(100%, 16.5rem);
+  min-width: 0;
+  max-width: 100%;
   position: relative;
   z-index: 4;
 }
@@ -356,19 +363,48 @@ html[data-chrome-morphing] .void-chrome-ask {
 
 @media (max-width: 767px) {
   .void-chrome--site .void-chrome-inner {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "name ask"
-      "nav nav";
+      "name"
+      "nav"
+      "ask";
     row-gap: var(--space-1);
+    column-gap: 0;
+    padding-left: max(1rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1rem, env(safe-area-inset-right, 0px));
   }
 
   .void-chrome--site .void-chrome-nav {
     justify-content: flex-start;
   }
 
+  .void-chrome--site .void-chrome-name .site-name {
+    font-size: clamp(1.05rem, 4.4vw, 1.25rem);
+  }
+
   .void-chrome--site .void-chrome-ask {
-    width: min(100%, 11.5rem);
+    justify-self: stretch;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .void-chrome--site .portfolio-guide--mini,
+  .void-chrome--site .portfolio-guide--mini .portfolio-guide-stage,
+  .void-chrome--site .portfolio-guide--mini .portfolio-guide-float,
+  .void-chrome--site .portfolio-guide--mini .portfolio-guide-form,
+  .void-chrome--site .portfolio-guide--mini .portfolio-guide-input-row {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .void-chrome--site .portfolio-guide--mini .portfolio-guide-float {
+    overflow: hidden;
+  }
+
+  .void-chrome--site .portfolio-guide--mini .portfolio-guide-input {
+    padding: 0.5rem 0.75rem;
+    font-size: var(--type-meta);
   }
 }
 
@@ -631,7 +667,7 @@ html[data-void-chrome="home"] .site-footer {
 }
 
 /* Short phones / landscape: keep ask + glyphs from fighting the fold */
-@media (max-height: 520px) and (max-width: 1023px) {
+@media (max-height: 600px) and (max-width: 1023px) {
   .void-chrome--home .void-chrome-inner {
     padding-top: calc(var(--space-2) + env(safe-area-inset-top, 0px));
     padding-bottom: var(--space-1);
@@ -643,6 +679,33 @@ html[data-void-chrome="home"] .site-footer {
 
   .void-chrome--home .void-chrome-ask {
     align-self: start;
+  }
+
+  .portfolio-guide-hints {
+    min-height: 1.25rem;
+    margin-top: 0.35rem;
+  }
+
+  .portfolio-guide-invite {
+    margin-top: 0.25rem;
+    font-size: var(--type-caption);
+  }
+
+  .portfolio-guide-live {
+    max-height: 3.75rem;
+  }
+
+  .portfolio-guide-live--expanded {
+    max-height: 6.5rem;
+  }
+
+  .portfolio-guide-reply-slot {
+    margin-top: var(--space-1);
+  }
+
+  .home-glyph-row {
+    margin-top: var(--space-1);
+    gap: var(--space-1) var(--space-2);
   }
 }
 
@@ -1032,8 +1095,8 @@ button.portfolio-guide-hint--focus:disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.75rem;
   margin: 0;
   padding: 0;
   color: rgba(244, 240, 232, 0.34);
@@ -1069,7 +1132,10 @@ button.portfolio-guide-hint--focus:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: max(1rem, env(safe-area-inset-top, 0px))
+    max(1rem, env(safe-area-inset-right, 0px))
+    max(1rem, env(safe-area-inset-bottom, 0px))
+    max(1rem, env(safe-area-inset-left, 0px));
   pointer-events: none;
 }
 
@@ -1092,7 +1158,7 @@ button.portfolio-guide-hint--focus:disabled {
   flex-direction: column;
   gap: 0.55rem;
   width: min(28rem, calc(100vw - 2rem));
-  max-height: min(62vh, 24rem);
+  max-height: min(62dvh, 24rem);
   padding: 0.85rem 1rem 1rem;
   background: rgba(10, 10, 10, 0.96);
   border: 1px solid rgba(244, 240, 232, 0.18);
@@ -1279,24 +1345,36 @@ button.portfolio-guide-hint--focus:disabled {
 /* Mini ask — compact site chrome (top-right) */
 .portfolio-guide--mini {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .portfolio-guide--mini .portfolio-guide-stage {
   position: relative;
+  min-width: 0;
 }
 
 .portfolio-guide--mini .portfolio-guide-float {
   border-width: 1px;
   border-radius: 999px;
+  max-width: 100%;
+  box-sizing: border-box;
   box-shadow:
     0 0 0 1px rgba(244, 240, 232, 0.06),
     0 0 12px rgba(244, 240, 232, 0.08);
+}
+
+.portfolio-guide--mini .portfolio-guide-input-row {
+  min-width: 0;
 }
 
 .portfolio-guide--mini .portfolio-guide-input {
   font-size: var(--type-meta);
   padding: 0.55rem 0.85rem;
   min-height: 44px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .portfolio-guide--mini .portfolio-guide-input::placeholder {
@@ -1315,7 +1393,7 @@ button.portfolio-guide-hint--focus:disabled {
   top: calc(100% + 0.5rem);
   right: 0;
   width: min(22rem, calc(100vw - 2rem));
-  max-height: min(40vh, 16rem);
+  max-height: min(40dvh, 16rem);
   z-index: 20;
   background: #0a0a0a;
   border: 1px solid rgba(244, 240, 232, 0.28);
@@ -1348,7 +1426,7 @@ button.portfolio-guide-hint--focus:disabled {
 .portfolio-guide-mini-panel-body {
   padding: 0 0.75rem 0.75rem;
   overflow-y: auto;
-  max-height: min(36vh, 14rem);
+  max-height: min(36dvh, 14rem);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -1362,7 +1440,7 @@ button.portfolio-guide-hint--focus:disabled {
 }
 
 .portfolio-guide-mini-panel-body .portfolio-guide-live--expanded {
-  max-height: min(28vh, 10rem);
+  max-height: min(28dvh, 10rem);
 }
 
 @media (max-width: 767px) {
@@ -1402,17 +1480,23 @@ button.portfolio-guide-hint--focus:disabled {
 
   .portfolio-guide--mini .portfolio-guide-input {
     font-size: var(--type-meta);
-    padding: 0.5rem 0.7rem;
+    padding: 0.5rem 0.55rem;
+  }
+
+  .portfolio-guide--mini .portfolio-guide-submit {
+    margin: 0.3rem 0.3rem 0.3rem 0;
+    padding: 0 0.55rem;
+    flex-shrink: 0;
   }
 
   .portfolio-guide-mini-panel {
     position: fixed;
-    left: 0.75rem;
-    right: 0.75rem;
+    left: max(0.75rem, env(safe-area-inset-left, 0px));
+    right: max(0.75rem, env(safe-area-inset-right, 0px));
     top: auto;
     bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     width: auto;
-    max-height: min(45vh, 18rem);
+    max-height: min(45dvh, 18rem);
   }
 }
 
@@ -1657,37 +1741,36 @@ body:has(.workshop-page) .site-main {
 .project-gallery-fallback-list {
   list-style: none;
   margin: 0 auto;
-  padding: 0 clamp(1.25rem, 4vw, 2.75rem)
+  padding: 0 clamp(1rem, 4vw, 2.75rem)
     calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
   max-width: 42rem;
   width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .project-gallery-fallback-card {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: clamp(1.15rem, 2.8vw, 1.75rem);
-  border: 1.5px solid rgba(244, 240, 232, 0.48);
-  background:
-    linear-gradient(
-      180deg,
-      rgba(244, 240, 232, 0.07) 0%,
-      transparent 18%
-    ),
-    rgba(10, 10, 10, 0.92);
+  padding: clamp(0.85rem, 2.4vw, 1.35rem) 0;
+  border: 0;
+  border-bottom: 1px solid rgba(244, 240, 232, 0.14);
+  background: transparent;
   color: var(--color-text);
   box-sizing: border-box;
+}
+
+.project-gallery-fallback-card:last-child {
+  border-bottom: 0;
 }
 
 .project-gallery-fallback-visual {
   aspect-ratio: 16 / 9;
   width: 100%;
-  border: 1px solid rgba(244, 240, 232, 0.18);
+  border: 1px solid rgba(244, 240, 232, 0.16);
   background:
     radial-gradient(
       ellipse 80% 70% at 30% 25%,
@@ -1706,6 +1789,8 @@ body:has(.workshop-page) .site-main {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .project-gallery-fallback-title {
@@ -1715,6 +1800,7 @@ body:has(.workshop-page) .site-main {
   line-height: 1.2;
   color: var(--color-text);
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 
 .project-gallery-fallback-title:hover {
@@ -1726,6 +1812,9 @@ body:has(.workshop-page) .site-main {
   font-size: var(--type-body);
   line-height: 1.45;
   color: var(--color-text);
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .project-gallery-fallback-summary.is-missing {
@@ -1768,7 +1857,7 @@ body:has(.workshop-page) .site-main {
 }
 
 /* Short viewports: keep intro + chrome, shrink chrome budget so stage survives */
-@media (max-height: 520px) {
+@media (max-height: 600px) {
   body:has(.workshop-page) .site-main {
     padding-top: var(--space-1);
   }
@@ -2019,10 +2108,12 @@ body:has(.workshop-page) .site-main {
 .project-exhibit-split-word {
   display: inline-block;
   vertical-align: top;
+  max-width: 100%;
 }
 
 .project-exhibit-split-line {
   display: block;
+  max-width: 100%;
 }
 
 .project-exhibit-rest {
@@ -3773,6 +3864,7 @@ body:has(.about-page) .site-main {
   color: var(--color-faint);
   font-size: var(--type-meta);
   max-width: 36rem;
+  overflow-wrap: anywhere;
 }
 
 .about-layout {
@@ -3817,8 +3909,8 @@ body:has(.about-page) .site-main {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.35rem 0.75rem;
 }
 
@@ -3904,6 +3996,7 @@ body:has(.about-page) .site-main {
   line-height: 1.72;
   color: rgba(244, 240, 232, 0.88);
   max-width: 78ch;
+  overflow-wrap: anywhere;
 }
 
 .about-section p:last-child {
@@ -3918,6 +4011,7 @@ body:has(.about-page) .site-main {
   line-height: 1.55;
   color: var(--color-text);
   max-width: 72ch;
+  overflow-wrap: anywhere;
 }
 
 .about-footer {
@@ -3980,6 +4074,7 @@ body:has(.about-page) .site-main {
     flex-direction: column;
     flex-wrap: nowrap;
     gap: 0.55rem;
+    display: flex;
   }
 
   .about-anchor-item {
@@ -4054,20 +4149,27 @@ body:has(.about-page) .site-main {
 
 .project-exhibit-rail {
   max-width: min(100%, 72rem);
+  min-width: 0;
 }
 
 .project-exhibit-hero {
   min-height: min(62dvh, 46rem);
   padding-block: clamp(2.5rem, 8vh, 6rem) clamp(3rem, 10vh, 7rem);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .project-title {
-  max-width: 12ch;
+  max-width: min(12ch, 100%);
+  width: 100%;
   font-size: clamp(3.25rem, 9vw, 8.5rem);
   font-weight: 600;
   line-height: 0.9;
   letter-spacing: -0.07em;
   text-wrap: balance;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
 }
 
 .project-exhibit-lede {
@@ -4091,6 +4193,9 @@ body:has(.about-page) .site-main {
   margin-bottom: var(--space-2);
   border-bottom: 1px solid rgba(242, 240, 235, 0.08);
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .project-exhibit-stack-status {
@@ -4106,10 +4211,13 @@ body:has(.about-page) .site-main {
 .project-exhibit-stack-glyphs {
   min-width: 0;
   flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
 }
 
 .project-exhibit-stack .stack-tags {
   gap: 0.35rem;
+  max-width: 100%;
 }
 
 .project-exhibit-stack .stack-tag {
@@ -4117,6 +4225,9 @@ body:has(.about-page) .site-main {
   border-color: rgba(242, 240, 235, 0.1);
   font-size: var(--type-caption);
   color: var(--color-muted);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .project-exhibit-how {
@@ -4334,6 +4445,18 @@ body:has(.about-page) .site-main {
     min-height: auto;
   }
 
+  .project-title {
+    font-size: clamp(2.6rem, 7.5vw, 4.75rem);
+    letter-spacing: -0.05em;
+    max-width: min(14ch, 100%);
+  }
+
+  .project-exhibit-actions {
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
   .project-exhibit-stack {
     flex-direction: column;
     align-items: flex-start;
@@ -4371,6 +4494,10 @@ body:has(.about-page) .site-main {
   .arch-overview-actions {
     padding: 0.75rem var(--space-2);
   }
+
+  .project-exhibit-proof-note {
+    margin-left: 0;
+  }
 }
 
 @media (max-width: 767px) {
@@ -4380,22 +4507,30 @@ body:has(.about-page) .site-main {
   }
 
   .project-title {
-    font-size: clamp(2.8rem, 15vw, 5rem);
+    font-size: clamp(2.25rem, 11vw, 3.5rem);
     line-height: 0.94;
+    letter-spacing: -0.04em;
+    max-width: 100%;
   }
 
   .project-exhibit-actions {
     order: initial;
     gap: var(--space-1);
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .project-exhibit-action {
     flex: 1 1 auto;
     justify-content: center;
+    width: 100%;
+    min-width: 0;
   }
 
   .project-exhibit-stack {
     padding-bottom: var(--space-2);
+    overflow-x: clip;
   }
 
   .project-exhibit-how {
