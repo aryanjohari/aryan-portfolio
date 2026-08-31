@@ -23,13 +23,15 @@ export type GuideEducationEntry = {
   notes?: string;
 };
 
-export type SuggestedChipGroup = "simple" | "technical";
+export type SuggestedChipKind = "ask" | "navigate";
 
 export type SuggestedChip = {
-  group: SuggestedChipGroup;
+  kind: SuggestedChipKind;
   label: string;
   prompt: string;
   tooltip: string;
+  /** Required when kind === "navigate" — expected destination for tests/docs */
+  navigateTo?: "/" | "/about" | "/projects" | `/projects/${string}`;
 };
 
 export type TenureRoleHint = {
@@ -75,39 +77,35 @@ export type GuideContextFile = {
 
 export const DEFAULT_SUGGESTED_CHIPS: SuggestedChip[] = [
   {
-    group: "simple",
-    label: "Who is he?",
+    kind: "ask",
+    label: "Who is Aryan?",
     prompt: "Who is Aryan?",
     tooltip: "A short plain-English intro to Aryan.",
   },
   {
-    group: "simple",
-    label: "Is he looking for work?",
-    prompt: "Is Aryan looking for work?",
-    tooltip: "Availability and when he can start in Auckland.",
+    kind: "ask",
+    label: "What can he build?",
+    prompt: "What can Aryan build?",
+    tooltip: "Projects and capabilities across systems, AI, and the browser.",
   },
   {
-    group: "simple",
-    label: "Show me something cool",
-    prompt: "Show me something cool from the portfolio.",
-    tooltip: "Pick a live demo or standout project to try.",
+    kind: "ask",
+    label: "What's his stack?",
+    prompt: "What's Aryan's skillset and stack?",
+    tooltip: "Languages, frameworks, and tools from the knowledge context.",
   },
   {
-    group: "technical",
-    label: "Backend / ML focus?",
-    prompt: "What's Aryan's backend and ML focus?",
-    tooltip: "Stack and strengths on the backend and ML side.",
+    kind: "navigate",
+    label: "Go to projects",
+    prompt: "Go to projects",
+    tooltip: "Navigate to the projects gallery via the guide.",
+    navigateTo: "/projects",
   },
   {
-    group: "technical",
-    label: "What's ADA?",
-    prompt: "What is ADA?",
-    tooltip: "Explain the ADA project in one clear answer.",
-  },
-  {
-    group: "technical",
-    label: "What's live?",
-    prompt: "What projects have live demos?",
-    tooltip: "Which projects you can open and try in the browser.",
+    kind: "navigate",
+    label: "Go to about",
+    prompt: "Take me to about",
+    tooltip: "Navigate to the about essay via the guide.",
+    navigateTo: "/about",
   },
 ];

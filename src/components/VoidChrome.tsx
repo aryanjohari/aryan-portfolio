@@ -42,7 +42,7 @@ const navItems = [
     href: "/projects",
     label: "projects",
     title: "Full project catalog",
-    glyph: "workshop" as const,
+    glyph: "projects" as const,
   },
   {
     href: "/about",
@@ -64,8 +64,8 @@ type ChromeMode = "home" | "site";
 
 type Rect = { left: number; top: number; width: number; height: number };
 
-function SoftGlyph({ kind }: { kind: "workshop" | "about" | "resume" }) {
-  if (kind === "workshop") {
+function SoftGlyph({ kind }: { kind: "projects" | "about" | "resume" }) {
+  if (kind === "projects") {
     return (
       <svg
         className="glyph-link-icon"

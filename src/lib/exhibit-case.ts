@@ -1,8 +1,18 @@
+import caseStudies from "../../content/project-case-studies.json";
 import type { Project } from "@/lib/projects";
+import type { CaseStudiesFile, CaseStudyBeats } from "@/lib/case-study-schema";
 
 export type ExhibitCaseBeat = {
   label: "Problem" | "Approach" | "Outcome";
   body: string;
+};
+
+const AUTHORED = caseStudies as CaseStudiesFile;
+
+const BEAT_LABELS: Record<keyof CaseStudyBeats, ExhibitCaseBeat["label"]> = {
+  problem: "Problem",
+  approach: "Approach",
+  outcome: "Outcome",
 };
 
 function sentences(text: string): string[] {
@@ -20,11 +30,21 @@ function clip(text: string, max = 180): string {
   return `${(at > 40 ? cut.slice(0, at) : cut).trim()}…`;
 }
 
-/**
- * Lite case-study beats derived from existing yaml summary/description.
- * No new content fields — good enough for layout; refine per project later.
- */
-export function exhibitCaseBeats(project: Project): ExhibitCaseBeat[] {
+export function hasAuthoredCaseStudy(slug: string): boolean {
+  return slug in AUTHORED.studies;
+}
+
+function authoredBeats(slug: string): ExhibitCaseBeat[] | null {
+  const study = AUTHORED.studies[slug];
+  if (!study) return null;
+
+  return (["problem", "approach", "outcome"] as const).map((key) => ({
+    label: BEAT_LABELS[key],
+    body: study[key].trim(),
+  }));
+}
+
+function heuristicBeats(project: Project): ExhibitCaseBeat[] {
   const summary = project.summary.trim();
   const description = project.description.trim();
   const parts = sentences(description);
@@ -49,4 +69,12 @@ export function exhibitCaseBeats(project: Project): ExhibitCaseBeat[] {
     { label: "Approach", body: clip(approach) },
     { label: "Outcome", body: clip(outcome) },
   ];
+}
+
+/**
+ * Case-study beats for the exhibit "In brief" section.
+ * Prefers portfolio-authored copy; falls back to yaml heuristics.
+ */
+export function exhibitCaseBeats(project: Project): ExhibitCaseBeat[] {
+  return authoredBeats(project.slug) ?? heuristicBeats(project);
 }

@@ -1,3 +1,5 @@
+Detailed verified facts, metrics, and do-not-claim rules live in `content/knowledge-bank.md` (ingested at build time).
+
 # Guide context
 
 User-editable source for the Portfolio Guide. Aggregated at build time into `src/lib/guide-context.json`.
@@ -5,16 +7,9 @@ User-editable source for the Portfolio Guide. Aggregated at build time into `src
 ## Identity
 
 - **Who:** Aryan Johari — graduate software engineer, Auckland, New Zealand
-- **Availability:** Seeking a graduate software engineering role in Auckland from September 2026
-- **Site:** Curated project portfolio — selected work with narrative and live demos
-- **Work history:** Detailed employment history is ingested from `public/resume.pdf` at build time (not duplicated here)
+- **Site:** https://aryanjohari.arkhives.nz — curated project portfolio with narrative exhibits and live demos
+- **Availability:** Seeking a graduate / junior software engineering role in Auckland from **September 2026**
 
 ## Philosophy
 
-I build software that solves real problems — from visual tools to edge systems. I own the full stack: architecture, APIs, and deployment. AI accelerates delivery, but the design and architecture are mine. This portfolio is a curated project index, not a README dump.
-
-## Quick facts
-
-- **Education:** Master of Technology — Computing, Unitec, Auckland (July 2026); BSc Computer Science, University of Mumbai (March 2024)
-- **Work eligibility:** Eligible to work in New Zealand
-- **Focus areas:** Visual systems, APIs, edge hardware, full-stack delivery
+I build software that solves real problems — from ML research pipelines to privacy-aware APIs and WebGL front ends. I own the full stack: architecture, APIs, and deployment. AI accelerates delivery, but the design and architecture are mine. This portfolio is a curated project index, not a README dump. The home-page guide is the primary way to explore work and ask hiring questions.

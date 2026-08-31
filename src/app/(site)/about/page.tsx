@@ -5,7 +5,8 @@ import { AboutScrollDrama } from "@/components/AboutScrollDrama";
 
 export const metadata: Metadata = {
   title: "About — Aryan Johari",
-  description: "Philosophy, background, education, and availability.",
+  description:
+    "Why and how Aryan codes — systems, AI, and research, from thesis work to shipped tools in Auckland.",
 };
 
 export default function AboutPage() {
@@ -14,73 +15,53 @@ export default function AboutPage() {
       <AboutScrollDrama />
       <header className="about-intro">
         <h1 className="page-heading">about</h1>
-        <p className="about-lede">
-          Who I am, how I work, and what I’m looking for next.
-        </p>
       </header>
 
-      <div className="about-body">
-        <section className="about-section">
-          <h2>philosophy</h2>
-          <blockquote className="about-pullquote">
-            I think in systems — how data moves, where failures show up, and
-            what a maintainer has to touch six months later.
-          </blockquote>
-          <p>
-            I build software that solves real problems, from ML research
-            pipelines to privacy-aware APIs and WebGL front ends.
-          </p>
-          <p>
-            I own the architecture: APIs, deployment, and the trade-offs. AI
-            speeds up delivery, but the design decisions are mine. This
-            portfolio is a curated project collection — selected work with
-            context, not a README dump.
-          </p>
-        </section>
+      <div className="about-body about-essay">
+        <p>
+          I&apos;m a graduate software engineer in Auckland. I build things at
+          the intersection of systems, AI, and research — from browser tools
+          you can touch to APIs and pipelines you can ship.
+        </p>
 
-        <section className="about-section">
-          <h2>background</h2>
-          <p>
-            I recently completed a Master of Applied Technology in Computing
-            at Unitec, Auckland. My thesis (GSTF) built a PyTorch pipeline for
-            video-level deepfake generator attribution — R(2+1)D features,
-            ArcFace metric learning, and continual learning under domain
-            shift. Held-out accuracy on FaceForensics++ reached 86.5%.
-          </p>
-          <p>
-            Before grad school I worked as an SEO Specialist at Specialist
-            Support Services in Auckland — scaling organic impressions 414%
-            over an 11-month GSC window across three sites, with hands-on
-            indexing workflows and mobile-first page templates.
-          </p>
-          <p>
-            Earlier, as a Junior Website Developer at KRIL Digital in Mumbai,
-            I built and maintained around 20 client sites (WordPress, React,
-            Shopify) and improved load times and search visibility through
-            daily iteration.
-          </p>
-        </section>
+        <blockquote className="about-pullquote">
+          I think in systems — how data moves, where failures show up, and what
+          a maintainer has to touch six months later.
+        </blockquote>
 
-        <section className="about-section">
-          <h2>education</h2>
-          <p>
-            Master of Applied Technology — Computing, Unitec Institute of
-            Technology, Auckland (Feb 2025 – June 2026).
-          </p>
-          <p>
-            Bachelor of Science in Computer Science, Thakur College of Science
-            and Commerce, Mumbai (Sep 2021 – Apr 2024).
-          </p>
-        </section>
+        <p>
+          I like learning by making. I read what&apos;s already there, cite
+          limits honestly, then prototype until something works for a real
+          person — not a slide deck. AI speeds up delivery; the architecture
+          and the call on what to ship are mine.
+        </p>
 
-        <section className="about-section">
-          <h2>availability</h2>
-          <p>
-            Seeking a graduate / junior software engineering role in Auckland
-            from September 2026. Eligible to work in New Zealand (Post Study
-            Work Visa; no sponsorship required).
-          </p>
-        </section>
+        <p>
+          Research first, then build. For my Master&apos;s thesis (GSTF) that
+          meant video-level deepfake <em>generator</em> attribution — R(2+1)D,
+          metric learning, measuring what breaks under domain shift — not
+          claiming a production detector. For PII Gateway and ADA, it meant
+          understanding the operator&apos;s constraint (redact before data
+          leaves; run an agent on your own hardware) and designing gateways,
+          policies, and workflows around that. Side branches and rewrites are
+          part of the process: explore, measure, cut what doesn&apos;t hold.
+        </p>
+
+        <p>
+          Visual systems in the browser (Background Studio, Sound Visualiser),
+          privacy-aware APIs (PII Gateway), and local agent tooling (ADA).
+          This site is a curated workshop for that work — context and demos, not
+          a README dump. Open a project to see the story; ask the guide if you
+          want a shortcut.
+        </p>
+
+        <p>
+          I completed my Master of Applied Technology at Unitec in July 2026.
+          I&apos;m looking for a graduate or junior software engineering role in
+          Auckland from September 2026. Eligible to work in New Zealand on a
+          Post Study Work Visa — no sponsorship required. Details and metrics
+          live in the resume; the guide can answer specifics.
+        </p>
 
         <footer className="about-footer">
           <a href="/resume.pdf" className="about-resume-cta">

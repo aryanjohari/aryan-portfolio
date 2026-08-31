@@ -9,8 +9,10 @@
     "lint": "eslint",
     "fetch:projects": "tsx scripts/fetch-portfolio-yaml.ts",
     "validate:graphs": "tsx scripts/validate-architecture-graphs.ts",
+    "validate:case-studies": "tsx scripts/validate-case-studies.ts",
+    "test:exhibit-case": "tsx src/lib/exhibit-case.test.ts",
     "build:guide-context": "tsx scripts/build-guide-context.ts",
-    "prebuild": "npm run validate:graphs && npm run fetch:projects && npm run build:guide-context"
+    "prebuild": "npm run validate:graphs && npm run validate:case-studies && npm run fetch:projects && npm run build:guide-context"
   },
   "dependencies": {
     "gsap": "^3.15.0",

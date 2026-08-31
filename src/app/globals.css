@@ -180,6 +180,34 @@ html[data-boot-cover-skip] #boot-cover {
   line-height: 1.45;
 }
 
+.home-identity-tagline {
+  min-height: 2.35rem;
+  margin: 0 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.12rem;
+  text-align: center;
+}
+
+.home-identity-tags,
+.home-identity-subline {
+  margin: 0;
+  font-size: var(--type-meta);
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+}
+
+.home-identity-tags {
+  color: var(--color-muted);
+}
+
+.home-identity-subline {
+  color: rgba(196, 191, 182, 0.72);
+  font-size: var(--type-caption);
+}
+
 .site-nav {
   font-size: var(--type-meta);
   display: flex;
@@ -394,7 +422,7 @@ html[data-chrome-morphing] .void-chrome-ask {
     justify-self: stretch;
     width: 100%;
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .void-chrome--site .portfolio-guide--mini,
@@ -689,14 +717,10 @@ html[data-void-chrome="home"] .site-footer {
     align-self: start;
   }
 
-  .portfolio-guide-hints {
-    min-height: 1.25rem;
-    margin-top: 0.35rem;
-  }
-
-  .portfolio-guide-invite {
-    margin-top: 0.25rem;
-    font-size: var(--type-caption);
+  .portfolio-guide-chips {
+    min-height: 1.5rem;
+    margin-top: 0.4rem;
+    gap: 0.45rem 0.55rem;
   }
 
   .portfolio-guide-live {
@@ -738,7 +762,66 @@ html[data-void-chrome="home"] .site-footer {
   flex-shrink: 0;
 }
 
-/* Whisper hint row — reserved height so the ask bar does not jump */
+/* Home guide chips — compact pills below the ask bar */
+.portfolio-guide-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem 0.7rem;
+  min-height: 1.75rem;
+  margin: 0.5rem clamp(0.5rem, 4vw, 2.25rem) 0;
+  padding: 0 0.35rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+.portfolio-guide-chip {
+  margin: 0;
+  padding: 0.15rem 0.45rem;
+  font-family: inherit;
+  font-size: 0.6875rem;
+  letter-spacing: 0.025em;
+  line-height: 1.3;
+  color: rgba(244, 240, 232, 0.55);
+  background: transparent;
+  border: 1px solid rgba(244, 240, 232, 0.18);
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    color var(--motion-fast),
+    border-color var(--motion-fast);
+}
+
+.portfolio-guide-chip:hover:not(:disabled) {
+  color: rgba(244, 240, 232, 0.88);
+  border-color: rgba(244, 240, 232, 0.42);
+}
+
+.portfolio-guide-chip:focus-visible {
+  outline: 1px solid rgba(244, 240, 232, 0.55);
+  outline-offset: 2px;
+  color: rgba(244, 240, 232, 0.88);
+}
+
+.portfolio-guide-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.portfolio-guide-chip--nav {
+  color: rgba(244, 240, 232, 0.52);
+  border-color: rgba(244, 240, 232, 0.16);
+}
+
+.portfolio-guide-chip--nav:hover:not(:disabled) {
+  color: rgba(244, 240, 232, 0.78);
+  border-color: rgba(244, 240, 232, 0.32);
+}
+
+/* Legacy hint row — mini variant only if reintroduced */
 .portfolio-guide-hints {
   display: flex;
   flex-wrap: wrap;
@@ -1000,9 +1083,12 @@ button.portfolio-guide-hint--focus:disabled {
 }
 
 .portfolio-guide-live-more {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
   margin: 0.35rem 0 0;
-  padding: 0;
+  padding: 0.35rem 0;
+  min-height: 44px;
   font-family: inherit;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
@@ -1201,7 +1287,10 @@ button.portfolio-guide-hint--focus:disabled {
 }
 
 .portfolio-guide-history-close {
-  padding: 0.2rem 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0;
+  min-height: 44px;
   font-family: inherit;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
@@ -1288,8 +1377,10 @@ button.portfolio-guide-hint--focus:disabled {
 }
 
 .portfolio-guide-clear {
-  display: inline-block;
-  padding: 0.2rem 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0;
+  min-height: 44px;
   font-family: inherit;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
@@ -1360,6 +1451,7 @@ button.portfolio-guide-hint--focus:disabled {
 .portfolio-guide--mini .portfolio-guide-stage {
   position: relative;
   min-width: 0;
+  overflow: visible;
 }
 
 .portfolio-guide--mini .portfolio-guide-float {
@@ -1401,7 +1493,7 @@ button.portfolio-guide-hint--focus:disabled {
   top: calc(100% + 0.5rem);
   right: 0;
   width: min(22rem, calc(100vw - 2rem));
-  max-height: min(40dvh, 16rem);
+  max-height: min(50dvh, 20rem);
   z-index: 20;
   background: #0a0a0a;
   border: 1px solid rgba(244, 240, 232, 0.28);
@@ -1410,6 +1502,7 @@ button.portfolio-guide-hint--focus:disabled {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overscroll-behavior: contain;
 }
 
 .portfolio-guide-mini-panel-close {
@@ -1432,23 +1525,35 @@ button.portfolio-guide-hint--focus:disabled {
 }
 
 .portfolio-guide-mini-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 0 0.75rem 0.75rem;
+  overflow-x: hidden;
   overflow-y: auto;
-  max-height: min(36dvh, 14rem);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 
 .portfolio-guide-mini-panel-body .portfolio-guide-live {
-  flex: 0 1 auto;
-  max-height: 5.5rem;
+  flex: 0 0 auto;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: visible;
   padding: 0;
   font-size: var(--type-meta);
 }
 
 .portfolio-guide-mini-panel-body .portfolio-guide-live--expanded {
-  max-height: min(28dvh, 10rem);
+  max-height: none;
+  overflow-y: visible;
+}
+
+.portfolio-guide-mini-panel-body .portfolio-guide-live-stack {
+  width: 100%;
+  min-width: 0;
 }
 
 @media (max-width: 767px) {
@@ -1504,7 +1609,7 @@ button.portfolio-guide-hint--focus:disabled {
     top: auto;
     bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     width: auto;
-    max-height: min(45dvh, 18rem);
+    max-height: min(55dvh, 22rem);
   }
 }
 
@@ -1886,6 +1991,11 @@ body:has(.workshop-page) .site-main {
     gap: 0.15rem;
   }
 
+  .project-gallery-stage {
+    flex: 1 1 0;
+    min-height: 8rem;
+  }
+
   body:has(.workshop-page) .site-footer {
     padding-top: 0.35rem;
     padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
@@ -1989,7 +2099,6 @@ body:has(.workshop-page) .site-main {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-      "badge actions"
       "title actions"
       "lede  .";
     column-gap: clamp(var(--space-3), 4vw, var(--space-4));
@@ -1999,30 +2108,6 @@ body:has(.workshop-page) .site-main {
     padding-block: clamp(var(--space-3), 4vh, var(--space-4)) var(--space-3);
     padding-top: clamp(2rem, 6vh, 4.5rem);
   }
-}
-
-.project-exhibit-badge {
-  margin: 0;
-  font-size: var(--type-meta);
-  letter-spacing: 0.06em;
-  text-transform: lowercase;
-  color: var(--color-muted);
-}
-
-@media (min-width: 1024px) {
-  .project-exhibit-badge {
-    grid-area: badge;
-    align-self: end;
-  }
-}
-
-.project-title {
-  font-family: var(--font-display), system-ui, sans-serif;
-  font-size: clamp(1.85rem, 3.6vw, 2.85rem);
-  font-weight: 400;
-  margin: 0;
-  line-height: 1.12;
-  max-width: 16ch;
 }
 
 @media (min-width: 1024px) {
@@ -3742,13 +3827,17 @@ body:has(.workshop-page) .site-main {
 }
 
 .demo-panel-mobile-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   padding: var(--space-1) var(--space-2);
   font-size: var(--type-meta);
   font-weight: 600;
   text-align: center;
   border-bottom: 1px solid var(--color-border);
   text-decoration: none;
+  box-sizing: border-box;
 }
 
 .demo-panel-mobile-link:hover {
@@ -4068,6 +4157,19 @@ body:has(.about-page) .site-main {
   max-width: none;
 }
 
+.about-essay p {
+  margin: 0 0 var(--space-2);
+  font-size: 0.975rem;
+  line-height: 1.72;
+  color: rgba(244, 240, 232, 0.88);
+  max-width: none;
+  overflow-wrap: anywhere;
+}
+
+.about-essay p:last-of-type {
+  margin-bottom: 0;
+}
+
 .about-section {
   margin-bottom: clamp(2.25rem, 5vw, 3.25rem);
   max-width: none;
@@ -4359,7 +4461,7 @@ body:has(.about-page) .site-main {
 
 .project-exhibit-case-body {
   margin: 0;
-  max-width: 36ch;
+  max-width: 44ch;
   color: var(--color-text);
   font-size: var(--type-body);
   line-height: 1.65;
@@ -4561,6 +4663,21 @@ body:has(.about-page) .site-main {
 
   .exhibit-stage-grid--duo .exhibit-stage-col--primary {
     transform: translateY(-0.35rem);
+  }
+
+  .exhibit-stage-grid--duo .exhibit-stage-col:not(.exhibit-stage-col--primary) .exhibit-stage-col-title {
+    font-size: var(--type-meta);
+    font-weight: 500;
+    color: var(--color-muted);
+  }
+
+  .exhibit-stage-grid--duo .exhibit-stage-col:not(.exhibit-stage-col--primary) .exhibit-surface-lede {
+    font-size: var(--type-caption);
+    color: rgba(196, 191, 182, 0.62);
+  }
+
+  .exhibit-stage-grid--duo .exhibit-stage-col:not(.exhibit-stage-col--primary) .matte-panel.is-plate {
+    opacity: 0.88;
   }
 
   .exhibit-stage-grid--duo .matte-panel.is-plate .matte-panel-preview {
@@ -4949,13 +5066,6 @@ body:has(.about-page) .site-main {
     row-gap: var(--space-2);
     align-content: stretch;
     min-height: min(56dvh, 40rem);
-  }
-
-  .project-exhibit-badge {
-    grid-area: auto;
-    grid-column: 1 / 4;
-    grid-row: 1;
-    align-self: start;
   }
 
   .project-title {

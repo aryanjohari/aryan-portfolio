@@ -1,10 +1,10 @@
-# Workshop Index — Master Directives
+# Portfolio — Master Directives
 
 This document is the entry point for all portfolio decisions. Read it first before changing code or content.
 
 ## What this site is
 
-A **curated workshop** — a terminal-style portfolio with a narrative homepage and catalog of selected projects hosted on GitHub. Each project has a dedicated page with narrative content and an optional live demo panel. An interactive guide is planned for Phase B. The portfolio is an editorial interface over GitHub repos, not a raw README browser.
+A **curated project portfolio** — a terminal-style site with a narrative homepage and catalog of selected projects hosted on GitHub. Each project has a dedicated page with narrative content and an optional live demo panel. The home-page Portfolio Guide is the primary interaction surface. The portfolio is an editorial interface over GitHub repos, not a raw README browser.
 
 Visitors should understand what a project does, see its stack and status, and try a demo when one is wired.
 
@@ -28,12 +28,12 @@ Visitors should understand what a project does, see its stack and status, and tr
 | Route              | Purpose                                                                                |
 | ------------------ | -------------------------------------------------------------------------------------- |
 | `/`                | Home — slim intro + portfolio guide (primary interaction)                              |
-| `/workshop`        | Workshop index — full project table only                                               |
+| `/projects`        | Projects index — curated gallery (one viewport, drag carousel)                       |
 | `/about`           | Void blog read (void-scroll portal): philosophy, background, education, availability, resume |
-| `/projects/[slug]` | Exhibit (void-scroll portal): hero, CTAs, optional stage, How it works, continue             |
-| `/resume.pdf`      | Static PDF in `public/resume.pdf` (not committed by default)                           |
+| `/projects/[slug]` | Exhibit (void-scroll portal): hero, CTAs, optional stage, case study, continue             |
+| `/resume.pdf`      | Static PDF in `public/resume.pdf`                                                      |
 
-**Routing note:** Never link to `/index` in nav or copy — Next.js/Vercel may alias it to `/`. Legacy `/index` URLs redirect permanently to `/workshop` via `next.config.ts`.
+**Routing note:** Never link to `/index` in nav or copy — Next.js/Vercel may alias it to `/`. Legacy `/index` and `/workshop` URLs redirect permanently to `/projects` via `next.config.ts`.
 
 ## Documentation index
 
@@ -46,10 +46,13 @@ Visitors should understand what a project does, see its stack and status, and tr
 | [ui.md](./ui.md)                                           | Design tokens, wireframes, components, responsive rules              |
 | [void-chrome-transitions.md](./void-chrome-transitions.md) | Morph-first home ↔ site chrome navigation (why + how)                |
 | [registry.md](./registry.md)                               | How to add/remove projects and wire demos                            |
-| [v2-roadmap.md](./v2-roadmap.md)                           | v2 workshop phases (homepage narrative, guide, remaining demos)      |
+| [v2-roadmap.md](./v2-roadmap.md)                           | v2 phases (homepage narrative, guide, remaining demos)               |
 | [guide.md](./guide.md)                                     | Portfolio guide API, context build, env setup, testing               |
+| [ship-checklist.md](./ship-checklist.md)                   | Pre-deploy verification steps                                        |
 
 ## Current phase
+
+**Phase 5 (done) — ship-ready freeze:** Mobile/layout polish, nav clarity (`/projects` canonical), guide JSON-leak hardening, exhibit slug polish, docs + ship checklist. See [ship-checklist.md](./ship-checklist.md) before deploy.
 
 **Phase 1 (done):** Static UI shell, mock project data, full documentation.
 
@@ -57,7 +60,7 @@ Visitors should understand what a project does, see its stack and status, and tr
 
 **Phase 3 (later):** GitHub Action deploy hook, additional demo types, production hardening.
 
-**Phase 4 — v2 Workshop (in progress):** Route split (`/` guide home, `/workshop` table). Portfolio Guide live via Gemini (Phase B). Narrative homepage shipped in Phase A. v1 architecture (registry, yaml fetch, demo wiring) is unchanged.
+**Phase 4 (done):** Route split (`/` guide home, `/projects` gallery). Portfolio Guide live via Gemini. Case studies, knowledge bank, home chips/tags, about essay, yaml fetch.
 
 ## Quick reference
 
@@ -66,3 +69,4 @@ Visitors should understand what a project does, see its stack and status, and tr
 - **Change design:** [ui.md](./ui.md)
 - **Change data contract:** [contract.md](./contract.md)
 - **Understand build flow:** [architecture.md](./architecture.md)
+- **Pre-deploy:** [ship-checklist.md](./ship-checklist.md)

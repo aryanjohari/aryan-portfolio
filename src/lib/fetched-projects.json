@@ -1,13 +1,13 @@
 {
-  "fetchedAt": "2026-08-09T03:41:30.449Z",
+  "fetchedAt": "2026-08-31T10:22:28.498Z",
   "results": [
     {
       "slug": "background-studio",
       "status": "ok",
       "yaml": {
         "title": "Background Studio",
-        "summary": "Design animated full-screen hero backgrounds in the browser and export the look as reusable JSON.",
-        "description": "Background Studio is a live WebGL tool for portfolio and landing-page heroes. Upload an image, pick one of fourteen looks or describe a mood, then tune motion and texture while the scene animates on a single canvas. Export preset JSON to reuse the same coefficients on your own site, or save a WebM loop or PNG still. Optional AI mood (when enabled) suggests a look and a small parameter patch; keyword matching works offline as a fallback.",
+        "summary": "Design animated full-screen hero backgrounds in the browser and export reusable JSON. Stage adds brand briefs, campaign packs, an in-memory Jobs API, and an embed demo.",
+        "description": "Background Studio is a live WebGL tool for portfolio and landing-page heroes. Upload an image, pick one of fourteen looks or describe a mood, then tune motion and texture while the scene animates on a single canvas. Export preset or StageRecipe JSON to reuse coefficients on your own site, save a campaign pack ZIP, or capture WebM/PNG. Optional Gemini brief/mood (when enabled) suggests a look and a validated parameter patch; keyword matching works offline as a fallback. Stage Phases 0–5: brand kit, campaign pack, keyed /api/v1 jobs (in-memory), embed helper — see docs/DIRECTION.md. Next: UI remake, then bugfix.",
         "stack": [
           "TypeScript",
           "React",
@@ -27,11 +27,11 @@
         "slug": "background-studio",
         "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-08-09T03:41:16.764Z",
+      "fetchedAt": "2026-08-31T10:22:15.094Z",
       "diagram": {
         "source": "github",
         "path": "docs/c4/2-containers.mmd",
-        "mermaid": "%% C4 Containers — Background Studio\n%% IDs: studio-spa (Container spa), mood-api (Container moodApi)\n%% If your Mermaid renderer lacks C4Container, use the flowchart block at the bottom (uncomment it / paste into a viewer).\n\nC4Container\n  title Containers — Background Studio\n  Person(designer, \"Designer\", \"Uploads textures, tunes looks, exports\")\n\n  System_Boundary(studio, \"Background Studio\") {\n    Container(spa, \"Background Studio SPA\", \"Vite, React, R3F, GLSL, Zustand\", \"Routes, scene store, single-pass WebGL compositor, preset / mood / export client\")\n    Container(moodApi, \"Mood API\", \"Vercel serverless\", \"Optional POST /api/mood → OpenAI → validated basePresetId + patch\")\n  }\n\n  System_Ext(openai, \"OpenAI API\", \"Chat Completions\")\n  System_Ext(embedSite, \"Your production site\", \"Consumes preset JSON\")\n\n  Rel(designer, spa, \"Uses in the browser\")\n  Rel(spa, embedSite, \"Exports preset JSON\")\n  Rel(spa, designer, \"Optional WebM / PNG\")\n  Rel(spa, moodApi, \"POST /api/mood when AI enabled (gets basePresetId + patch)\", \"HTTPS\")\n  Rel(moodApi, openai, \"Chat completions\", \"HTTPS\")\n\n%% flowchart equivalent (same topology):\n%% flowchart TB\n%%   designer[Designer]\n%%   subgraph browser [Browser]\n%%     spa[\"studio-spa — Background Studio SPA\"]\n%%   end\n%%   moodApi[\"mood-api — Mood API on Vercel\"]\n%%   openai[OpenAI API]\n%%   embed[Your production site]\n%%   designer -->|uploads and tunes| spa\n%%   spa -->|exports preset JSON| embed\n%%   spa -->|optional WebM / PNG| designer\n%%   spa -.->|POST /api/mood when AI enabled| moodApi\n%%   moodApi -.->|chat completions| openai\n%%   moodApi -.->|basePresetId + optional patch| spa",
+        "mermaid": "%% C4 Containers — Background Studio / Stage\n%% IDs: studio-spa, stage-api\n\nC4Container\n  title Containers — Background Studio / Stage\n  Person(designer, \"Designer\", \"Uploads textures, tunes looks, exports\")\n  Person(moduleDev, \"Module consumer\", \"Calls Jobs API with API key\")\n\n  System_Boundary(studio, \"Background Studio / Stage\") {\n    Container(spa, \"Studio SPA\", \"Vite, React, R3F, GLSL, Zustand\", \"Routes, WebGL compositor, lab brand/brief/pack, embed demo\")\n    Container(stageApi, \"Stage API\", \"Vercel serverless\", \"Gemini brief/mood; keyed /api/v1 brands+jobs (in-memory)\")\n  }\n\n  System_Ext(gemini, \"Gemini API\", \"Constrained JSON brief patches\")\n  System_Ext(embedSite, \"Your production site\", \"Consumes preset / StageRecipe JSON\")\n\n  Rel(designer, spa, \"Uses in the browser\")\n  Rel(moduleDev, stageApi, \"POST /api/v1/jobs\", \"HTTPS + API key\")\n  Rel(spa, embedSite, \"Exports recipe / preset JSON\")\n  Rel(spa, designer, \"Campaign pack ZIP / WebM / PNG\")\n  Rel(spa, stageApi, \"POST /api/brief and /api/mood when AI enabled\", \"HTTPS\")\n  Rel(stageApi, gemini, \"generateContent JSON\", \"HTTPS\")",
         "graph": {
           "version": 1,
           "nodes": [
@@ -238,14 +238,14 @@
           "mapPath": "docs/c4/portfolio-map.json",
           "defaultLevel": "context",
           "context": {
-            "mermaid": "C4Context\n  title System Context — Background Studio\n  Person(designer, \"Designer\", \"Tunes animated hero looks in the browser and exports presets\")\n  System(studio, \"Background Studio\", \"Live WebGL hero-background designer and preset exporter\")\n  System_Ext(openai, \"OpenAI API\", \"Optional Chat Completions for AI mood\")\n  System_Ext(embedSite, \"Your production site\", \"Embeds exported preset JSON behind HTML\")\n\n  Rel(designer, studio, \"Uploads textures, picks looks, exports JSON / WebM / PNG\")\n  Rel(studio, openai, \"Optional AI mood when enabled\", \"HTTPS\")\n  Rel(studio, embedSite, \"Exports reusable preset coefficients\")",
+            "mermaid": "C4Context\n  title System Context — Background Studio / Stage\n  Person(designer, \"Designer\", \"Tunes looks, brand briefs, campaign packs in the browser\")\n  Person(moduleDev, \"Module consumer\", \"Calls Stage Jobs API with an API key\")\n  System(studio, \"Background Studio / Stage\", \"WebGL studio + Gemini brief + in-memory Jobs API\")\n  System_Ext(gemini, \"Gemini API\", \"Constrained JSON brief patches\")\n  System_Ext(embedSite, \"Your production site\", \"Embeds preset / StageRecipe JSON behind HTML\")\n\n  Rel(designer, studio, \"Uploads, briefs, exports pack / recipe\")\n  Rel(moduleDev, studio, \"POST /api/v1/jobs\", \"HTTPS + API key\")\n  Rel(studio, gemini, \"Brief / jobs when configured\", \"HTTPS\")\n  Rel(studio, embedSite, \"Exports reusable coefficients\")",
             "path": "docs/c4/1-context.mmd",
-            "markdown": "# C1 — System context\n\n**Background Studio** is one product: a browser tool for designing animated full-viewport hero backgrounds and exporting **preset JSON** (plus optional WebM/PNG).\n\n## Elements\n\n| ID | Type | Role | Evidence |\n|----|------|------|----------|\n| `designer` | Person | Authors looks on `/`, `/lab`, `/story` | `src/App.tsx`, shells |\n| `studio` | Software system | This repository’s product (SPA ± optional Mood API) | whole repo |\n| `openai` | External system | Optional upstream for AI mood | `api/mood.ts` → `api.openai.com/v1/chat/completions` |\n| `embedSite` | External system | A site that reuses exported preset coefficients (not part of this deploy) | `src/lib/preset/PORTING.md` |\n\n## Notes\n\n- Keyword mood runs entirely in the browser; AI mood is optional and needs the Mood API + `OPENAI_API_KEY` (see C2).\n- No hosted database, no multi-tenant backend, no Docker/workers.\n- Browser WebGL / `MediaRecorder` / `localStorage` are **platform capabilities of the SPA**, not separate software systems on this diagram.\n- Diagram: [`1-context.mmd`](1-context.mmd). Zoom → [`2-containers.md`](2-containers.md)."
+            "markdown": "# C1 — System context\n\n**Background Studio → Stage** designs animated full-viewport heroes and brand-ruled campaign recipes (web app + Jobs API).\n\n## Elements\n\n| ID | Type | Role | Evidence |\n|----|------|------|----------|\n| `designer` | Person | Authors looks on `/`, `/lab`, `/story`, `/embed-demo` | `src/App.tsx`, shells |\n| `moduleConsumer` | Person | External modules calling keyed `/api/v1` | `docs/api/AUTH.md` |\n| `studio` | Software system | This repository (SPA + Stage API) | whole repo |\n| `gemini` | External system | Constrained brief → patch | `src/lib/stage/runStageBrief.ts` |\n| `embedSite` | External system | Site that reuses exported coefficients | `src/lib/preset/PORTING.md`, `src/lib/stage/EMBED.md` |\n\n## Notes\n\n- Keyword mood runs in the browser; AI brief/mood/jobs need Gemini + Vercel (or `vercel dev`).\n- Jobs API brands/jobs are **in-memory** (cold-start wipe). No multi-tenant durable backend.\n- Diagram: [`1-context.mmd`](1-context.mmd). Zoom → [`2-containers.md`](2-containers.md)."
           },
           "containers": {
-            "mermaid": "%% C4 Containers — Background Studio\n%% IDs: studio-spa (Container spa), mood-api (Container moodApi)\n%% If your Mermaid renderer lacks C4Container, use the flowchart block at the bottom (uncomment it / paste into a viewer).\n\nC4Container\n  title Containers — Background Studio\n  Person(designer, \"Designer\", \"Uploads textures, tunes looks, exports\")\n\n  System_Boundary(studio, \"Background Studio\") {\n    Container(spa, \"Background Studio SPA\", \"Vite, React, R3F, GLSL, Zustand\", \"Routes, scene store, single-pass WebGL compositor, preset / mood / export client\")\n    Container(moodApi, \"Mood API\", \"Vercel serverless\", \"Optional POST /api/mood → OpenAI → validated basePresetId + patch\")\n  }\n\n  System_Ext(openai, \"OpenAI API\", \"Chat Completions\")\n  System_Ext(embedSite, \"Your production site\", \"Consumes preset JSON\")\n\n  Rel(designer, spa, \"Uses in the browser\")\n  Rel(spa, embedSite, \"Exports preset JSON\")\n  Rel(spa, designer, \"Optional WebM / PNG\")\n  Rel(spa, moodApi, \"POST /api/mood when AI enabled (gets basePresetId + patch)\", \"HTTPS\")\n  Rel(moodApi, openai, \"Chat completions\", \"HTTPS\")\n\n%% flowchart equivalent (same topology):\n%% flowchart TB\n%%   designer[Designer]\n%%   subgraph browser [Browser]\n%%     spa[\"studio-spa — Background Studio SPA\"]\n%%   end\n%%   moodApi[\"mood-api — Mood API on Vercel\"]\n%%   openai[OpenAI API]\n%%   embed[Your production site]\n%%   designer -->|uploads and tunes| spa\n%%   spa -->|exports preset JSON| embed\n%%   spa -->|optional WebM / PNG| designer\n%%   spa -.->|POST /api/mood when AI enabled| moodApi\n%%   moodApi -.->|chat completions| openai\n%%   moodApi -.->|basePresetId + optional patch| spa",
+            "mermaid": "%% C4 Containers — Background Studio / Stage\n%% IDs: studio-spa, stage-api\n\nC4Container\n  title Containers — Background Studio / Stage\n  Person(designer, \"Designer\", \"Uploads textures, tunes looks, exports\")\n  Person(moduleDev, \"Module consumer\", \"Calls Jobs API with API key\")\n\n  System_Boundary(studio, \"Background Studio / Stage\") {\n    Container(spa, \"Studio SPA\", \"Vite, React, R3F, GLSL, Zustand\", \"Routes, WebGL compositor, lab brand/brief/pack, embed demo\")\n    Container(stageApi, \"Stage API\", \"Vercel serverless\", \"Gemini brief/mood; keyed /api/v1 brands+jobs (in-memory)\")\n  }\n\n  System_Ext(gemini, \"Gemini API\", \"Constrained JSON brief patches\")\n  System_Ext(embedSite, \"Your production site\", \"Consumes preset / StageRecipe JSON\")\n\n  Rel(designer, spa, \"Uses in the browser\")\n  Rel(moduleDev, stageApi, \"POST /api/v1/jobs\", \"HTTPS + API key\")\n  Rel(spa, embedSite, \"Exports recipe / preset JSON\")\n  Rel(spa, designer, \"Campaign pack ZIP / WebM / PNG\")\n  Rel(spa, stageApi, \"POST /api/brief and /api/mood when AI enabled\", \"HTTPS\")\n  Rel(stageApi, gemini, \"generateContent JSON\", \"HTTPS\")",
             "path": "docs/c4/2-containers.mmd",
-            "markdown": "# C2 — Containers\n\nRunnable pieces that exist in this repo. Machine IDs: `studio-spa`, `mood-api`.\n\n## Containers\n\n| ID | Technology | Responsibility | Evidence |\n|----|------------|----------------|----------|\n| `studio-spa` | Vite + React + R3F / Three / GLSL + Zustand in the browser | Routes, in-memory scene state, single-pass WebGL compositor, preset/mood/export client | `src/main.tsx`, `src/App.tsx`, `src/webgl/*`, `src/store/*`, `src/lib/*`, `vite.config.ts`, `vercel.json` SPA rewrite, `public/_redirects` |\n| `mood-api` | Vercel serverless | Optional `POST /api/mood` → OpenAI → validated `{ basePresetId, patch? }` | `api/mood.ts`; Vite proxies `/api/mood` → `vercel dev` in `vite.config.ts` |\n\n## External systems\n\n| Label | Role | Evidence |\n|-------|------|----------|\n| OpenAI API | Chat Completions when AI mood is configured | `api/mood.ts` (`OPENAI_API_KEY`, `OPENAI_MODEL` default `gpt-4o-mini`) |\n| Your production site | Consumes exported preset JSON | `src/lib/preset/PORTING.md`, export via `buildPreset` |\n\n## Honest omissions / collapsed notes\n\n- **No server database.** Zustand is in-memory in the SPA. The only client persistence found is `localStorage` for “preserve text on apply” (`src/lib/preset/presetApplyPreference.ts`).\n- **No workers / Docker / CLIs / CI workflows** in this repo.\n- **Keyword mood is inside `studio-spa`**, not a container (`src/lib/mood/mapMoodToPreset.ts`).\n- **Netlify static** can host the SPA (`public/_redirects`) but has no `mood-api` — keyword mood only.\n- SPA internals (shader banks, apply modes, export clock) are collapsed here; see C3 `studio-spa`.\n\n## Relationships\n\n- Designer → SPA: upload hero/overlay, catalog/mood, semantic tune, export.\n- SPA → Mood API (optional): only when `VITE_MOOD_AI_ENABLED=true` at build and the API is deployed.\n- Mood API → OpenAI (optional): requires `OPENAI_API_KEY`.\n- SPA → production site: primary output is preset **coefficients** from Zustand (`buildPreset`), not pixels from the GPU. WebM/PNG are canvas captures.\n\nDiagram: [`2-containers.mmd`](2-containers.mmd). Components: [`3-components/studio-spa.md`](3-components/studio-spa.md), [`3-components/mood-api.md`](3-components/mood-api.md)."
+            "markdown": "# C2 — Containers\n\nRunnable pieces in this repo. Machine IDs: `studio-spa`, `stage-api` (includes legacy `mood-api` routes).\n\n## Containers\n\n| ID | Technology | Responsibility | Evidence |\n|----|------------|----------------|----------|\n| `studio-spa` | Vite + React + R3F / Three / GLSL + Zustand | Routes, scene state, WebGL compositor, brand/brief/pack UI, embed demo | `src/main.tsx`, `src/App.tsx`, `src/webgl/*`, `src/lib/stage/*`, `vite.config.ts` |\n| `stage-api` | Vercel serverless | Keyless `POST /api/brief` + `/api/mood` (Gemini); keyed `/api/v1/*` brands + jobs (in-memory) | `api/brief.ts`, `api/mood.ts`, `api/v1/*`, `src/lib/stage/server/*` |\n\n## External systems\n\n| Label | Role | Evidence |\n|-------|------|----------|\n| Gemini API | Constrained brief → patch (jobs + lab) | `src/lib/stage/runStageBrief.ts` (`GEMINI_API_KEY`) |\n| Consumer modules | Call Jobs API with API key | `docs/api/stage-v1.openapi.yaml`, `docs/api/AUTH.md` |\n| Your production site | Consumes preset / StageRecipe JSON | `src/lib/preset/PORTING.md`, `src/lib/stage/EMBED.md` |\n\n## Honest omissions / collapsed notes\n\n- **No durable database.** API brands/jobs are module-scope Maps (wipe on cold start). Lab brand kit = `localStorage`.\n- **Pack ZIP** is produced in the SPA, not by `stage-api`.\n- **`POST /v1/assets`** not implemented (Phase 4 deferred).\n- **Keyword mood** stays inside `studio-spa`.\n- **Netlify static** can host the SPA but has no `stage-api`.\n\n## Relationships\n\n- Designer → SPA: upload, brief, pack, embed demo.\n- SPA → stage-api: `/api/brief`, `/api/mood` (no Stage API key).\n- Modules → stage-api: `/api/v1/*` with Bearer / `X-Stage-Key`.\n- stage-api → Gemini: brief JSON.\n- SPA → production site: preset / StageRecipe coefficients.\n\nDiagram: [`2-containers.mmd`](2-containers.mmd). Components: [`3-components/studio-spa.md`](3-components/studio-spa.md), [`3-components/stage-api.md`](3-components/stage-api.md)."
           },
           "components": {
             "studio-spa": {
@@ -253,27 +253,39 @@
               "path": "docs/c4/3-components/studio-spa.mmd",
               "markdown": "# C3 — studio-spa\n\nInternals of the Background Studio SPA (browser). Shared Zustand + one WebGL canvas across routes.\n\n## Components\n\n| ID / label | Evidence | Role |\n|------------|----------|------|\n| Route shells | `src/shells/*`, `src/App.tsx` | `/` living demo, `/lab` studio drawer, `/story` case study; unknown → `/` |\n| Zustand scene store | `src/store/useSynthStore.ts`, `layerEffects.ts`, `textLayers.ts` | Textures, global synth params, per-layer effect maps, UI tabs — in-memory |\n| Preset catalog | `src/data/presetCatalog.ts` (+ builders / background / demo idea modules) | **14** looks: 7 featured ambient + 7 legacy |\n| Preset lib | `src/lib/preset/*` | Build (`buildPreset`), validate, hydrate, apply modes (effects-only / style / full / patch), `?preset=` share URLs, preserve-text preference (`localStorage`) |\n| Mood client | `src/lib/mood/*` | Keyword map always; optional `fetch('/api/mood')` then keyword fallback on any failure |\n| Semantic sliders | `src/lib/semantic/mapSemanticSliders.ts` | Intensity / Motion / Grit → background-layer `PresetPatch` |\n| Decal pipeline | `src/utils/decalTexture.ts`, `UploadButton.tsx` | Overlay processing → `setDecalTexture` |\n| R3F canvas host | `src/components/SynthCanvasView.tsx`, `src/webgl/SynthCanvas.tsx` | Orthographic camera, one `planeGeometry(2,2)`, `preserveDrawingBuffer: true`, pointer drag for overlay/text |\n| SynthMaterial | `src/webgl/materials/SynthMaterial.tsx` | `useFrame`: store → uniforms; rasterizes preview text to `CanvasTexture`s; respects `window.__SYNTH_EXPORT_TIME__` |\n| GLSL fragment compositor | `src/webgl/shaders/fragment.glsl` (+ `vertex.glsl`) | Contain-letterbox hero UVs; `layerWarp` then `layerShade` per prefix; alpha-composite `L0` / `L1` / `T0–T3` in **one** pass |\n| Export | `src/lib/export/*`, `src/lib/preset/buildPreset.ts`, `ExportActions.tsx` | JSON from Zustand; WebM via `MediaRecorder` + export-time hijack; PNG from canvas |\n\n## Notes (distinctive effort, not collapsed)\n\n- **Presets are coefficients, not frames** — JSON is built from the store; the GPU path is how you *preview* and capture media.\n- **Apply modes** — effects-only can keep preview text; full import may embed assets (`hydrate` / `assets`).\n- **Export clock** — `exportLoopWebm` sets `__SYNTH_EXPORT_TIME__` so layer `u_*_t` follow a deterministic timeline, then clears it.\n- Lab UI chrome (`ControlsDrawer` / `StackPanel`) sits on the shells; omitted as separate C3 boxes to avoid UI-widget noise.\n\nDiagram: [`studio-spa.mmd`](studio-spa.mmd). Parent: [`../2-containers.md`](../2-containers.md)."
             },
+            "stage-api": {
+              "markdown": "# C3 — stage-api\n\nVercel serverless Stage API: keyless lab Gemini routes + keyed `/api/v1` brands/jobs.\n\nEvolves the older **mood-api** name — see also [`mood-api.md`](mood-api.md).\n\n## Components\n\n| Label | Evidence | Role |\n|-------|----------|------|\n| Brief handler | `api/brief.ts` | Keyless `POST /api/brief` → Gemini → `{ patch, summary?, baseLookId? }` |\n| Mood adapter | `api/mood.ts` | Keyless landing mood; wraps same `runStageBrief` |\n| Health | `api/v1/health.ts` | Public liveness + `contractVersion` |\n| Brands | `api/v1/brands.ts`, `brands/[brandId].ts` | In-memory brand CRUD subset |\n| Jobs | `api/v1/jobs.ts`, `jobs/[jobId].ts`, `.../patch.ts`, `.../artifacts.ts` | Sync job → StageRecipe; patch follow-up; artifacts metadata stub |\n| Auth | `src/lib/stage/server/stageApiAuth.ts` | `STAGE_API_KEY` / `STAGE_API_KEYS` |\n| Store | `src/lib/stage/server/stageStore.ts` | Module Maps (cold-start wipe) |\n| Job runner | `src/lib/stage/server/runStageJob.ts` | Brief + merge patch → StageRecipe |\n| Gemini runner | `src/lib/stage/runStageBrief.ts` | Shared with brief/mood |\n\n## Notes\n\n- Persistence is **in-memory only** for dogfood.\n- Lab brand kits stay in browser `localStorage` — not synced with API brands.\n- `POST /v1/assets` is not implemented.\n- OpenAPI: [`../../api/stage-v1.openapi.yaml`](../../api/stage-v1.openapi.yaml). Auth: [`../../api/AUTH.md`](../../api/AUTH.md).\n- Parent: [`../2-containers.md`](../2-containers.md).",
+              "path": "docs/c4/3-components/stage-api.md"
+            },
             "mood-api": {
               "mermaid": "%% C3 Components — mood-api (optional Vercel serverless)\n\nC4Component\n  title Components — Mood API\n  Container_Boundary(mood, \"mood-api\") {\n    Component(handler, \"Vercel handler\", \"api/mood.ts\", \"POST only; env gate; upstream fetch\")\n    Component(prompt, \"System prompt builder\", \"src/lib/mood/buildAiMoodSystemPrompt.ts\", \"Catalog-aware director prompt\")\n    Component(parse, \"Parse and validate\", \"src/lib/mood/parseAiMoodResponse.ts\", \"basePresetId + optional patch or 422\")\n  }\n\n  System_Ext(openai, \"OpenAI Chat Completions\", \"Upstream HTTPS\")\n\n  Rel(handler, prompt, \"Builds system message\")\n  Rel(handler, openai, \"chat/completions\", \"HTTPS\")\n  Rel(handler, parse, \"Validates model JSON\")\n\n%% flowchart equivalent:\n%% flowchart LR\n%%   post[POST /api/mood]\n%%   handler[Vercel handler]\n%%   prompt[System prompt builder]\n%%   openai[OpenAI Chat Completions]\n%%   parse[Parse and validate]\n%%   json[\"JSON basePresetId + optional patch\"]\n%%   post --> handler\n%%   handler --> prompt\n%%   handler --> openai\n%%   openai --> parse\n%%   parse --> json",
               "path": "docs/c4/3-components/mood-api.mmd",
-              "markdown": "# C3 — mood-api\n\nOptional Vercel serverless function for AI mood. Keyword mood does **not** live here — it runs in the SPA (`src/lib/mood/mapMoodToPreset.ts` via `applyMood.ts`).\n\n## Components\n\n| Label | Evidence | Role |\n|-------|----------|------|\n| Vercel handler | `api/mood.ts` | `POST` only; 405 otherwise; requires `OPENAI_API_KEY` (503 if missing) |\n| System prompt builder | `src/lib/mood/buildAiMoodSystemPrompt.ts` | Catalog-aware director prompt (bundled into the function) |\n| Parse / validate | `src/lib/mood/parseAiMoodResponse.ts` | `{ basePresetId, patch? }` or 422 |\n| OpenAI Chat Completions | upstream | Model from `OPENAI_MODEL` or default `gpt-4o-mini`; `response_format: json_object` |\n\n## Contract (from `api/mood.ts`)\n\n- Request body: `{ prompt: string }`\n- Success `200`: `{ basePresetId }` or `{ basePresetId, patch }`\n- Failures: `400` / `405` / `422` / `502` / `503` as implemented\n\n## Notes\n\n- Client enables the call only when `VITE_MOOD_AI_ENABLED=true` (build-time). Local: Vite proxies `/api/mood` → `vercel dev` (`vite.config.ts`).\n- Netlify-only static deploys have **no** this container — keyword mood only.\n- Diagram: [`mood-api.mmd`](mood-api.mmd). Parent: [`../2-containers.md`](../2-containers.md)."
+              "markdown": "# C3 — mood-api (legacy name)\n\nOptional Vercel path for landing AI mood. **Implementation now uses Gemini** via the shared Stage brief runner — not OpenAI.\n\nPrefer the broader container name **stage-api**: [`stage-api.md`](stage-api.md).\n\n## Components\n\n| Label | Evidence | Role |\n|-------|----------|------|\n| Vercel handler | `api/mood.ts` | `POST` only; adapts brief result → `{ basePresetId, patch? }` |\n| Shared runner | `src/lib/stage/runStageBrief.ts` | Gemini JSON brief |\n| Lab brief sibling | `api/brief.ts` | Stage lab Brand+Brief UI |\n\n## Contract (from `api/mood.ts`)\n\n- Request body: `{ prompt: string }` (and compatible fields)\n- Success `200`: `{ basePresetId }` or `{ basePresetId, patch }`\n- Requires `GEMINI_API_KEY` / `GOOGLE_API_KEY` (503 if missing)\n\n## Notes\n\n- Client: `VITE_STAGE_BRIEF_AI_ENABLED` (or legacy `VITE_MOOD_AI_ENABLED`).\n- Local: Vite proxies `/api/mood` → `vercel dev`.\n- Phase 4 Jobs API lives under `/api/v1/*` with API keys — see stage-api.\n- Parent: [`../2-containers.md`](../2-containers.md)."
             }
           },
           "diveTargets": [
             {
               "id": "studio-spa",
-              "label": "Background Studio SPA",
+              "label": "Studio SPA",
               "graphNodeIds": [],
               "matchLabels": [
+                "Studio SPA",
                 "Background Studio SPA",
                 "studio-spa"
               ]
+            },
+            {
+              "id": "stage-api",
+              "label": "Stage API",
+              "graphNodeIds": []
             },
             {
               "id": "mood-api",
               "label": "Mood API",
               "graphNodeIds": [],
               "matchLabels": [
+                "Stage API",
+                "stage-api",
                 "Mood API",
                 "mood-api"
               ]
@@ -282,31 +294,35 @@
           "zoomTargets": [
             {
               "id": "background-studio",
-              "label": "Background Studio",
+              "label": "Background Studio / Stage",
               "fromLevel": "context",
               "toLevel": "containers",
               "matchLabels": [
                 "Background Studio",
+                "Background Studio / Stage",
                 "background-studio"
               ]
             },
             {
               "id": "studio-spa",
-              "label": "Background Studio SPA",
+              "label": "Studio SPA",
               "fromLevel": "containers",
               "toLevel": "components",
               "matchLabels": [
+                "Studio SPA",
                 "Background Studio SPA",
                 "studio-spa"
               ],
               "componentId": "studio-spa"
             },
             {
-              "id": "mood-api",
-              "label": "Mood API",
+              "id": "stage-api",
+              "label": "Stage API",
               "fromLevel": "containers",
               "toLevel": "components",
               "matchLabels": [
+                "Stage API",
+                "stage-api",
                 "Mood API",
                 "mood-api"
               ],
@@ -340,7 +356,7 @@
         },
         "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-08-09T03:41:19.153Z",
+      "fetchedAt": "2026-08-31T10:22:17.867Z",
       "diagram": {
         "source": "github",
         "path": "docs/c4/2-containers.mmd",
@@ -752,7 +768,7 @@
         },
         "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-08-09T03:41:21.633Z",
+      "fetchedAt": "2026-08-31T10:22:20.267Z",
       "diagram": {
         "source": "github",
         "path": "docs/c4/2-containers.mmd",
@@ -1072,7 +1088,7 @@
         },
         "diagram": "docs/c4/2-containers.mmd"
       },
-      "fetchedAt": "2026-08-09T03:41:23.815Z",
+      "fetchedAt": "2026-08-31T10:22:22.059Z",
       "diagram": {
         "source": "github",
         "path": "docs/c4/2-containers.mmd",
@@ -1572,7 +1588,7 @@
         },
         "diagram": "docs/architecture.mmd"
       },
-      "fetchedAt": "2026-08-09T03:41:27.567Z",
+      "fetchedAt": "2026-08-31T10:22:25.691Z",
       "diagram": {
         "source": "github",
         "path": "docs/architecture.mmd",

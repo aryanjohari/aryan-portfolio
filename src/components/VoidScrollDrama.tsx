@@ -7,9 +7,9 @@ import { MOTION, prefersReducedMotion } from "@/lib/motion";
 export const VOID_SCROLL_SELECTOR = "[data-void-scroll]";
 export const VOID_SCROLL_EXEMPT_SELECTOR = "[data-void-scroll-exempt]";
 
-/** About readable blocks — matches prior AboutScrollDrama targets. */
+/** About readable blocks — continuous essay paragraphs + pullquote. */
 export const ABOUT_VOID_SCROLL_BLOCKS =
-  ".about-section h2, .about-section p, .about-pullquote";
+  ".about-essay p, .about-pullquote";
 
 /**
  * Slug exhibit readable blocks (hero kept out — ProjectExhibitMotion owns entry).

@@ -1,107 +1,84 @@
 {
-  "builtAt": "2026-08-09T03:41:32.923Z",
-  "identity": "# Guide context\n\nUser-editable source for the Portfolio Guide. Aggregated at build time into `src/lib/guide-context.json`.\n\n## Identity\n\n- **Who:** Aryan Johari — graduate software engineer, Auckland, New Zealand\n- **Availability:** Seeking a graduate software engineering role in Auckland from September 2026\n- **Site:** Curated project portfolio — selected work with narrative and live demos\n- **Work history:** Detailed employment history is ingested from `public/resume.pdf` at build time (not duplicated here)\n\n## Philosophy\n\nI build software that solves real problems — from visual tools to edge systems. I own the full stack: architecture, APIs, and deployment. AI accelerates delivery, but the design and architecture are mine. This portfolio is a curated project index, not a README dump.\n\n## Quick facts\n\n- **Education:** Master of Technology — Computing, Unitec, Auckland (July 2026); BSc Computer Science, University of Mumbai (March 2024)\n- **Work eligibility:** Eligible to work in New Zealand\n- **Focus areas:** Visual systems, APIs, edge hardware, full-stack delivery",
-  "resumeText": "Aryan Johari\nGraduate Software Engineer\nAuckland, New Zealand | +64 20 435 5340 | johari.aryan16@gmail.com | LinkedIn | GitHub\nSummary\nMaster’s computing graduate (Unitec) who builds end-to-end software in Python and TypeScript, from ML research\npipelines to privacy-aware APIs and WebGL front ends. Eligible to work in NZ (Post Study Work Visa; no sponsorship\nrequired). Seeking a graduate or junior software engineering role in Auckland; available from September 2026.\nSkills\nLanguages: Python, TypeScript/JavaScript, SQL\nML / CV: PyTorch, computer vision, OpenCV, NLP (Presidio)\nWeb / Graphics: React, WebGL, Three.js, GLSL, Web Audio API\nBackend: FastAPI, asyncio, REST APIs, Pydantic\nTools: Git, Docker, pytest, Vitest, Vite, Linux\nCloud / Data: AWS S3, PostgreSQL, Google Gemini API, Google Search Console\nEducation\nMaster of Applied Technology – Computing Feb 2025 – June 2026\nUnitec Institute of Technology Auckland, New Zealand\n• Thesis: video-level deepfake generator attribution (GSTF) using R(2+1)D, ArcFace metric learning, and continual\nlearning under domain shift\nBachelor of Science in Computer Science Sep 2021 – Apr 2024\nThakur College of Science and Commerce Mumbai, India\n• CGPA: 8.49\nProjects\nADA Apr 2026 – May 2026\nPython, asyncio, SQLite, Gemini API, AWS S3\n• Built a local asyncio AI agent harness with Gemini tool calling, SQLite persistence, and background workers for\nconstrained edge hardware\n• Designed deterministic ingest-to-publish workflows with quality gates and AWS S3 deployment; 531 pytest tests\nwith GitHub Actions CI on Python 3.11/3.12\nGSTF — Deepfake Video Attribution (Master’s Thesis) Feb 2026 – May 2026\nPython, PyTorch, Docker\n• Implemented Master’s thesis PyTorch pipeline for video-level deepfake generator attribution using R(2+1)D,\nArcFace metric learning, and EWC continual learning\n• Achieved 86.67% held-out accuracy on FaceForensics++ with ArcFace; YAML-driven experiment runner with\nGrad-CAM attribution and Dockerised training\nPII Gateway Mar 2026 – May 2026\nPython, FastAPI, Presidio, Docker, PostgreSQL\n• Built Docker-first FastAPI gateway for PII redaction with Microsoft Presidio, policy-driven structured JSON field\nrules, and API-key authenticated sanitize endpoint\n• Implemented batch ingest from PostgreSQL, CSV/JSON files, and S3-compatible storage with APScheduler jobs;\n33 pytest tests and CI on Python 3.11/3.12\nBackground Studio Apr 2026 – Jun 2026\nReact, TypeScript, Three.js, WebGL, Vite\n• Built browser-based WebGL studio for designing animated hero backgrounds with real-time GPU compositing and\nversioned preset JSON export for site embeds\n• Authored single-pass GLSL fragment shader with per-layer effect bundles; 82 Vitest tests for preset validation and\noptional Vercel serverless mood API\nSound Visualiser Mar 2026 – Jul 2026\n\n-- 1 of 2 --\n\nTypeScript, Three.js, Web Audio API, GLSL\n• Built real-time audio-reactive WebGL visualiser mapping Meyda spectral features to cinematic 3D, live webcam,\nand acid feedback modes\n• Implemented beat-sync PLL, ping-pong FBO temporal feedback, and frame-rate-independent audio smoothing\nacross three visual modes\nExperience\nSEO Specialist Jul 2025 – Present\nSpecialist Support Services Auckland, New Zealand\n• Scaled monthly organic impressions 414% (1,080 to 5,555) over 11-month GSC window; 2,595 clicks, 6.81% CTR,\nand 8.31 average position across three sites\n• Engineered GSC infrastructure, indexing workflows, mobile-first layouts (1,608 mobile clicks), and pSEO page\ntemplates; position 1.63 for “em bail accommodation”\nJunior Website Developer May 2024 – Oct 2024\nKRIL Digital Mumbai, India\n• Built and maintained approximately 20 client websites (WordPress, React, Shopify) across industrial, education,\nand events sectors\n• Improved average site performance via daily updates and SEO best practices: 70% faster load times, 45% visibility\nuplift, and 30% higher CTR\n\n-- 2 of 2 --",
+  "builtAt": "2026-08-31T10:22:30.108Z",
+  "identity": "Detailed verified facts, metrics, and do-not-claim rules live in `content/knowledge-bank.md` (ingested at build time).\n\n# Guide context\n\nUser-editable source for the Portfolio Guide. Aggregated at build time into `src/lib/guide-context.json`.\n\n## Identity\n\n- **Who:** Aryan Johari — graduate software engineer, Auckland, New Zealand\n- **Site:** https://aryanjohari.arkhives.nz — curated project portfolio with narrative exhibits and live demos\n- **Availability:** Seeking a graduate / junior software engineering role in Auckland from **September 2026**\n\n## Philosophy\n\nI build software that solves real problems — from ML research pipelines to privacy-aware APIs and WebGL front ends. I own the full stack: architecture, APIs, and deployment. AI accelerates delivery, but the design and architecture are mine. This portfolio is a curated project index, not a README dump. The home-page guide is the primary way to explore work and ask hiring questions.\n\n---\n\n# Knowledge bank\n\nVisitor-safe verified facts for the Portfolio Guide. Sourced from CV evidence (Job Hunt Brain). Metrics and guardrails below are **verbatim** where marked.\n\n## Contact & identity\n\n| Field | Value |\n|-------|-------|\n| Full legal name | `Aryan Johari` |\n| Preferred name (if different) | — |\n| Email | `johari.aryan16@gmail.com` |\n| Phone | `+64 20 435 5340` |\n| City, Country | `Auckland, New Zealand` |\n| LinkedIn | `https://www.linkedin.com/in/aryan-johari-627b4023a/` |\n| GitHub | `https://github.com/aryanjohari` |\n| Portfolio / personal site | `https://aryanjohari.arkhives.nz` |\n\n## Work rights (NZ)\n\n| Field | Value |\n|-------|-------|\n| Status | Post Study Work Visa (PSW) |\n| Granted | 29 Aug 2026 |\n| Valid until | 29 Aug 2029 |\n| Sponsorship required? | No |\n| Hours / restrictions | None |\n| Earliest start date | September 2026 |\n\n## Education\n\n| Qualification | Institution | Location | Dates | Notes |\n|---------------|-------------|----------|-------|-------|\n| Master of Applied Technology — Computing | Unitec Institute of Technology | Auckland, NZ | Feb 2025 -- July 2026 | **Completed.** Cumulative GPA **7.667 / 9.0** (Unitec postgraduate scale; unofficial transcript, Print Date Jul 29, 2026). Thesis: Generator-Specific Temporal Forensics (GSTF) — video-level deepfake generator attribution. COMP 9902 Thesis: A- (90 credits). |\n| Bachelor of Science in Computer Science | Thakur College of Science and Commerce | Mumbai, India | Sep 2021 -- Apr 2024 | CGPA 8.49 / 10 |\n\n## Publications\n\n| Title | Venue | Status | Notes |\n|-------|-------|--------|-------|\n| Generator-Specific Temporal Forensics | Machine Vision and Applications (Springer) | **Under review** (submitted) | Canonical CV string: *Generator-Specific Temporal Forensics* — under review at Machine Vision and Applications (Springer) (not accepted/published). Do **not** claim accepted, published, camera-ready, DOI, volume/issue, or peer-reviewed acceptance. |\n\n## Verified metrics (guide may cite)\n\n| Metric | Context | Source file |\n|--------|---------|-------------|\n| GPA 7.667 / 9.0 | Master's cumulative (Unitec postgraduate scale; unofficial transcript Jul 29, 2026) | this profile / transcript |\n| COMP 9902 Thesis grade A- | Master's thesis course (90 credits); use on CV only when academically relevant | this profile / transcript |\n| 86.67% held-out accuracy | GSTF Phase 2 ArcFace on FaceForensics++ | `evidence/projects/gstf/resume.md` |\n| 531 test functions | ADA pytest suite | `evidence/projects/ada/resume.md` |\n| 82 Vitest tests | Background Studio preset validation | `evidence/projects/image-editor/resume.md` |\n| 33 test functions | PII Gateway pytest suite | `evidence/projects/pii-gateway/resume.md` |\n| 70% / 45% / 30% | KRIL avg load speed / visibility / CTR uplift | `evidence/experience/kril-digital.md` (raw responsibilities; method not recorded) |\n| ~50% / ~90% | Koverify visibility / load improvement | `evidence/experience/koverify.md` (self-reported; method not recorded) |\n| 2,595 clicks; 38,080 impressions | Specialist Support GSC (Aug 2025 -- Jun 2026) | `evidence/experience/specialist-support-services.md` |\n| 6.81% CTR; 8.31 avg position | Specialist Support GSC aggregate | `evidence/experience/specialist-support-services.md` |\n| 414% impression growth (1,080 → 5,555) | Specialist Support monthly impressions Aug 2025 -- May 2026 | `evidence/experience/specialist-support-services.md` |\n| Position 1.63 / 2.41 / 4.39 | \"em bail accommodation\" / \"bail accommodation\" / \"specialist support services\" | `evidence/experience/specialist-support-services.md` |\n| 1,608 mobile clicks of 2,595 | Specialist Support mobile organic clicks | `evidence/experience/specialist-support-services.md` |\n| Live demo image.arkhives.nz | Background Studio / Stage (`main`) | `evidence/projects/image-editor/resume.md` |\n| Live demo music.arkhives.nz | Sound Visualiser (`main`) | `evidence/projects/sound-visualiser/resume.md` |\n| Live demo hackathon-ivory-rho.vercel.app | Tahi Pulse (ssi-hackthon `main`) | `evidence/projects/tahi-pulse/resume.md` |\n| PSW granted 29 Aug 2026; valid to 29 Aug 2029 | Work rights; no sponsorship | this profile |\n\n## Do not claim (global boundaries)\n\n- Production traffic, paying customers, or enterprise deployments for personal projects (ADA, GSTF, Background Studio, PII Gateway, Sound Visualiser, Tahi Pulse) unless explicitly verified in evidence\n- GSTF as deployable deepfake detector or state-of-the-art forensic product (research thesis only)\n- GSTF / Generator-Specific Temporal Forensics publication as **accepted**, **published**, camera-ready, DOI, volume/issue, or peer-reviewed acceptance — status is **under review** at Machine Vision and Applications (Springer) only until updated here\n- Master's GPA on a /10 or /4.0 scale — always **7.667 / 9.0** (Unitec postgraduate)\n- ADA as hosted SaaS or multi-tenant cloud service\n- ADA embodied Pi / constitution / Tailscale HUD from `rewrite/v1-body` until merged to `main` and this index updated\n- Background Studio Prism / still-image rewrite (`rewrite/v1-styling`) or stale primary routes `/lab` / `/story` as the product story\n- Sound Visualiser work from `new-ideas` branch; both demo tracks working (`huzur.mp3` missing)\n- PII Gateway as compliance certification, DLP replacement, or production deployment without recorded evidence\n- Tahi Pulse as bank AML / Safe Harbour / government ID replacement, hackathon win/placement, or team size / \"solo on 8-person team\" until verified in evidence\n- Specialist Support: PPC management, automated backlink building, or massive global traffic (~97% NZ local)\n- KRIL or Specialist scope beyond what employment evidence supports\n- SDAC duties until `evidence/experience/sdac.md` exists\n- Deep security engineering, audits, pen-tests, or \"security specialist\" claims for commercial web roles (Koverify, KRIL, Specialist) — only routine site-security hygiene as recorded in evidence\n- Koverify client/agency scale beyond the 3 in-house brands, or measurement methodology for ~50% / ~90% (self-reported; method not recorded)\n- \"X years backend engineering\" beyond employment history dates\n- AWS credential ID or conferral ceremony date — not recorded; do not invent\n- Family minimart: invented revenue, team size, named chain, manager/supervisor/CEO title, named POS brand, or a formal employment letter as a required fact\n- Cash handling / till / POS on **web or SWE CVs** (Specialist Support, KRIL, Koverify, fullstack variants) — those roles have no till evidence. Cash handling **is** allowed on the Lane A retail CV for the family-minimart role only\n\n## Employment (narrative index)\n\nFull approved CV bullets for these roles are in structured `experience[]` (from `content/experience.md`).\n\n### Specialist Support Services — SEO Specialist\n\nPart-time technical SEO lead for three NZ EM bail and parole accommodation sites: GSC infrastructure, indexing and mobile-first page architecture, pSEO templates, and organic search analytics across an 11-month verified GSC window.\n\n### KRIL Digital — Junior Website Developer\n\nJunior website developer at a Mumbai digital marketing firm, building and maintaining client sites (WordPress, React, Shopify) with ongoing performance and SEO updates.\n\n### Koverify — Website Developer\n\nWebsite developer for three in-house brands: solo WordPress/WooCommerce clothing-site ops (catalog, SEO, Paytm, performance) plus a MERN hotel-business web app.\n\n## Projects on this site\n\nCiteable metrics for all projects are in **Verified metrics** above. Project-specific guardrails below supplement global boundaries.\n\n### background-studio (CV: image-editor)\n\nBrowser WebGL studio for animated hero backgrounds; live at image.arkhives.nz. Stack: React, TypeScript, Vite, Three.js, R3F, GLSL, Vitest\n\n**Approved CV bullets:**\n\n- Built a browser WebGL studio for designing animated hero backgrounds in real time; live at image.arkhives.nz with preset / StageRecipe JSON export\n- Shipped Stage routes `/workspace`, `/studio`, and `/embed-demo` plus keyed in-memory Jobs API (`/api/v1/*`) for brand briefs and campaign packs\n- Wrote a single-pass GLSL compositor for layered effects; 82 Vitest tests covering preset validation\n- Implemented preset system v2 with validation, hydrate, and apply modes; 14 bundled background looks; optional Gemini brief/mood with keyword fallback\n\n**Do not claim (project-specific):** OpenAI SDK usage (raw `fetch` only); multi-pass framebuffer; audio-reactive backgrounds; hosted durable Jobs API; `/lab` or `/story` as primary routes; Prism rewrite branch\n\n### sound-visualiser\n\nBrowser-only audio-reactive WebGL visualiser; live at music.arkhives.nz. Stack: TypeScript, Three.js, Web Audio API, GLSL, Meyda, GSAP\n\n**Approved CV bullets:**\n\n- Built real-time audio-reactive WebGL visualiser mapping Meyda spectral features to cinematic 3D, live webcam, and acid feedback modes; live at music.arkhives.nz\n- Implemented beat-sync PLL, ping-pong FBO temporal feedback, and frame-rate-independent audio smoothing across three visual modes\n- Derived bass/mid/high band energies and mood weights from power spectrum; optional beat-quantized modulation when sync confidence is high\n- Built glass-overlay UI for mode switching, Sync Auto/Off, demo track, file upload, and microphone input — all capture/analysis/rendering client-side\n\n**Do not claim (project-specific):** Both demo tracks working (`huzur.mp3` missing); Meyda built-in spectralFlux; `VoidLayer` not wired; `new-ideas` branch work\n\n### pii-gateway\n\nSelf-hosted PII sanitization gateway (FastAPI + Presidio). Stack: Python, FastAPI, Presidio, Docker, PostgreSQL, pytest\n\n**Approved CV bullets:**\n\n- Built an API that redacts personal data from free text and structured JSON before it leaves a system (Presidio + policy rules)\n- Added scheduled batch ingest from PostgreSQL, CSV/JSON files, and S3-compatible storage; 33 pytest tests with CI\n- Defined YAML/JSON policy schema for entity allowlists, structured field rules, and batch connector settings\n- Packaged as Docker image with compose overlay; CI runs ruff, mypy, pytest on 3.11/3.12 plus Docker build\n\n**Do not claim (project-specific):** External security audit; published container registry; full batch/S3/Postgres validation; multi-language PII or multi-tenant SaaS\n\n### ada\n\nHeadless Python asyncio agent for local edge operator. Stack: Python, asyncio, SQLite, Gemini API, AWS S3, pytest\n\n**Approved CV bullets:**\n\n- Built a local AI agent for constrained edge hardware: chat, goals, and background work with SQLite persistence\n- Automated ingest-to-publish workflows that push content to AWS S3 after quality checks; 531 pytest tests with GitHub Actions CI\n- Implemented knowledge ingest pipelines (RSS, GSC, keywords) with graph-lite extraction and publish quality gates on cited facts\n- Built CLI operator surface (`ada` chat, daemon, goals, workflows) with allowlisted tools and human approval gates for risky actions\n- Knowledge search via SQLite FTS5 with optional embedding-backed lookup (env-gated; not a full vector-DB RAG platform)\n\n**Do not claim (project-specific):** Full RAG/vector DB/MCP; in-process scheduler; Next.js ISR consumer; embeddings on by default; embodied Pi from `rewrite/v1-body`\n\n### gstf\n\nPyTorch Master's thesis on video-level deepfake generator attribution (not binary detection). Stack: Python, PyTorch, Docker, Grad-CAM\n\n**Approved CV bullets:**\n\n- Implemented Master's thesis PyTorch pipeline for video-level deepfake generator attribution using R(2+1)D, ArcFace metric learning, and EWC continual learning\n- Achieved 86.67% held-out accuracy on FaceForensics++ with ArcFace; YAML-driven experiment runner with Grad-CAM attribution and Dockerised training\n- Studied cross-domain adaptation (FF++→DFDM) via EWC, replay, and joint training; documented domain-shift failure modes (~34.6% zero-shot DFDM)\n- Built modular training/eval CLI (`train`, `preprocess`, `evaluate`, `gradcam`, `umap`, `compute_fisher`) with reproducibility utilities\n\n**Do not claim (project-specific):** Robust cross-domain attribution; face detection in baseline; legal admissibility; GitHub Actions CI; official conferral date\n\n## Projects not on this site\n\n### tahi-pulse (off-site)\n\nHackathon privacy check-in OS for small hospitality desks — session → Didit ID verify → webhook → tier allowlist → purge → min tx + KMS desk receipt. Built at Unitec AI for Good hackathon (6–8 Aug 2026). **Not in the portfolio carousel** — mention only if asked.\n\nStack: Vite, React, TypeScript, FastAPI, Mangum, AWS SAM, Didit IDV, KMS, Vercel\n\n**Approved CV bullets:**\n\n- Built a privacy check-in demo for small hospitality desks: desk session → Didit verify → webhook → tier allowlist → purge → min trust tx + KMS-signed desk receipt\n- Shipped engineering blocks 1–5 (sessions, Didit integration, desk UI, KMS receipts); three merchant tiers with different disclosure rules (hotel/car vs age-only events)\n- Deployed web on Vercel and API on AWS SAM (Lambda + DynamoDB) in ap-southeast-2; live demo at hackathon-ivory-rho.vercel.app\n\n**Do not claim (project-specific):**\n\n- Custom in-house Didit camera UI (uses Didit hosted verify)\n- Durable production hardening beyond demo constraints (D5 incomplete)\n\n## Guide routing FAQ\n\n- **Who / site:** Aryan Johari, graduate SWE, Auckland. Curated portfolio; home guide is primary Q&A.\n- **Hiring:** Graduate/junior SWE, Auckland, start Sept 2026. PSW 29 Aug 2026–29 Aug 2029, no sponsorship.\n- **Full-stack:** background-studio, sound-visualiser. **Backend/API:** pii-gateway. **WebGL:** background-studio, sound-visualiser (live demos). **ML/thesis:** gstf (86.67% FF++ — verified only). **Agents/edge:** ada (local, not SaaS).\n- **Demos:** Live on-site: background-studio, sound-visualiser. Exhibits only: ada, gstf, pii-gateway. Off-site: tahi-pulse (not in carousel).\n- **Tenure:** Use tenureHints; approximate only. SEO + web dev roles listed.\n- **GSTF:** Thesis research, not production detector. **Publication:** under review at Springer only — not accepted/published.\n- **ADA:** Local edge agent, not hosted SaaS.",
+  "resumeText": "Aryan Johari\nGraduate Software Engineer\nAuckland, New Zealand | +64 20 435 5340 | johari.aryan16@gmail.com | LinkedIn | GitHub | Portfolio\nSummary\nMaster’s computing graduate (Unitec) who builds useful software end to end in Python and TypeScript — APIs,\nagent workflows, and web UIs. Post Study Work Visa (no sponsorship required; valid to 29 Aug 2029). Seeking a\ngraduate or junior software engineering role in Auckland; available September 2026. Open to relocate within New\nZealand for the right role.\nSkills\nLanguages: Python, TypeScript/JavaScript, SQL\nBackend: FastAPI, asyncio, REST APIs\nWeb: React, WebGL, Three.js, Vite\nTools: Git, Docker, pytest, Vitest\nCloud / Data: AWS S3, PostgreSQL, Gemini API\nML: PyTorch, Presidio\nEducation\nMaster of Applied Technology – Computing Feb 2025 – July 2026\nUnitec Institute of Technology Auckland, New Zealand\n• Completed. Cumulative GPA 7.667 / 9.0 (Unitec postgraduate scale)\n• Generator-Specific Temporal Forensics - under review at Machine Vision and Applications (Springer)\nBachelor of Science in Computer Science Sep 2021 – Apr 2024\nThakur College of Science and Commerce Mumbai, India\n• CGPA: 8.49 / 10\nCertifications\nAWS Certified Developer – Associate, Amazon Web Services\nProjects\nADA Apr 2026 – May 2026\nPython, asyncio, SQLite, Gemini API, AWS S3, pytest github.com/aryanjohari/ADA\n• Built a local AI agent for constrained edge hardware: chat, goals, and background work with SQLite persistence\n• Automated ingest-to-publish workflows that p…",
   "experience": [
     {
       "role": "SEO Specialist",
       "company": "Specialist Support Services",
       "location": "Auckland, New Zealand",
-      "period": "Jul 2025 – Present",
+      "period": "Jul 2025 -- Jul 2026",
       "highlights": [
-        "Scaled monthly organic impressions 414% (1,080 to 5,555) over 11-month GSC window; 2,595 clicks, 6.81% CTR,"
+        "Grew organic search across three NZ sites: monthly impressions up 414% (1,080 to 5,555); 2,595 clicks, 6.81% CTR, and 8.31 average position over an 11-month GSC window",
+        "Worked with stakeholders on content and technical SEO — GSC setup, indexing, mobile-first pages (1,608 mobile clicks), and pSEO templates; position 1.63 for \"em bail accommodation\"",
+        "Managed indexing coverage remediation and on-page technical SEO (metadata, internal linking, mobile UX) across three properties",
+        "Performed keyword research and on-page optimisation for high-intent EM bail and accommodation terms",
+        "Supported basic site security hygiene alongside CMS and SEO maintenance"
       ]
     },
     {
       "role": "Junior Website Developer",
       "company": "KRIL Digital",
       "location": "Mumbai, India",
-      "period": "May 2024 – Oct 2024",
+      "period": "May 2024 -- Oct 2024",
       "highlights": [
-        "Built and maintained approximately 20 client websites (WordPress, React, Shopify) across industrial, education,"
+        "Built and maintained about 20 client websites (WordPress, React, Shopify) across industrial, education, and events",
+        "Worked with clients on requirements and day-to-day site updates; average load 70% faster, 45% visibility uplift, and 30% higher CTR",
+        "Communicated with clients to gather requirements and propose solutions",
+        "Maintained sites with daily updates and SEO best practices across the portfolio",
+        "Applied routine WordPress/site security updates and basic hardening (plugins, access, caching-related config) as part of site maintenance"
+      ]
+    },
+    {
+      "role": "Website Developer",
+      "company": "Koverify",
+      "location": "Mumbai, India",
+      "period": "Aug 2023 -- Dec 2023",
+      "highlights": [
+        "Owned three in-house clothing brand sites (WordPress/WooCommerce): catalog, SEO, Paytm payments, and performance; ~50% visibility and ~90% load improvements (self-reported)",
+        "Built a MERN web app for the company's hotel line with inventory, services, and admin panels",
+        "Improved site visibility and load performance (~50% / ~90% respectively; self-reported, method not recorded) while owning payment-channel setup and changes",
+        "Applied routine WordPress/site security updates and basic hardening (plugins, access, caching-related config) as part of site maintenance"
       ]
     }
   ],
-  "education": [
-    {
-      "degree": "Master of Applied Technology – Computing",
-      "institution": "Unitec Institute of Technology",
-      "location": "Auckland, New Zealand",
-      "period": "Feb 2025 – June 2026",
-      "notes": "Thesis: video-level deepfake generator attribution (GSTF) using R(2+1)D, ArcFace metric learning, and continual"
-    },
-    {
-      "degree": "Bachelor of Science in Computer Science",
-      "institution": "Thakur College of Science and Commerce",
-      "location": "Mumbai, India",
-      "period": "Sep 2021 – Apr 2024",
-      "notes": "CGPA: 8.49"
-    }
-  ],
-  "skills": [
-    "Languages: Python",
-    "Languages: TypeScript/JavaScript",
-    "Languages: SQL",
-    "ML / CV: PyTorch",
-    "ML / CV: computer vision",
-    "ML / CV: OpenCV",
-    "ML / CV: NLP (Presidio)",
-    "Web / Graphics: React",
-    "Web / Graphics: WebGL",
-    "Web / Graphics: Three.js",
-    "Web / Graphics: GLSL",
-    "Web / Graphics: Web Audio API",
-    "Backend: FastAPI",
-    "Backend: asyncio",
-    "Backend: REST APIs",
-    "Backend: Pydantic",
-    "Tools: Git",
-    "Tools: Docker",
-    "Tools: pytest",
-    "Tools: Vitest",
-    "Tools: Vite",
-    "Tools: Linux",
-    "Cloud / Data: AWS S3",
-    "Cloud / Data: PostgreSQL",
-    "Cloud / Data: Google Gemini API",
-    "Cloud / Data: Google Search Console"
-  ],
+  "education": [],
   "tenureHints": {
-    "asOf": "2026-08-09T03:41:32.923Z",
+    "asOf": "2026-08-31T10:22:30.108Z",
     "professional": {
-      "approxYears": 1.7,
-      "wording": "about 1.7 years of listed professional roles",
+      "approxYears": 2,
+      "wording": "about 2 years of listed professional roles",
       "roles": [
         {
           "role": "SEO Specialist",
           "company": "Specialist Support Services",
-          "period": "Jul 2025 – Present",
-          "approxMonths": 14
+          "period": "Jul 2025 -- Jul 2026",
+          "approxMonths": 13
         },
         {
           "role": "Junior Website Developer",
           "company": "KRIL Digital",
-          "period": "May 2024 – Oct 2024",
+          "period": "May 2024 -- Oct 2024",
           "approxMonths": 6
+        },
+        {
+          "role": "Website Developer",
+          "company": "Koverify",
+          "period": "Aug 2023 -- Dec 2023",
+          "approxMonths": 5
         }
       ]
     },
     "byArea": [
       {
         "label": "SEO / web growth",
-        "approxMonths": 14,
+        "approxMonths": 24,
         "note": "Based on listed role titles/highlights matching SEO / web growth."
-      },
-      {
-        "label": "Web development",
-        "approxMonths": 6,
-        "note": "Based on listed role titles/highlights matching Web development."
       }
     ],
     "caveats": [
       "Approximate only — computed from listed role periods at build time.",
       "Do not invent employers, titles, or metrics beyond this rollup.",
-      "Roles ending in Present are measured through the build date (2026-08-09).",
       "Role months are summed per listed period; overlapping calendar months (if any) are not de-duplicated."
     ]
   },
@@ -111,14 +88,14 @@
       "background-studio",
       "sound-visualiser"
     ],
-    "contextCharCount": 12119
+    "contextCharCount": 22918
   },
   "projects": [
     {
       "slug": "background-studio",
       "title": "Background Studio",
-      "summary": "Design animated full-screen hero backgrounds in the browser and export the look as reusable JSON.",
-      "description": "Background Studio is a live WebGL tool for portfolio and landing-page heroes. Upload an image, pick one of fourteen looks or describe a mood, then tune motion and texture while the scene animates on a single canvas. Export preset JSON to reuse the same coefficients on your own site, or save a WebM loop or PNG still. Optional AI mood (when enabled) suggests a look and a small parameter patch; keyw…",
+      "summary": "Design animated full-screen hero backgrounds in the browser and export reusable JSON. Stage adds brand briefs, campaign packs, an in-memory Jobs API, and an embed demo.",
+      "description": "Background Studio is a live WebGL tool for portfolio and landing-page heroes. Upload an image, pick one of fourteen loo…",
       "stack": [
         "TypeScript",
         "React",
@@ -135,7 +112,7 @@
       "slug": "sound-visualiser",
       "title": "Sound Visualiser",
       "summary": "Turns music, your microphone, or your webcam into live 3D visuals that follow the beat in the browser.",
-      "description": "Sound Visualiser is a browser-based VJ rig. Play a track, talk into your microphone, or point your webcam at the room, and the whole screen becomes a reactive light show. Rather than just bouncing bars to the volume, it works out whether the music feels calm, groovy or intense, and tries to lock onto the tempo — when it is confident it has found the beat, the visuals step and pulse in time instea…",
+      "description": "Sound Visualiser is a browser-based VJ rig. Play a track, talk into your microphone, or point your webcam at the room,…",
       "stack": [
         "TypeScript",
         "Vite",
@@ -151,7 +128,7 @@
       "slug": "pii-gateway",
       "title": "PII Gateway",
       "summary": "Self-hosted API that redacts personal data from JSON, text, and batch files before downstream use.",
-      "description": "PII Gateway is a Docker-first service for teams that want one place to scrub emails, names, and other personal data before it reaches analytics, logs, or third-party tools. Call POST /v1/sanitize for live JSON and free text, or let optional jobs pull PostgreSQL exports and CSV or JSON inbox files on a schedule. A mounted policy file sets entity types and per-field rules; secrets stay in environme…",
+      "description": "PII Gateway is a Docker-first service for teams that want one place to scrub emails, names, and other personal data bef…",
       "stack": [
         "Python",
         "FastAPI",
@@ -165,7 +142,7 @@
       "slug": "ada",
       "title": "ADA",
       "summary": "Local Python agent for edge devices—chat, background goals, RSS ingest, and SEO page publishing.",
-      "description": "ADA is a headless Python agent you run on your own hardware, such as a Raspberry Pi. One install supports interactive chat, a background worker for queued goals, offline ingest from RSS and Search Console, and deterministic workflows that draft and publish SEO pages to S3. All state lives in a single SQLite database per profile, with allowlisted shell commands and token budgets for cost control.…",
+      "description": "ADA is a headless Python agent you run on your own hardware, such as a Raspberry Pi. One install supports interactive c…",
       "stack": [
         "Python",
         "asyncio",
@@ -183,7 +160,7 @@
       "slug": "gstf",
       "title": "GSTF — Generator-Specific Temporal Forensics",
       "summary": "Video deepfake research that attributes face-swap clips to specific generators, not just real vs fake.",
-      "description": "GSTF is a research codebase that classifies face-manipulation videos by which synthesis pipeline produced them (for example Real, Deepfakes, or Face2Face on FaceForensics++), rather than only labeling clips real or fake. It trains an R(2+1)D video backbone, then freezes it and learns an ArcFace metric head for sharper generator separation. A second stage studies transfer to the DFDM dataset with…",
+      "description": "GSTF is a research codebase that classifies face-manipulation videos by which synthesis pipeline produced them (for exa…",
       "stack": [
         "Python",
         "PyTorch",
@@ -200,40 +177,36 @@
   ],
   "suggestedChips": [
     {
-      "group": "simple",
-      "label": "Who is he?",
+      "kind": "ask",
+      "label": "Who is Aryan?",
       "prompt": "Who is Aryan?",
       "tooltip": "A short plain-English intro to Aryan."
     },
     {
-      "group": "simple",
-      "label": "Is he looking for work?",
-      "prompt": "Is Aryan looking for work?",
-      "tooltip": "Availability and when he can start in Auckland."
+      "kind": "ask",
+      "label": "What can he build?",
+      "prompt": "What can Aryan build?",
+      "tooltip": "Projects and capabilities across systems, AI, and the browser."
     },
     {
-      "group": "simple",
-      "label": "Show me something cool",
-      "prompt": "Show me something cool from the portfolio.",
-      "tooltip": "Pick a live demo or standout project to try."
+      "kind": "ask",
+      "label": "What's his stack?",
+      "prompt": "What's Aryan's skillset and stack?",
+      "tooltip": "Languages, frameworks, and tools from the knowledge context."
     },
     {
-      "group": "technical",
-      "label": "Backend / ML focus?",
-      "prompt": "What's Aryan's backend and ML focus?",
-      "tooltip": "Stack and strengths on the backend and ML side."
+      "kind": "navigate",
+      "label": "Go to projects",
+      "prompt": "Go to projects",
+      "tooltip": "Navigate to the projects gallery via the guide.",
+      "navigateTo": "/projects"
     },
     {
-      "group": "technical",
-      "label": "What's ADA?",
-      "prompt": "What is ADA?",
-      "tooltip": "Explain the ADA project in one clear answer."
-    },
-    {
-      "group": "technical",
-      "label": "What's live?",
-      "prompt": "What projects have live demos?",
-      "tooltip": "Which projects you can open and try in the browser."
+      "kind": "navigate",
+      "label": "Go to about",
+      "prompt": "Take me to about",
+      "tooltip": "Navigate to the about essay via the guide.",
+      "navigateTo": "/about"
     }
   ]
 }

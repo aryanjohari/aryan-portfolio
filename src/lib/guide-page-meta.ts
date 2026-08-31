@@ -18,14 +18,14 @@ const STATIC_PAGES: GuidePageMeta[] = [
     pathname: "/",
     title: "Home",
     blurb:
-      "You’re on Aryan’s home — a quiet void with his name and an ask bar. This is the front door to a curated project portfolio, not a long bio page. From here you can ask about his work, or head into /projects to browse selected builds.",
+      "You’re on Aryan’s home — a quiet void with his name and the portfolio guide ask bar. This is the primary front door: ask about his work, hiring status (available from September 2026 in Auckland), or which project to explore. Live demos include Background Studio and Sound Visualiser.",
     nextPath: "/projects",
   },
   {
     pathname: "/about",
     title: "About",
     blurb:
-      "You’re on the about page — background on Aryan as a graduate software engineer in Auckland: how he works, what he cares about, and how this portfolio is meant to be read. For employment detail and availability, ask the guide or open /resume.pdf.",
+      "You’re on the about page — a short essay on why and how Aryan codes: systems thinking, research-first builds, and the projects he ships. He’s seeking a graduate role in Auckland from September 2026 (PSW, no sponsorship). Ask the guide for specifics or open /resume.pdf for metrics.",
     nextPath: "/projects",
   },
   {
@@ -37,9 +37,9 @@ const STATIC_PAGES: GuidePageMeta[] = [
   },
   {
     pathname: "/workshop",
-    title: "Workshop",
+    title: "Projects",
     blurb:
-      "You’re on the workshop / projects gallery — a curated set of Aryan’s selected builds. Open a project for the full exhibit, or ask what to look at next.",
+      "Legacy /workshop URL — same as /projects. You’re on the curated projects gallery; open any project for the full exhibit, or ask what to look at next.",
     nextPath: "/about",
   },
 ];

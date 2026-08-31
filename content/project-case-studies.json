@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "studies": {
+    "background-studio": {
+      "problem": "Portfolio and landing-page heroes need animated full-screen backgrounds, but hand-rolling WebGL shaders for every site is slow and the look is hard to reuse elsewhere.",
+      "approach": "Built a browser WebGL compositor with fourteen preset looks, live tuning, and optional mood suggestions. One GPU pass renders the scene; coefficients export as preset JSON for other sites.",
+      "outcome": "The live demo lets designers export preset JSON, WebM loops, or PNG stills. The same coefficients can drive hero backgrounds on production sites without rebuilding the editor."
+    },
+    "sound-visualiser": {
+      "problem": "Most browser visualizers bounce bars to volume and jitter instead of locking to the beat, so the show never feels in sync with the music.",
+      "approach": "Built a client-side VJ rig with Meyda spectral analysis, mood and energy tracking, and beat confidence so visuals step in time when the tempo is clear. Three modes cover 3D scenes, webcam feed, and feedback-loop acid trails.",
+      "outcome": "Audio, video, and rendering stay on the user's machine—nothing is uploaded or recorded. The live demo runs mic, file, or bundled track sources in the browser."
+    },
+    "pii-gateway": {
+      "problem": "Teams sending customer data to analytics, logs, or third-party tools need consistent redaction before it leaves their environment—not ad hoc scripts per pipeline.",
+      "approach": "Shipped a Docker-first FastAPI service with Microsoft Presidio for NLP detection, a mounted policy file for entity rules, and POST /v1/sanitize for live JSON and text.",
+      "outcome": "Optional scheduled jobs pull PostgreSQL exports and CSV or JSON inbox files. Undeclared structured fields still get scanned so nothing slips through by default."
+    },
+    "ada": {
+      "problem": "Edge operators want an AI assistant that runs on their own hardware with predictable cost and local state—not another hosted SaaS with opaque billing.",
+      "approach": "Built a headless Python agent for Raspberry Pi-class devices: SQLite per profile, allowlisted shell commands, Gemini chat, and token budgets for cost control.",
+      "outcome": "One install supports interactive chat, queued background goals, offline RSS and Search Console ingest, and deterministic workflows that draft and publish SEO pages to S3."
+    },
+    "gstf": {
+      "problem": "Deepfake detection often stops at real versus fake, but investigators need to know which face-swap generator produced a clip.",
+      "approach": "Master's thesis research: train an R(2+1)D video backbone on FaceForensics++, freeze it, then learn an ArcFace metric head for sharper generator separation. A second stage studies DFDM transfer with Elastic Weight Consolidation.",
+      "outcome": "The ArcFace stage reaches 86.7% three-way generator attribution on FF++ validation in the logged baseline run, with Grad-CAM and UMAP analysis for interpretability."
+    }
+  }
+}

@@ -6,7 +6,8 @@ Server-side Gemini proxy that answers questions about Aryan Johari's portfolio u
 
 | Source | Role |
 |--------|------|
-| [`content/guide-context.md`](../content/guide-context.md) | Identity, philosophy, availability (user-editable) |
+| [`content/guide-context.md`](../content/guide-context.md) | Identity, philosophy, availability (user-editable front door) |
+| [`content/knowledge-bank.md`](../content/knowledge-bank.md) | Verified metrics, do-not-claim guardrails, employment/project facts (concatenated into `identity` at build) |
 | [`public/resume.pdf`](../public/resume.pdf) | Work experience, education, skills (parsed at build time into plain text + structured fields) |
 | [`content/experience.md`](../content/experience.md) | Optional structured experience overrides (JSON block in markdown) |
 | [`src/lib/fetched-projects.json`](../src/lib/fetched-projects.json) | Project titles, summaries, descriptions, stacks (build-time fetch) |
@@ -179,8 +180,13 @@ curl -X POST http://localhost:3000/api/guide \
 ## Updating guide knowledge
 
 1. Edit `content/guide-context.md` for bio, availability, philosophy
-2. Replace `public/resume.pdf` when employment or education changes (rebuild refreshes `tenureHints`)
-3. Optionally add `content/experience.md` with a JSON code block to override structured experience
-4. Edit route blurbs in `src/lib/guide-page-meta.ts`
-5. Update project repos' `portfolio.yaml` and redeploy (or run `npm run fetch:projects`)
-6. Rebuild — `guide-context.json` regenerates automatically in prebuild (`npm run build:guide-context`)
+2. Edit `content/knowledge-bank.md` for verified metrics, do-not-claim rules, employment/project facts (sync from CV evidence)
+3. Replace `public/resume.pdf` when employment or education changes (rebuild refreshes `tenureHints`)
+4. Optionally add `content/experience.md` with a JSON code block to override structured experience
+5. Edit route blurbs in `src/lib/guide-page-meta.ts`
+6. Update project repos' `portfolio.yaml` and redeploy (or run `npm run fetch:projects`)
+7. Rebuild — `guide-context.json` regenerates automatically in prebuild (`npm run build:guide-context`)
+
+### Resume PDF
+
+`public/resume.pdf` is not committed by default. Export the latest **fullstack-v1** variant from Overleaf (`/Users/aryan/CV/applications/_defaults/fullstack-v1/`) or from `/Users/aryan/CV/exports/` when available, then copy to `public/resume.pdf` before running `npm run build:guide-context`.

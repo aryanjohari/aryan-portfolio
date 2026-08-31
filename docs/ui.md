@@ -103,7 +103,7 @@ Two gates in `src/lib/motion.ts` (both server-safe → `false`). Shared paces/ea
   - **Skip:** tap/click anywhere or Escape; short fade then unmount. Hint: “tap to enter” on coarse pointer, “click to enter” otherwise.
   - **Reduced-motion:** no boot theatre; Atmosphere stays as static void presence (grain + vignette, no trail/drift) — site shows immediately. Boot always ends with `signalBootDone()` (`data-boot-done` + `portfolio:boot-done`) so home presence (name scramble, section-link reveal) can sync.
 - Wired once via `MotionScaffold` in root `layout.tsx` (`dynamic(..., { ssr: false })`). Do not import three/gsap outside client motion modules and page-local clients that already use GSAP (`ProjectGallery`). No Framer Motion.
-- **About** — single-column ~48rem reading measure; section blocks still fade via `VoidScrollDrama` / `AboutScrollDrama`. No sticky section anchors.
+- **About** — single-column ~48rem reading measure; essay paragraphs fade via `VoidScrollDrama` / `AboutScrollDrama`. No sticky section anchors.
 
 ## Void-scroll portal (opt-in)
 
@@ -153,7 +153,7 @@ Boot → home theatre is unchanged (`BootOverlay` / ask-bar measure).
 | -------------- | ------------- | -------------------------------------------------------------------- |
 | Nav `home`     | `/`           | Minimal void: identity + ask + footer                                |
 | Nav `workshop` | `/workshop`   | Void-glass project tablet carousel (drag / arrows / dots / keyboard) |
-| Nav `about`    | `/about`      | Void blog read: philosophy, background, education, availability      |
+| Nav `about`    | `/about`      | Essay: why and how Aryan codes (void-scroll read)                    |
 | Nav `resume`   | `/resume.pdf` | PDF download                                                         |
 
 Do **not** link to `/index` anywhere — it aliases to `/` on some hosts. `/index` redirects to `/workshop` for old bookmarks only.
@@ -162,10 +162,10 @@ Do **not** link to `/index` anywhere — it aliases to `/` on some hosts. `/inde
 
 Minimal black void (`#0a0a0a`) site-wide via `:root` tokens. Home and all site routes share quiet void chrome (no accent band / bottom rule). Composition lives in `VoidChrome` (route page body is empty).
 
-Editorial composition (desktop): oversized name top-left · centered ask + invite whisper + reply · right-rail section links · contacts footer.
+Editorial composition (desktop): oversized name top-left · centered ask + chips + reply · right-rail section links · contacts footer.
 
-- **Header (home):** hero-scale soft GSAP scramble of `aryan johari` (`MOTION.scramble` ~2.15s, `clamp(2.35rem, 8.75vw, 5.5rem)`) once after boot on a full load (initial paint is dots only — no final-name flash). Return-to-home settles without re-scramble. **No under-name role/tagline.** `prefers-reduced-motion`: final name immediately. Accessible via `aria-label` on the name link (`HomeIdentity`).
-- **Center:** void wireframe ask bar (larger type/padding) with three whisper capability labels under the bar (`ask · explain page · go to…` — not modes or a chip toolbar; `ask` may focus the input; other labels are non-submitting reminders — intent comes from typed input), a soft invite whisper below the labels (`ask · explain this page · or say where to go` — DOM type-once + `MOTION.medium` fade after boot; full text instantly if reduced-motion; one-line reserved height so the bar does not jump), and a **reserved live-reply band** below (latest answer only as a short whisper with explicit **more** / **less** when longer; absolute so answers cannot shove the ask bar). When the API returns an allowlisted `navigateTo`, an ephemeral confirm (`go to {path}?` · Go · Stay) appears in that band — never auto-navigates. Quiet **Chat history** glyph (hidden until turns exist) opens a separate void overlay — full transcript mounts only while that overlay is open. Placeholder: `ask · explain this page · or say where to go…`. Loading dots → character typewriter on the whisper (~32 cps, capped ~3s); expand shows the remainder instantly. `prefers-reduced-motion`: full whisper, no typewriter. No intro essay, no SaaS chip rails, no canvas quotes. Ask bar stays wireframe — no float/tilt chrome. Manual ask only (no auto Gemini).
+- **Header (home):** hero-scale soft GSAP scramble of `aryan johari` (`MOTION.scramble` ~2.15s, `clamp(2.35rem, 8.75vw, 5.5rem)`) once after boot on a full load (initial paint is dots only — no final-name flash). Return-to-home settles without re-scramble. **Home only:** muted tag line under the name — `systems · ai · research` then `engineer · auckland` (`HomeIdentity` with `showTagline`; hidden on site chrome). Reserved min-height so tags do not shift the ask bar after boot. `prefers-reduced-motion`: final name immediately. Accessible via `aria-label` on the name link (`HomeIdentity`).
+- **Center:** void wireframe ask bar (larger type/padding) with **five clickable guide chips** under the bar (home only — not on mini/site ask). Chips submit through the same path as typing + send. Ask chips: `Who is Aryan?`, `What can he build?`, `What's his stack?`. Nav chips demo guide routing: `Go to projects`, `Go to about` — server `navigateTo` + `autoNavigate: true` when phrasing matches; otherwise confirm (`go to {path}?` · Go · Stay). Chips disabled while loading or at session cap. Wrap on mobile; no horizontal scroll trap. Placeholder: `ask anything…`. **Reserved live-reply band** below (latest answer only as a short whisper with explicit **more** / **less** when longer; absolute so answers cannot shove the ask bar). Quiet **Chat history** glyph (hidden until turns exist) opens a separate void overlay — full transcript mounts only while that overlay is open. Loading dots → character typewriter on the whisper (~32 cps, capped ~3s); expand shows the remainder instantly. `prefers-reduced-motion`: full whisper, no typewriter. No intro essay, no canvas quotes. Ask bar stays wireframe — no float/tilt chrome. Chip data: `guide-context.json` → `suggestedChips` (built from `DEFAULT_SUGGESTED_CHIPS` in `guide-schema.ts`).
 - **Section links:** workshop · about · resume — clear text labels with larger glyph marks (18px) + ~1rem labels; underline on hover/focus. **Desktop (≥1024px):** fixed vertical stack in the right margin, out of the center cluster. **Mobile / tablet:** horizontal row under the ask stage (collapsed until reveal so the input stays centered). Auto-fades in ~0.9s after boot (`MOTION.medium` enter; immediate if reduced-motion); `inert` only until revealed. Leaving home morphs these into the site top nav (adds `home`).
 - **Footer (home):** contacts only (`email · github · linkedin`) — always soft-visible (`HomeFooterChrome`). Light padding; no heavy separator.
 - Ask bar: void fill (`#0a0a0a`), cream/off-white rounded outline, soft outer glow — reads as settled boot wireframe; off-white text + muted placeholder; ghost outline send. No GSAP float / no CSS 3D tilt. Mobile: same language, slightly tighter radius.
@@ -173,14 +173,14 @@ Editorial composition (desktop): oversized name top-left · centered ask + invit
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ aryan johari (hero-scale)              workshop             │
-│                                        about                │
-│                                        resume               │
+│ systems · ai · research                about                │
+│ engineer · auckland                    resume               │
 │                                                             │
 │           ┌─ void wireframe ask bar ────────────────┐      │
-│           │ ask · explain this page · or say… send │      │
+│           │ ask anything…                        send │      │
 │           └─────────────────────────────────────────┘      │
-│           ask · explain page · go to… (capability labels)  │
-│           ask · explain this page · or say where to go     │
+│     [Who is Aryan?] [What can he build?] [What's his stack?]│
+│           [Go to projects]  [Go to about]                   │
 │           ┌─ live reply (whisper + more) ───────────┐      │
 │           │ latest guide answer · confirm go/stay   │      │
 │           └─────────────────────────────────────────┘      │
@@ -193,9 +193,9 @@ Editorial composition (desktop): oversized name top-left · centered ask + invit
 
 **Void chrome CSS:** `.void-chrome`, `.void-chrome--home`, `.void-chrome--site`, `.void-chrome-name`, `.void-chrome-nav`, `.void-chrome-ask`, `.void-chrome-page`
 
-**Home ask CSS classes:** `.portfolio-guide--home`, `.portfolio-guide-stage`, `.portfolio-guide-hints`, `.portfolio-guide-hint`, `.portfolio-guide-hint--focus`, `.portfolio-guide-invite`, `.portfolio-guide-reply-slot`, `.portfolio-guide-live-stack`, `.portfolio-guide-live`, `.portfolio-guide-live-more`, `.portfolio-guide-nav-confirm`, `.portfolio-guide-history-glyph`, `.portfolio-guide-history-panel`, `.portfolio-guide-transcript`, `.portfolio-guide-clear`
+**Home ask CSS classes:** `.portfolio-guide--home`, `.portfolio-guide-stage`, `.portfolio-guide-chips`, `.portfolio-guide-chip`, `.portfolio-guide-chip--nav`, `.portfolio-guide-reply-slot`, `.portfolio-guide-live-stack`, `.portfolio-guide-live`, `.portfolio-guide-live-more`, `.portfolio-guide-nav-confirm`, `.portfolio-guide-history-glyph`, `.portfolio-guide-history-panel`, `.portfolio-guide-transcript`, `.portfolio-guide-clear`
 
-**Home header identity:** `.site-header-identity` (`HomeIdentity`) — name only
+**Home header identity:** `.site-header-identity`, `.home-identity-tagline`, `.home-identity-tags`, `.home-identity-subline` (`HomeIdentity`) — name + home-only tag line
 
 **Home soft section links:** `.home-glyph-row`, `.glyph-link`, `.glyph-link-label` (owned by `VoidChrome`) — desktop right-rail; mobile under-ask row
 
@@ -274,7 +274,7 @@ Each tablet is **five meshes**, back → front:
 
 Exhibit panels match iframe sandbox height. Body scrolls on mobile.
 
-**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide--home`, `.portfolio-guide--mini`, `.portfolio-guide-float-wrap`, `.portfolio-guide-float`, `.portfolio-guide-form`, `.portfolio-guide-label`, `.portfolio-guide-input-row`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-hints`, `.portfolio-guide-hint`, `.portfolio-guide-hint--focus`, `.portfolio-guide-hint-sep`, `.portfolio-guide-invite`, `.portfolio-guide-reply-slot`, `.portfolio-guide-live-stack`, `.portfolio-guide-live`, `.portfolio-guide-live--loading`, `.portfolio-guide-live--idle`, `.portfolio-guide-live--expanded`, `.portfolio-guide-live-more`, `.portfolio-guide-nav-confirm`, `.portfolio-guide-history-glyph`, `.portfolio-guide-history-layer`, `.portfolio-guide-history-panel`, `.portfolio-guide-transcript`, `.portfolio-guide-turn`, `.portfolio-guide-clear`, `.portfolio-guide-mini-panel`
+**PortfolioGuide CSS classes:** `.portfolio-guide`, `.portfolio-guide--home`, `.portfolio-guide--mini`, `.portfolio-guide-float-wrap`, `.portfolio-guide-float`, `.portfolio-guide-form`, `.portfolio-guide-label`, `.portfolio-guide-input-row`, `.portfolio-guide-input`, `.portfolio-guide-submit`, `.portfolio-guide-chips`, `.portfolio-guide-chip`, `.portfolio-guide-chip--nav`, `.portfolio-guide-reply-slot`, `.portfolio-guide-live-stack`, `.portfolio-guide-live`, `.portfolio-guide-live--loading`, `.portfolio-guide-live--idle`, `.portfolio-guide-live--expanded`, `.portfolio-guide-live-more`, `.portfolio-guide-nav-confirm`, `.portfolio-guide-history-glyph`, `.portfolio-guide-history-layer`, `.portfolio-guide-history-panel`, `.portfolio-guide-transcript`, `.portfolio-guide-turn`, `.portfolio-guide-clear`, `.portfolio-guide-mini-panel`
 
 ### Project page (`/projects/[slug]`)
 
@@ -327,14 +327,13 @@ Single-column **case study** inside the wider project shell (`max-width: 1400px`
 
 Hire / who-why page — **clear blog-style read**, not a guided dossier, not a second gallery. Quiet void site chrome (same mini ask as workshop). Atmosphere trail may show behind (`pointer-events: none`).
 
-**Scroll feel:** Shared void-scroll portal — shell locks to one viewport like workshop; void chrome header + site footer stay put; `.about-page[data-void-scroll]` is the continuous content scrollport over the fixed Atmosphere void (scrollbar hidden). Soft CSS mask dissolve (`--void-dissolve`, ~14vh eased band) fades content into the void at the top/bottom of that reading window; where `animation-timeline: scroll()` is supported, top/bottom fades open/close with scroll position (muted at start/end). `AboutScrollDrama` → `VoidScrollDrama` adds quiet bidirectional GSAP fades on section `h2` / paragraphs / pullquote (`scroller: [data-void-scroll]`). Shorter static edge + no block motion under `prefers-reduced-motion`. Not snap chapters / hard gates. Anchor hash jumps scroll the about scrollport (scroll-margin accounts for dissolve + sticky nav). See **Void-scroll portal (opt-in)** above.
+**Scroll feel:** Shared void-scroll portal — shell locks to one viewport like workshop; void chrome header + site footer stay put; `.about-page[data-void-scroll]` is the continuous content scrollport over the fixed Atmosphere void (scrollbar hidden). Soft CSS mask dissolve (`--void-dissolve`, ~14vh eased band) fades content into the void at the top/bottom of that reading window; where `animation-timeline: scroll()` is supported, top/bottom fades open/close with scroll position (muted at start/end). `AboutScrollDrama` → `VoidScrollDrama` adds quiet bidirectional GSAP fades on essay paragraphs + pullquote (`scroller: [data-void-scroll]`). Shorter static edge + no block motion under `prefers-reduced-motion`. Not snap chapters / hard gates. See **Void-scroll portal (opt-in)** above.
 
 **Layout**
 
-1. **Intro** — `> about` + short lede.
-2. **Anchor menu** — sticky section nav (01–04) with scroll-spy highlight + entrance stagger; desktop side rail, mobile sticky top strip (sticky offset parks below the dissolve edge).
-3. **Sections** — philosophy → background → education → availability; wider measure (~78ch), clear `h2` hierarchy, generous spacing; philosophy pull-quote; per-block enter/leave fades while scrolling (static under reduced-motion). Hire details live in the availability section, not a top badge.
-4. **In-page footer** — resume CTA + ask/workshop links (inside the scrollport). Site contacts footer stays pinned under the shell.
+1. **Intro** — `> about` only (no section lede).
+2. **Essay body** — one continuous read (`.about-essay`): lede → pullquote → why / how / what / now paragraphs; no `h2` section labels. Hire details in the closing paragraph; resume + guide cover specifics.
+3. **In-page footer** — resume CTA + ask/projects links (inside the scrollport). Site contacts footer stays pinned under the shell.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -342,10 +341,9 @@ Hire / who-why page — **clear blog-style read**, not a guided dossier, not a s
 ├─────────────────────────────────────────────────────────────┤
 │  ░ dissolve ░                                               │
 │  > about                                                    │
-│  01 philosophy  │  philosophy          ← scrolls continuously│
-│  02 background  │  “I think in systems…”                    │
-│  03 education   │  background / education / availability    │
-│  04 availability│  [download resume.pdf]                    │
+│               │  continuous essay — lede, pullquote,          │
+│               │  why / how / what / now paragraphs          │
+│               │  [download resume.pdf] · ask · projects     │
 │  ░ dissolve ░                                               │
 ├─────────────────────────────────────────────────────────────┤
 │ email · github · linkedin                                   │ ← fixed

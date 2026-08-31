@@ -102,16 +102,14 @@ function IframeDemo({
         </div>
       ) : null}
 
-      {!canvasOnly ? (
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="demo-panel-mobile-link"
-        >
-          open in new tab
-        </a>
-      ) : null}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="demo-panel-mobile-link"
+      >
+        open in new tab
+      </a>
 
       <div className="demo-panel-iframe-body">
         {status === "loading" && (

@@ -17,14 +17,16 @@ import {
 import type { FetchedProjectsFile } from "../src/lib/portfolio-schema";
 
 const IDENTITY_PATH = resolve(process.cwd(), "content/guide-context.md");
+const KNOWLEDGE_BANK_PATH = resolve(process.cwd(), "content/knowledge-bank.md");
 const FETCHED_PATH = resolve(process.cwd(), "src/lib/fetched-projects.json");
 const OUTPUT_PATH = resolve(process.cwd(), "src/lib/guide-context.json");
 const RESUME_PATH = resolve(process.cwd(), "public/resume.pdf");
 const EXPERIENCE_MD_PATH = resolve(process.cwd(), "content/experience.md");
 
 const MAX_RESUME_TEXT_CHARS = 6000;
-const MAX_PROJECT_DESCRIPTION_CHARS = 400;
+const MAX_PROJECT_DESCRIPTION_CHARS = 120;
 const MAX_TOTAL_CONTEXT_CHARS = 24000;
+const MAX_IDENTITY_CHARS = 14000;
 
 const SECTION_HEADERS = [
   "Summary",
@@ -65,8 +67,63 @@ function loadEnvFile(filename: string): void {
 loadEnvFile(".env.local");
 loadEnvFile(".env");
 
+const COURSE_GRADES_SECTION_PATTERN =
+  /### Master's course grades[\s\S]*?(?=\n## |\n---|\n$)/;
+const FAQ_SECTION_PATTERN =
+  /## Guide routing FAQ[\s\S]*$/;
+const COMPACT_FAQ = `## Guide routing FAQ
+
+- **Who / site:** Aryan Johari, graduate SWE, Auckland. Curated portfolio; home guide is primary Q&A.
+- **Hiring:** Graduate/junior SWE, Auckland, start Sept 2026. PSW 29 Aug 2026–29 Aug 2029, no sponsorship.
+- **Full-stack:** background-studio, sound-visualiser. **Backend/API:** pii-gateway. **WebGL:** background-studio, sound-visualiser (live demos). **ML/thesis:** gstf (86.67% FF++ — verified only). **Agents/edge:** ada (local, not SaaS).
+- **Demos:** Live on-site: background-studio, sound-visualiser. Exhibits only: ada, gstf, pii-gateway. Off-site: tahi-pulse (not in carousel).
+- **Tenure:** Use tenureHints; approximate only. SEO + web dev roles listed.
+- **GSTF:** Thesis research, not production detector. **Publication:** under review at Springer only — not accepted/published.
+- **ADA:** Local edge agent, not hosted SaaS.`;
+
+function trimCourseGradesTable(identity: string): string {
+  return identity.replace(COURSE_GRADES_SECTION_PATTERN, "").trim();
+}
+
+function compressFaqSection(identity: string): string {
+  if (!FAQ_SECTION_PATTERN.test(identity)) return identity;
+  return identity.replace(FAQ_SECTION_PATTERN, COMPACT_FAQ).trim();
+}
+
 function readIdentity(): string {
-  return readFileSync(IDENTITY_PATH, "utf8").trim();
+  const guideContext = readFileSync(IDENTITY_PATH, "utf8").trim();
+  let knowledgeBank = "";
+
+  if (existsSync(KNOWLEDGE_BANK_PATH)) {
+    knowledgeBank = readFileSync(KNOWLEDGE_BANK_PATH, "utf8").trim();
+    console.log(`Ingesting knowledge bank from ${KNOWLEDGE_BANK_PATH}`);
+  }
+
+  let identity = knowledgeBank
+    ? `${guideContext}\n\n---\n\n${knowledgeBank}`
+    : guideContext;
+
+  if (identity.length > MAX_IDENTITY_CHARS) {
+    console.warn(
+      `Identity field ${identity.length} chars exceeds ${MAX_IDENTITY_CHARS} — trimming course grades table if present.`,
+    );
+    identity = trimCourseGradesTable(identity);
+  }
+
+  if (identity.length > MAX_IDENTITY_CHARS) {
+    console.warn(
+      `Identity field still ${identity.length} chars — compressing FAQ section.`,
+    );
+    identity = compressFaqSection(identity);
+  }
+
+  if (identity.length > MAX_IDENTITY_CHARS) {
+    console.warn(
+      `Identity field still ${identity.length} chars after FAQ compress (budget ${MAX_IDENTITY_CHARS}). Do-not-claim and verified metrics were not trimmed.`,
+    );
+  }
+
+  return identity;
 }
 
 function readFetchedProjects(): FetchedProjectsFile | null {
@@ -333,11 +390,17 @@ function parseMonthYear(token: string): MonthPoint | null {
   return { year: Number(match[2]), month };
 }
 
+function normalizePeriodSeparator(period: string): string {
+  return period.replace(/\s*--\s*/g, " – ").trim();
+}
+
 function parsePeriodRange(
   period: string,
   asOf: Date,
 ): { start: MonthPoint; end: MonthPoint; endedPresent: boolean } | null {
-  const parts = period.split(/[–-]/).map((part) => part.trim());
+  const parts = normalizePeriodSeparator(period)
+    .split(/[–-]/)
+    .map((part) => part.trim());
   if (parts.length !== 2) return null;
   const start = parseMonthYear(parts[0]!);
   if (!start) return null;
@@ -509,9 +572,7 @@ function mergeExperienceFromMarkdown(
   return parsed;
 }
 
-function estimateContextCharCount(output: Omit<GuideContextFile, "meta"> & {
-  meta: Omit<GuideContextFile["meta"], "contextCharCount">;
-}): number {
+function estimateContextCharCount(output: GuideContextFile): number {
   return JSON.stringify(output).length;
 }
 
@@ -527,7 +588,7 @@ async function buildGuideContext(): Promise<GuideContextFile> {
   const fullResumeText = await extractResumeText();
   const resumeSections = parseResumeSections(fullResumeText);
 
-  let experience = mergeExperienceFromMarkdown(
+  const experience = mergeExperienceFromMarkdown(
     parseExperience(resumeSections.Experience ?? ""),
   );
   const education = parseEducation(resumeSections.Education ?? "");
@@ -562,13 +623,17 @@ async function buildGuideContext(): Promise<GuideContextFile> {
   const builtAt = new Date().toISOString();
   const tenureHints = buildTenureHints(experience, new Date(builtAt));
 
-  const baseOutput = {
+  const buildPayload = (
+    id: string,
+    resume: string,
+    options: { includeSkills: boolean; includeEducation: boolean },
+  ): GuideContextFile => ({
     builtAt,
-    identity,
-    resumeText,
+    identity: id,
+    resumeText: resume,
     experience,
-    education,
-    ...(skills.length > 0 ? { skills } : {}),
+    education: options.includeEducation ? education : [],
+    ...(options.includeSkills && skills.length > 0 ? { skills } : {}),
     tenureHints,
     meta: {
       projectCount: projects.length,
@@ -577,9 +642,66 @@ async function buildGuideContext(): Promise<GuideContextFile> {
     },
     projects,
     suggestedChips: DEFAULT_SUGGESTED_CHIPS.map((chip) => ({ ...chip })),
-  };
+  });
 
-  const contextCharCount = estimateContextCharCount(baseOutput);
+  const outputIdentity = identity;
+  let outputResumeText = resumeText;
+  let includeSkills = true;
+  let includeEducation = true;
+
+  let baseOutput = buildPayload(outputIdentity, outputResumeText, {
+    includeSkills,
+    includeEducation,
+  });
+  let contextCharCount = estimateContextCharCount(baseOutput);
+
+  if (contextCharCount > MAX_TOTAL_CONTEXT_CHARS && includeSkills) {
+    console.warn(
+      `Context size ${contextCharCount} exceeds budget — omitting skills array.`,
+    );
+    includeSkills = false;
+    baseOutput = buildPayload(outputIdentity, outputResumeText, {
+      includeSkills,
+      includeEducation,
+    });
+    contextCharCount = estimateContextCharCount(baseOutput);
+  }
+
+  if (contextCharCount > MAX_TOTAL_CONTEXT_CHARS && includeEducation) {
+    console.warn(
+      `Context size ${contextCharCount} exceeds budget — omitting education array (see identity knowledge bank).`,
+    );
+    includeEducation = false;
+    baseOutput = buildPayload(outputIdentity, outputResumeText, {
+      includeSkills,
+      includeEducation,
+    });
+    contextCharCount = estimateContextCharCount(baseOutput);
+  }
+
+  if (contextCharCount > MAX_TOTAL_CONTEXT_CHARS && outputResumeText.length > 1500) {
+    console.warn(
+      `Context size ${contextCharCount} exceeds budget — trimming resumeText to 1500 chars.`,
+    );
+    outputResumeText = truncateText(outputResumeText, 1500);
+    baseOutput = buildPayload(outputIdentity, outputResumeText, {
+      includeSkills,
+      includeEducation,
+    });
+    contextCharCount = estimateContextCharCount(baseOutput);
+  }
+
+  if (contextCharCount > MAX_TOTAL_CONTEXT_CHARS && outputResumeText.length > 1000) {
+    console.warn(
+      `Context size ${contextCharCount} exceeds budget — trimming resumeText to 1000 chars.`,
+    );
+    outputResumeText = truncateText(outputResumeText, 1000);
+    baseOutput = buildPayload(outputIdentity, outputResumeText, {
+      includeSkills,
+      includeEducation,
+    });
+    contextCharCount = estimateContextCharCount(baseOutput);
+  }
 
   return {
     ...baseOutput,
@@ -604,7 +726,7 @@ async function main(): Promise<void> {
     `Wrote ${OUTPUT_PATH} (${output.projects.length} projects, ${output.meta.featuredDemoSlugs.length} live demos)`,
   );
   console.log(
-    `resumeText: ${output.resumeText.length} chars | experience: ${output.experience.length} entries | education: ${output.education.length} | skills: ${output.skills?.length ?? 0} | contextCharCount: ${output.meta.contextCharCount}`,
+    `resumeText: ${output.resumeText.length} chars | experience: ${output.experience.length} entries | education: ${output.education?.length ?? 0} | skills: ${output.skills?.length ?? 0} | contextCharCount: ${output.meta.contextCharCount}`,
   );
   if (output.tenureHints) {
     console.log(

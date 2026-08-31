@@ -14,14 +14,13 @@ import {
 } from "react";
 
 import { useVoidChromeNavigate } from "@/components/void-chrome-nav";
+import guideContext from "@/lib/guide-context.json";
 import {
   isResumePath,
   validateNavigateTo,
 } from "@/lib/guide-navigate";
+import type { SuggestedChip } from "@/lib/guide-schema";
 import {
-  BOOT_DONE_EVENT,
-  isBootDone,
-  MOTION,
   prefersReducedMotion,
 } from "@/lib/motion";
 
@@ -38,10 +37,7 @@ const WHISPER_MAX_CHARS = 360;
 const SESSION_CAP_MESSAGE =
   "That’s enough for this visit — close the tab or clear history to ask again later.";
 
-/** Soft whisper under the ask bar — DOM only, not on the WebGL canvas. */
-const ASK_INVITE = "ask · explain this page · or say where to go";
-/** Type-once pace; short line finishes near MOTION.slow. */
-const INVITE_CPS = 28;
+const HOME_SUGGESTED_CHIPS = guideContext.suggestedChips as SuggestedChip[];
 
 type TranscriptTurn = {
   id: string;
@@ -323,119 +319,46 @@ function makeId(): string {
 }
 
 /**
- * Soft invite under the ask bar. Reserves one line so the bar does not jump.
- * Types once after boot; reduced-motion shows the full line instantly.
+ * Home-only identity tags — sits above the ask bar, not under the name.
  */
-function AskInvite() {
-  const inviteRef = useRef<HTMLParagraphElement>(null);
-  const [bootDone, setBootDone] = useState(false);
-  const [visible, setVisible] = useState("");
-
-  useEffect(() => {
-    if (isBootDone()) {
-      setBootDone(true);
-      return;
-    }
-    const onDone = () => setBootDone(true);
-    window.addEventListener(BOOT_DONE_EVENT, onDone);
-    return () => window.removeEventListener(BOOT_DONE_EVENT, onDone);
-  }, []);
-
-  useEffect(() => {
-    if (!bootDone) return;
-    const el = inviteRef.current;
-
-    if (prefersReducedMotion()) {
-      setVisible(ASK_INVITE);
-      if (el) el.style.opacity = "1";
-      return;
-    }
-
-    let cancelled = false;
-    let frame = 0;
-    let fadeTween: { kill: () => void } | undefined;
-
-    void import("gsap").then(({ gsap }) => {
-      if (cancelled || !inviteRef.current) return;
-      fadeTween = gsap.fromTo(
-        inviteRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: MOTION.medium, ease: MOTION.ease },
-      );
-    });
-
-    const total = ASK_INVITE.length;
-    const durationMs = Math.max(
-      MOTION.slow * 1000,
-      (total / INVITE_CPS) * 1000,
-    );
-    const start = performance.now();
-
-    const tick = (now: number) => {
-      if (cancelled) return;
-      const t = Math.min(1, (now - start) / durationMs);
-      setVisible(ASK_INVITE.slice(0, Math.floor(t * total)));
-      if (t < 1) {
-        frame = requestAnimationFrame(tick);
-      } else {
-        setVisible(ASK_INVITE);
-      }
-    };
-
-    frame = requestAnimationFrame(tick);
-
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(frame);
-      fadeTween?.kill();
-    };
-  }, [bootDone]);
-
+function HomeTagline() {
   return (
-    <p
-      ref={inviteRef}
-      className="portfolio-guide-invite"
-      aria-hidden={visible.length === 0}
-    >
-      {visible.length > 0 ? visible : "\u00a0"}
-    </p>
+    <div className="home-identity-tagline" aria-hidden="true">
+      <p className="home-identity-tags">systems · ai · research</p>
+      <p className="home-identity-subline">engineer · auckland</p>
+    </div>
   );
 }
 
-type GuideHintsProps = {
-  /** When true, the ask focus control is inactive (loading / session cap). */
-  askDisabled: boolean;
-  onAskFocus: () => void;
+/**
+ * Home-only suggested prompts — fills the input; visitor sends when ready.
+ */
+type GuideChipsProps = {
+  disabled: boolean;
+  onChipClick: (chip: SuggestedChip) => void;
 };
 
-/**
- * Quiet capability reminders — home only; not modes, not a chip toolbar.
- * Only “ask” is interactive (focuses the input); the rest are labels.
- */
-function GuideHints({ askDisabled, onAskFocus }: GuideHintsProps) {
+function GuideChips({ disabled, onChipClick }: GuideChipsProps) {
   return (
     <div
-      className="portfolio-guide-hints"
+      className="portfolio-guide-chips"
       role="group"
-      aria-label="Guide capabilities"
+      aria-label="Suggested questions"
     >
-      <button
-        type="button"
-        className="portfolio-guide-hint portfolio-guide-hint--focus"
-        disabled={askDisabled}
-        onClick={onAskFocus}
-        aria-label="Ask — focus the question input"
-      >
-        ask
-      </button>
-      <span className="portfolio-guide-hint-sep" aria-hidden="true">
-        ·
-      </span>
-      <span className="portfolio-guide-hint">explain page</span>
-      <span className="portfolio-guide-hint-sep" aria-hidden="true">
-        ·
-      </span>
-      <span className="portfolio-guide-hint">go to…</span>
+      {HOME_SUGGESTED_CHIPS.map((chip) => (
+        <button
+          key={chip.label}
+          type="button"
+          className={`portfolio-guide-chip${
+            chip.kind === "navigate" ? " portfolio-guide-chip--nav" : ""
+          }`}
+          disabled={disabled}
+          title={chip.tooltip}
+          onClick={() => onChipClick(chip)}
+        >
+          {chip.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -746,6 +669,7 @@ function PortfolioGuideInner({
     null,
   );
   const liveRef = useRef<HTMLDivElement>(null);
+  const miniPanelBodyRef = useRef<HTMLDivElement>(null);
   const historyListRef = useRef<HTMLOListElement>(null);
   const historyGlyphRef = useRef<HTMLButtonElement>(null);
   const historyCloseRef = useRef<HTMLButtonElement>(null);
@@ -797,12 +721,13 @@ function PortfolioGuideInner({
     typewriterActive,
   );
 
-  /* Keep live reply top stable; scroll only after intentional expand. */
+  /* Keep live reply top stable; scroll panel body on mini when reply changes. */
   useEffect(() => {
-    const el = liveRef.current;
-    if (!el) return;
-    el.scrollTop = 0;
-  }, [latestModel?.id, status, liveExpanded]);
+    const scrollEl =
+      variant === "mini" ? miniPanelBodyRef.current : liveRef.current;
+    if (!scrollEl) return;
+    scrollEl.scrollTop = 0;
+  }, [latestModel?.id, status, liveExpanded, variant]);
 
   useEffect(() => {
     if (!historyOpen) return;
@@ -1047,10 +972,19 @@ function PortfolioGuideInner({
     />
   );
 
+  function applyChip(chip: SuggestedChip) {
+    if (chip.kind === "navigate") {
+      void submitQuestion(chip.prompt);
+      return;
+    }
+    setMessage(chip.prompt);
+    focusAskInput();
+  }
+
   const hintsBlock = !isMini ? (
-    <GuideHints
-      askDisabled={isLoading || atSessionCap}
-      onAskFocus={focusAskInput}
+    <GuideChips
+      disabled={isLoading || atSessionCap}
+      onChipClick={applyChip}
     />
   ) : null;
 
@@ -1060,6 +994,7 @@ function PortfolioGuideInner({
       aria-label="Ask Aryan"
     >
       <div className="portfolio-guide-stage">
+        {!isMini ? <HomeTagline /> : null}
         <div className="portfolio-guide-float-wrap">
           <div className="portfolio-guide-float">
             <form className="portfolio-guide-form" onSubmit={handleSubmit}>
@@ -1074,9 +1009,7 @@ function PortfolioGuideInner({
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
                   placeholder={
-                    isMini
-                      ? "ask · explain…"
-                      : "ask · explain this page · or say where to go…"
+                    isMini ? "ask · explain…" : "ask anything…"
                   }
                   maxLength={500}
                   disabled={isLoading || atSessionCap}
@@ -1103,8 +1036,6 @@ function PortfolioGuideInner({
 
         {hintsBlock}
 
-        {!isMini && <AskInvite />}
-
         {!isMini && (
           <div className="portfolio-guide-reply-slot">
             {liveBlock}
@@ -1118,6 +1049,7 @@ function PortfolioGuideInner({
             className="portfolio-guide-mini-panel"
             role="region"
             aria-label="Guide reply"
+            data-void-scroll-exempt
           >
             <button
               type="button"
@@ -1133,7 +1065,10 @@ function PortfolioGuideInner({
             >
               close
             </button>
-            <div className="portfolio-guide-mini-panel-body">
+            <div
+              ref={miniPanelBodyRef}
+              className="portfolio-guide-mini-panel-body"
+            >
               {liveBlock}
               {confirmBlock}
             </div>
