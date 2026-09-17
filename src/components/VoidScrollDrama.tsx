@@ -7,6 +7,9 @@ import { MOTION, prefersReducedMotion } from "@/lib/motion";
 export const VOID_SCROLL_SELECTOR = "[data-void-scroll]";
 export const VOID_SCROLL_EXEMPT_SELECTOR = "[data-void-scroll-exempt]";
 
+/** Off for now — set true to restore per-block enter/leave fades. */
+const VOID_SCROLL_DRAMA_ENABLED = false;
+
 /** About readable blocks — continuous essay paragraphs + pullquote. */
 export const ABOUT_VOID_SCROLL_BLOCKS =
   ".about-essay p, .about-pullquote";
@@ -46,6 +49,7 @@ export function VoidScrollDrama({
   scroller = VOID_SCROLL_SELECTOR,
 }: VoidScrollDramaProps) {
   useEffect(() => {
+    if (!VOID_SCROLL_DRAMA_ENABLED) return;
     if (prefersReducedMotion()) return;
 
     const scrollport = document.querySelector<HTMLElement>(scroller);

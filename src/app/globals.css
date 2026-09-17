@@ -4108,6 +4108,13 @@ body:has([data-void-scroll]) .site-main {
   }
 }
 
+/* Off for now — comment out this override to restore top/bottom edge dissolves. */
+[data-void-scroll] {
+  -webkit-mask-image: none;
+  mask-image: none;
+  animation: none;
+}
+
 /* About — void blog read (portal via [data-void-scroll]) */
 
 body:has(.about-page) .site-main,
