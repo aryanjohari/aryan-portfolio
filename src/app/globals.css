@@ -1705,6 +1705,38 @@ body:has(.workshop-page) .site-main {
   max-width: 28rem;
 }
 
+.workshop-index {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--type-meta);
+  color: var(--color-faint);
+  max-width: 28rem;
+}
+
+.workshop-index li {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.workshop-index a {
+  color: var(--color-faint);
+}
+
+.workshop-index a:hover,
+.workshop-index a:focus-visible {
+  color: var(--color-text);
+}
+
+.workshop-index-sep {
+  margin: 0 0.4rem;
+  color: var(--color-muted);
+}
+
 .workshop-page .page-heading {
   color: var(--color-text);
   margin-bottom: var(--space-1);
@@ -1984,6 +2016,10 @@ body:has(.workshop-page) .site-main {
   }
 
   .workshop-lede {
+    font-size: var(--type-caption);
+  }
+
+  .workshop-index {
     font-size: var(--type-caption);
   }
 
@@ -4174,6 +4210,23 @@ body:has(.about-page) .site-main {
 }
 
 .about-essay p:last-of-type {
+  margin-bottom: 0;
+}
+
+.about-jobs {
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+  font-size: 0.975rem;
+  line-height: 1.72;
+  color: rgba(244, 240, 232, 0.88);
+}
+
+.about-jobs li {
+  margin: 0 0 var(--space-1);
+}
+
+.about-jobs li:last-child {
   margin-bottom: 0;
 }
 

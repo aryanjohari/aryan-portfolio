@@ -24,11 +24,11 @@ function resolveLiveDemoUrl(project: Project): string | undefined {
   return project.links.demo;
 }
 
-/** Full description for the project homepage hero (not a truncated lede). */
+/** Short summary for the project homepage hero. */
 function exhibitDescription(project: Project): string {
-  const description = project.description.trim();
-  if (description) return description;
-  return project.summary.trim();
+  const summary = project.summary.trim();
+  if (summary) return summary;
+  return project.description.trim();
 }
 
 /** Visual projects have a live demo URL; systems/research do not. */

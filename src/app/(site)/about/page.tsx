@@ -24,6 +24,26 @@ export default function AboutPage() {
           you can touch to APIs and pipelines you can ship.
         </p>
 
+        <p>
+          I completed my Master of Applied Technology at Unitec in July 2026.
+          I&apos;m looking for a graduate or junior software engineering role in
+          Auckland. Eligible to work in New Zealand on a Post Study Work Visa —
+          no sponsorship required.
+        </p>
+
+        <ul className="about-jobs">
+          <li>
+            Specialist Support Services — SEO Specialist, Auckland, Jul 2025–Jul
+            2026
+          </li>
+          <li>
+            KRIL Digital — Junior Website Developer, Mumbai, May–Oct 2024
+          </li>
+          <li>
+            Koverify — Website Developer, Mumbai, Aug–Dec 2023
+          </li>
+        </ul>
+
         <blockquote className="about-pullquote">
           I think in systems — how data moves, where failures show up, and what
           a maintainer has to touch six months later.
@@ -48,19 +68,9 @@ export default function AboutPage() {
         </p>
 
         <p>
-          Visual systems in the browser (Background Studio, Sound Visualiser),
-          privacy-aware APIs (PII Gateway), and local agent tooling (ADA).
-          This site is a curated workshop for that work — context and demos, not
-          a README dump. Open a project to see the story; ask the guide if you
-          want a shortcut.
-        </p>
-
-        <p>
-          I completed my Master of Applied Technology at Unitec in July 2026.
-          I&apos;m looking for a graduate or junior software engineering role in
-          Auckland from September 2026. Eligible to work in New Zealand on a
-          Post Study Work Visa — no sponsorship required. Details and metrics
-          live in the resume; the guide can answer specifics.
+          Visual systems in the browser (Prism, Sound Visualiser), privacy-aware
+          APIs (PII Gateway), and local agent tooling (ADA). Open a project for
+          the story.
         </p>
 
         <footer className="about-footer">
@@ -68,7 +78,7 @@ export default function AboutPage() {
             download resume.pdf
           </a>
           <p className="about-bridge">
-            <Link href="/">ask on home</Link>
+            <Link href="/">home</Link>
             <span className="about-bridge-sep" aria-hidden="true">
               ·
             </span>

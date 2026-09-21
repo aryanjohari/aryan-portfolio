@@ -52,7 +52,7 @@ $ ada worker --once
 
   metrics: `GSTF — Deepfake Video Attribution (Master's thesis)
 
-held-out accuracy (FaceForensics++, ArcFace): 86.5%
+held-out accuracy (FaceForensics++, ArcFace): 86.7%
 backbone: R(2+1)D + ArcFace metric learning
 continual learning: Elastic Weight Consolidation (EWC)
 

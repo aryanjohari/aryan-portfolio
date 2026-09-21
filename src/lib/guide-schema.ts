@@ -94,18 +94,4 @@ export const DEFAULT_SUGGESTED_CHIPS: SuggestedChip[] = [
     prompt: "What's Aryan's skillset and stack?",
     tooltip: "Languages, frameworks, and tools from the knowledge context.",
   },
-  {
-    kind: "navigate",
-    label: "Go to projects",
-    prompt: "Go to projects",
-    tooltip: "Navigate to the projects gallery via the guide.",
-    navigateTo: "/projects",
-  },
-  {
-    kind: "navigate",
-    label: "Go to about",
-    prompt: "Take me to about",
-    tooltip: "Navigate to the about essay via the guide.",
-    navigateTo: "/about",
-  },
 ];

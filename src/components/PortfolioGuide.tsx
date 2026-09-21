@@ -323,9 +323,11 @@ function makeId(): string {
  */
 function HomeTagline() {
   return (
-    <div className="home-identity-tagline" aria-hidden="true">
+    <div className="home-identity-tagline">
       <p className="home-identity-tags">systems · ai · research</p>
-      <p className="home-identity-subline">engineer · auckland</p>
+      <p className="home-identity-subline">
+        graduate engineer · auckland · open to work
+      </p>
     </div>
   );
 }

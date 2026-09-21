@@ -22,7 +22,8 @@ const rubikDirt = Rubik_Dirt({
 
 export const metadata: Metadata = {
   title: "Aryan Johari",
-  description: "Curated portfolio of software projects and experiments.",
+  description:
+    "Graduate software engineer in Auckland. Systems, AI, and research. Open to junior / grad roles — no sponsorship required.",
 };
 
 /**
