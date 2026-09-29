@@ -19,6 +19,8 @@ Pre-deploy verification for the portfolio site.
 | `/projects/ada` | exhibit | same |
 | `/about` | essay scroll | same |
 | `/about` mini guide | reply + history | panel clip OK |
+| `/blog` | list, or empty state when there are no posts | same |
+| `/blog/not-a-post` | missing-slug 404 | same |
 
 - Home chips: ask chips return grounded answers; navigate chips go to `/projects` and `/about`
 - Guide: no raw `{ "reply": ... }` JSON in live whisper or history
@@ -34,7 +36,6 @@ curl -s -X POST http://localhost:3000/api/guide \
 
 ## Explicitly deferred (v2)
 
-- ADA blogs
 - GitHub webhooks
 - Branch previews
 - About essay rewrite

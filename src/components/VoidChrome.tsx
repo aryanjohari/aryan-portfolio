@@ -51,6 +51,12 @@ const navItems = [
     glyph: "about" as const,
   },
   {
+    href: "/blog",
+    label: "blog",
+    title: "Writing",
+    glyph: "blog" as const,
+  },
+  {
     href: "/resume.pdf",
     label: "resume",
     title: "Download PDF resume",
@@ -64,7 +70,7 @@ type ChromeMode = "home" | "site";
 
 type Rect = { left: number; top: number; width: number; height: number };
 
-function SoftGlyph({ kind }: { kind: "projects" | "about" | "resume" }) {
+function SoftGlyph({ kind }: { kind: "projects" | "about" | "resume" | "blog" }) {
   if (kind === "projects") {
     return (
       <svg
@@ -144,6 +150,27 @@ function SoftGlyph({ kind }: { kind: "projects" | "about" | "resume" }) {
     );
   }
 
+  if (kind === "blog") {
+    return (
+      <svg
+        className="glyph-link-icon"
+        viewBox="0 0 16 16"
+        width={GLYPH_SIZE}
+        height={GLYPH_SIZE}
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path
+          d="M2.5 3.5h11M2.5 6.75h11M2.5 10h11M2.5 13.25h6.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
   return (
     <svg
       className="glyph-link-icon"
@@ -182,7 +209,9 @@ function isInAppChromePath(pathname: string): boolean {
     pathname === "/" ||
     pathname === "/projects" ||
     pathname === "/about" ||
-    pathname.startsWith("/projects/")
+    pathname === "/blog" ||
+    pathname.startsWith("/projects/") ||
+    pathname.startsWith("/blog/")
   );
 }
 

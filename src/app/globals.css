@@ -3988,7 +3988,7 @@ body:has(.workshop-page) .site-main {
 
 /* ==========================================================================
    Void-scroll portal — opt-in continuous read over fixed Atmosphere void
-   Enable with [data-void-scroll] on /about + /projects/[slug] only.
+   Enable with [data-void-scroll] on /about, /blog, and /projects/[slug] only.
    Do not enable on home or /projects workshop carousel.
    ========================================================================== */
 
@@ -4213,6 +4213,67 @@ body:has(.about-page) .site-main {
   margin-bottom: 0;
 }
 
+.about-essay h2,
+.about-essay h3 {
+  font-size: var(--type-meta);
+  font-weight: 600;
+  margin: var(--space-3) 0 var(--space-2);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid rgba(244, 240, 232, 0.16);
+  color: var(--color-text);
+}
+
+.about-essay h3 {
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-top: var(--space-2);
+}
+
+.about-essay ul:not(.about-jobs),
+.about-essay ol {
+  margin: 0 0 var(--space-2);
+  padding-left: 1.25rem;
+  font-size: 0.975rem;
+  line-height: 1.72;
+  color: rgba(244, 240, 232, 0.88);
+}
+
+.about-essay ul:not(.about-jobs) li,
+.about-essay ol li {
+  margin: 0 0 var(--space-1);
+}
+
+.about-essay blockquote p {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.about-essay pre {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2);
+  overflow-x: auto;
+  font-size: var(--type-meta);
+  line-height: 1.6;
+  border: 1px solid rgba(244, 240, 232, 0.12);
+}
+
+.about-essay pre code {
+  font-size: inherit;
+}
+
+.about-essay img {
+  max-width: 100%;
+  height: auto;
+}
+
+.about-essay hr {
+  border: 0;
+  border-top: 1px solid rgba(244, 240, 232, 0.12);
+  margin: var(--space-3) 0;
+}
+
 .about-jobs {
   margin: 0 0 var(--space-2);
   padding: 0;
@@ -4255,6 +4316,17 @@ body:has(.about-page) .site-main {
 
 .about-section p:last-child {
   margin-bottom: 0;
+}
+
+.about-page .about-section h2.page-heading {
+  font-size: var(--type-heading);
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.about-section .about-lede {
+  color: var(--color-faint);
+  font-size: var(--type-meta);
 }
 
 .about-pullquote {
