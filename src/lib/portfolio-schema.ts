@@ -1,276 +1,229 @@
-export type ProjectStatus = "active" | "wip" | "archived";
+/**
+ * Project contract v2: one `portfolio.yaml` per project (docs/V2_PLAN.md §6).
+ * Pure: fetching and file reads live in the caller.
+ */
 
-export type PortfolioLinks = {
-  github: string;
-  demo?: string;
-  docs?: string;
-};
+import {
+  DATE_RANGE_HINT,
+  DATE_RANGE_PATTERN,
+  isHttpsUrl,
+  isNonEmptyString,
+  isRecord,
+  isStringArray,
+} from "./schema-helpers";
 
-/** Optional authored architecture walkthrough step (visitor path story). */
-export type PortfolioWalkthroughStep = {
-  id?: string;
+export const PROJECT_TIERS = ["featured", "in-progress", "archive"] as const;
+export const PROJECT_STATES = ["live", "frozen", "wip"] as const;
+export const CODE_VISIBILITIES = ["public", "private"] as const;
+export const STORY_PARTS = ["problem", "built", "decision", "learned", "next"] as const;
+
+export type ProjectTier = (typeof PROJECT_TIERS)[number];
+export type ProjectState = (typeof PROJECT_STATES)[number];
+
+export type ProjectStory = Record<(typeof STORY_PARTS)[number], string>;
+
+export type Project = {
+  /** From content/projects.yaml, not the yaml file, so a repo can't rename itself. */
+  slug: string;
   title: string;
-  body?: string;
-  /** Match Mermaid node / cluster label for spotlight */
-  highlight?: string;
-  mermaidNodeId?: string;
-};
-
-export type PortfolioYaml = {
-  title: string;
-  slug?: string;
   summary: string;
-  description: string;
+  thread: string;
+  tier: ProjectTier;
+  order: number;
+  status: { state: ProjectState; as_of: string; note?: string };
+  role: string;
+  dates: string;
   stack: string[];
-  status: ProjectStatus;
-  links: PortfolioLinks;
-  /** Optional path hint to architecture Mermaid (e.g. docs/architecture.mmd). */
-  diagram?: string;
-  /**
-   * Optional path hint to owned architecture graph IR
-   * (e.g. docs/architecture.graph.json). Preferred over Mermaid on the site.
-   */
-  graph?: string;
-  /** Optional 3–5 step path story; portfolio derives steps when omitted. */
-  walkthrough?: PortfolioWalkthroughStep[];
+  proves: string;
+  proof: string[];
+  /** Site path of the face image once copied into public/, e.g. /projects/prism/face.png. */
+  face?: string;
+  links: { demo?: string; github?: string; story?: string };
+  visibility: { code: (typeof CODE_VISIBILITIES)[number]; can_show?: string; cannot_show?: string };
+  /** Required for featured and in-progress; archive projects are one line. */
+  story?: ProjectStory;
 };
 
-/** One C4 markdown/mermaid document pair fetched from a project repo. */
-export type ProjectC4Doc = {
-  mermaid?: string;
-  markdown?: string;
-  path?: string;
-};
+export type ProjectResult = { ok: true; project: Project } | { ok: false; message: string };
 
-/** C4 zoom stack levels shown on the project page. */
-export type ProjectC4Level = "context" | "containers" | "components";
+export const SUMMARY_MAX_CHARS = 120;
+export const STACK_MAX_ITEMS = 5;
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function oneOf<T extends string>(value: unknown, allowed: readonly T[]): value is T {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value);
+}
+
+function optionalString(record: Record<string, unknown>, key: string): boolean {
+  return record[key] === undefined || isNonEmptyString(record[key]);
+}
+
+export function validateProject(slug: string, data: unknown): ProjectResult {
+  const fail = (message: string): ProjectResult => ({ ok: false, message: `${slug}: ${message}` });
+
+  if (!isRecord(data)) {
+    return fail("Expected a YAML object at root");
+  }
+
+  for (const key of ["title", "thread", "role", "proves"] as const) {
+    if (!isNonEmptyString(data[key])) {
+      return fail(`Missing or empty required field: ${key}`);
+    }
+  }
+
+  if (!isNonEmptyString(data.summary) || data.summary.length > SUMMARY_MAX_CHARS) {
+    return fail(`summary must be one sentence of at most ${SUMMARY_MAX_CHARS} characters`);
+  }
+
+  if (!oneOf(data.tier, PROJECT_TIERS)) {
+    return fail(`tier must be one of: ${PROJECT_TIERS.join(", ")}`);
+  }
+
+  if (typeof data.order !== "number" || !Number.isInteger(data.order) || data.order < 1) {
+    return fail("order must be a whole number from 1");
+  }
+
+  const status = data.status;
+  if (!isRecord(status)) {
+    return fail("Missing or invalid required field: status");
+  }
+  if (!oneOf(status.state, PROJECT_STATES)) {
+    return fail(`status.state must be one of: ${PROJECT_STATES.join(", ")}`);
+  }
+  // YAML reads an unquoted 2026-11-14 as a Date, so accept both and store the string.
+  const asOf = status.as_of instanceof Date ? status.as_of.toISOString().slice(0, 10) : status.as_of;
+  if (!isNonEmptyString(asOf) || !ISO_DATE_PATTERN.test(asOf)) {
+    return fail("status.as_of must be a date like 2026-11-14");
+  }
+  if (!optionalString(status, "note")) {
+    return fail("status.note must be a non-empty string when provided");
+  }
+
+  if (!isNonEmptyString(data.dates) || !DATE_RANGE_PATTERN.test(data.dates)) {
+    return fail(`dates must look like ${DATE_RANGE_HINT}`);
+  }
+
+  if (!isStringArray(data.stack) || data.stack.length > STACK_MAX_ITEMS) {
+    return fail(`stack must list 1 to ${STACK_MAX_ITEMS} items`);
+  }
+
+  if (!isStringArray(data.proof)) {
+    return fail("proof must be a non-empty array of verifiable facts");
+  }
+
+  if (data.face !== undefined && !isNonEmptyString(data.face)) {
+    return fail("face must be a file path when provided");
+  }
+
+  const links = data.links ?? {};
+  if (!isRecord(links)) {
+    return fail("links must be an object when provided");
+  }
+  for (const key of ["demo", "github", "story"] as const) {
+    if (links[key] !== undefined && !isHttpsUrl(links[key])) {
+      return fail(`links.${key} must be an https:// URL when provided`);
+    }
+  }
+
+  const visibility = data.visibility;
+  if (!isRecord(visibility) || !oneOf(visibility.code, CODE_VISIBILITIES)) {
+    return fail(`visibility.code must be one of: ${CODE_VISIBILITIES.join(", ")}`);
+  }
+  if (!optionalString(visibility, "can_show") || !optionalString(visibility, "cannot_show")) {
+    return fail("visibility.can_show and cannot_show must be non-empty strings when provided");
+  }
+  // A private project must never link its code, and a public one must.
+  if (visibility.code === "private" && links.github !== undefined) {
+    return fail("links.github must be left out when visibility.code is private");
+  }
+  if (visibility.code === "public" && links.github === undefined) {
+    return fail("links.github is required when visibility.code is public");
+  }
+
+  const story = data.story;
+  if (story !== undefined || data.tier !== "archive") {
+    if (!isRecord(story)) {
+      return fail("story is required for featured and in-progress projects");
+    }
+    for (const part of STORY_PARTS) {
+      if (!isNonEmptyString(story[part])) {
+        return fail(`Missing or empty required field: story.${part}`);
+      }
+    }
+  }
+
+  return {
+    ok: true,
+    project: { ...(data as Omit<Project, "slug">), slug, status: { ...(status as Project["status"]), as_of: asOf } },
+  };
+}
 
 /**
- * Normalized zoom edge from portfolio-map.json `zoom[]`
- * (Context → Containers → Components).
+ * Rules that need every project at once: each thread exists in the spine,
+ * no two projects share a place in a tier, and no two featured projects
+ * claim to prove the same thing (each one has to earn its slot).
  */
-export type ProjectC4ZoomTarget = {
-  id: string;
-  label: string;
-  fromLevel: ProjectC4Level;
-  toLevel: ProjectC4Level;
-  /** Labels / aliases matched against Mermaid SVG text for click zoom. */
-  matchLabels: string[];
-  /**
-   * Component doc id under `components` when `toLevel` is `"components"`.
-   * Derived from `componentsPath` or `componentZooms`.
-   */
-  componentId?: string;
-};
+export function validateProjectSet(
+  projects: Project[],
+  threadIds: string[],
+): { ok: true } | { ok: false; message: string } {
+  const places = new Set<string>();
+  const featuredProves = new Map<string, string>();
 
-/** Dive target: C3 component zoom (+ optional legacy graph node ids). */
-export type ProjectC4DiveTarget = {
-  /** File stem under docs/c4/3-components/, e.g. "studio-spa". */
-  id: string;
-  /** Visitor-facing label. */
-  label: string;
-  /** Overview IR node ids that open this dive (legacy graph fallback). */
-  graphNodeIds: string[];
-  /** Optional Mermaid label aliases for container → component clicks. */
-  matchLabels?: string[];
-  /** Container zoom ids this component covers (from componentZooms). */
-  coversContainers?: string[];
-};
-
-/** Normalized C4 artifacts for Context → Containers → Components. */
-export type ProjectC4Data = {
-  mapPath?: string;
-  /** Preferred entry level from portfolio-map.json (default: context when present). */
-  defaultLevel?: ProjectC4Level;
-  context?: ProjectC4Doc;
-  containers?: ProjectC4Doc;
-  /** Component docs keyed by dive id. */
-  components: Record<string, ProjectC4Doc>;
-  /** C3 targets for the Dive sheet (and legacy graph node mapping). */
-  diveTargets: ProjectC4DiveTarget[];
-  /** Zoom edges for Context↔Containers↔Components navigation. */
-  zoomTargets: ProjectC4ZoomTarget[];
-};
-
-export type ProjectDiagramData = {
-  source: "github" | "base";
-  path?: string;
-  mermaid?: string;
-  /** Normalized walkthrough from portfolio.yaml when authored */
-  walkthrough?: PortfolioWalkthroughStep[];
-  /**
-   * Optional C4 context/containers/components.
-   * Prefer over `graph` when context or containers Mermaid is present.
-   */
-  c4?: ProjectC4Data;
-};
-
-export type ContentStatus = "ok" | "missing_yaml" | "invalid_yaml" | "fetch_error";
-
-export type FetchResult =
-  | {
-      slug: string;
-      status: "ok";
-      yaml: PortfolioYaml;
-      fetchedAt: string;
-      diagram?: ProjectDiagramData;
+  for (const project of projects) {
+    if (!threadIds.includes(project.thread)) {
+      return {
+        ok: false,
+        message: `${project.slug}: thread "${project.thread}" is not in profile.yaml threads (${threadIds.join(", ")})`,
+      };
     }
-  | { slug: string; status: "missing_yaml"; repo: string; message: string }
-  | { slug: string; status: "invalid_yaml"; repo: string; message: string; raw?: string }
-  | { slug: string; status: "fetch_error"; repo: string; message: string };
 
-export type FetchedProjectsFile = {
-  fetchedAt: string;
-  results: FetchResult[];
-};
+    const place = `${project.tier}#${project.order}`;
+    if (places.has(place)) {
+      return { ok: false, message: `${project.slug}: another ${project.tier} project already has order ${project.order}` };
+    }
+    places.add(place);
 
-const PROJECT_STATUSES: ProjectStatus[] = ["active", "wip", "archived"];
-const GITHUB_URL_PATTERN = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/?$/;
+    if (project.tier === "featured") {
+      const key = project.proves.trim().toLowerCase();
+      const other = featuredProves.get(key);
+      if (other) {
+        return { ok: false, message: `${project.slug}: proves the same thing as ${other} ("${project.proves}")` };
+      }
+      featuredProves.set(key, project.slug);
+    }
+  }
 
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
+  return { ok: true };
 }
 
-function isStringArray(value: unknown): value is string[] {
-  return (
-    Array.isArray(value) &&
-    value.length > 0 &&
-    value.every((item) => typeof item === "string" && item.trim().length > 0)
-  );
-}
+export type ProjectIndexEntry = { slug: string; repo?: string };
 
-export function validatePortfolioYaml(data: unknown): { ok: true; yaml: PortfolioYaml } | { ok: false; message: string } {
-  if (data === null || typeof data !== "object" || Array.isArray(data)) {
-    return { ok: false, message: "Expected a YAML object at root" };
+const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
+const REPO_PATTERN = /^[\w.-]+\/[\w.-]+$/;
+
+/** Validates content/projects.yaml, the list of which projects the site shows. */
+export function validateProjectIndex(
+  data: unknown,
+): { ok: true; entries: ProjectIndexEntry[] } | { ok: false; message: string } {
+  if (!isRecord(data) || !Array.isArray(data.projects) || data.projects.length === 0) {
+    return { ok: false, message: "projects.yaml needs a non-empty projects list" };
   }
 
-  const record = data as Record<string, unknown>;
-
-  if (!isNonEmptyString(record.title)) {
-    return { ok: false, message: "Missing or empty required field: title" };
-  }
-
-  if (record.slug !== undefined && !isNonEmptyString(record.slug)) {
-    return { ok: false, message: "Field slug must be a non-empty string when provided" };
-  }
-
-  if (!isNonEmptyString(record.summary)) {
-    return { ok: false, message: "Missing or empty required field: summary" };
-  }
-
-  if (!isNonEmptyString(record.description)) {
-    return { ok: false, message: "Missing or empty required field: description" };
-  }
-
-  if (!isStringArray(record.stack)) {
-    return { ok: false, message: "Field stack must be a non-empty array of strings" };
-  }
-
-  if (!isNonEmptyString(record.status) || !PROJECT_STATUSES.includes(record.status as ProjectStatus)) {
-    return { ok: false, message: `Field status must be one of: ${PROJECT_STATUSES.join(", ")}` };
-  }
-
-  if (record.links === null || typeof record.links !== "object" || Array.isArray(record.links)) {
-    return { ok: false, message: "Missing or invalid required field: links" };
-  }
-
-  const links = record.links as Record<string, unknown>;
-
-  if (!isNonEmptyString(links.github) || !GITHUB_URL_PATTERN.test(links.github.trim())) {
-    return { ok: false, message: "links.github must be a valid GitHub repository URL" };
-  }
-
-  if (links.demo !== undefined && !isNonEmptyString(links.demo)) {
-    return { ok: false, message: "links.demo must be a non-empty string when provided" };
-  }
-
-  if (links.docs !== undefined && !isNonEmptyString(links.docs)) {
-    return { ok: false, message: "links.docs must be a non-empty string when provided" };
-  }
-
-  if (record.diagram !== undefined && !isNonEmptyString(record.diagram)) {
-    return { ok: false, message: "Field diagram must be a non-empty string when provided" };
-  }
-
-  if (record.graph !== undefined && !isNonEmptyString(record.graph)) {
-    return { ok: false, message: "Field graph must be a non-empty string when provided" };
-  }
-
-  let walkthrough: PortfolioWalkthroughStep[] | undefined;
-  if (record.walkthrough !== undefined) {
-    if (!Array.isArray(record.walkthrough)) {
-      return { ok: false, message: "Field walkthrough must be an array when provided" };
+  const entries: ProjectIndexEntry[] = [];
+  for (const [index, entry] of data.projects.entries()) {
+    const at = `projects[${index}]`;
+    if (!isRecord(entry) || !isNonEmptyString(entry.slug) || !SLUG_PATTERN.test(entry.slug)) {
+      return { ok: false, message: `${at}.slug must be lowercase letters, digits or dashes` };
     }
-    walkthrough = [];
-    for (const item of record.walkthrough) {
-      if (item === null || typeof item !== "object" || Array.isArray(item)) {
-        return { ok: false, message: "Each walkthrough entry must be an object" };
-      }
-      const step = item as Record<string, unknown>;
-      if (!isNonEmptyString(step.title)) {
-        return { ok: false, message: "Each walkthrough entry needs a non-empty title" };
-      }
-      const entry: PortfolioWalkthroughStep = { title: step.title.trim() };
-      if (step.id !== undefined) {
-        if (!isNonEmptyString(step.id)) {
-          return { ok: false, message: "walkthrough.id must be a non-empty string when provided" };
-        }
-        entry.id = step.id.trim();
-      }
-      if (step.body !== undefined) {
-        if (!isNonEmptyString(step.body)) {
-          return { ok: false, message: "walkthrough.body must be a non-empty string when provided" };
-        }
-        entry.body = step.body.trim();
-      }
-      if (step.highlight !== undefined) {
-        if (!isNonEmptyString(step.highlight)) {
-          return { ok: false, message: "walkthrough.highlight must be a non-empty string when provided" };
-        }
-        entry.highlight = step.highlight.trim();
-      }
-      if (step.mermaidNodeId !== undefined) {
-        if (!isNonEmptyString(step.mermaidNodeId)) {
-          return {
-            ok: false,
-            message: "walkthrough.mermaidNodeId must be a non-empty string when provided",
-          };
-        }
-        entry.mermaidNodeId = step.mermaidNodeId.trim();
-      }
-      walkthrough.push(entry);
-      if (walkthrough.length >= 5) break;
+    if (entries.some((existing) => existing.slug === entry.slug)) {
+      return { ok: false, message: `${at}.slug "${entry.slug}" is listed twice` };
     }
+    if (entry.repo !== undefined && (!isNonEmptyString(entry.repo) || !REPO_PATTERN.test(entry.repo))) {
+      return { ok: false, message: `${at}.repo must look like owner/name` };
+    }
+    entries.push(entry.repo === undefined ? { slug: entry.slug } : { slug: entry.slug, repo: entry.repo });
   }
 
-  const yaml: PortfolioYaml = {
-    title: record.title.trim(),
-    summary: record.summary.trim(),
-    description: record.description.trim(),
-    stack: record.stack.map((s) => s.trim()),
-    status: record.status as ProjectStatus,
-    links: {
-      github: links.github.trim(),
-      ...(links.demo !== undefined ? { demo: (links.demo as string).trim() } : {}),
-      ...(links.docs !== undefined ? { docs: (links.docs as string).trim() } : {}),
-    },
-  };
-
-  if (record.slug !== undefined) {
-    yaml.slug = record.slug.trim();
-  }
-
-  if (record.diagram !== undefined) {
-    yaml.diagram = (record.diagram as string).trim();
-  }
-
-  if (record.graph !== undefined) {
-    yaml.graph = (record.graph as string).trim();
-  }
-
-  if (walkthrough && walkthrough.length > 0) {
-    yaml.walkthrough = walkthrough;
-  }
-
-  return { ok: true, yaml };
+  return { ok: true, entries };
 }

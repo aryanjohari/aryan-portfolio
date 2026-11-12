@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# fetched project content (scripts/fetch-projects.ts)
+/.cache/
+/public/fetched/

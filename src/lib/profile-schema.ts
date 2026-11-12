@@ -3,6 +3,15 @@
  * See docs/V2_PLAN.md §5. Pure: parsing and file reads live in the caller.
  */
 
+import {
+  DATE_RANGE_HINT,
+  DATE_RANGE_PATTERN,
+  isHttpsUrl,
+  isNonEmptyString,
+  isRecord,
+  isStringArray,
+} from "./schema-helpers";
+
 export type ProfileThread = {
   /** Referenced by each project's `thread` field. */
   id: string;
@@ -42,31 +51,8 @@ export type Profile = {
 
 export type ProfileResult = { ok: true; profile: Profile } | { ok: false; message: string };
 
-const MONTH = "(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \\d{4}";
-/** One date style everywhere ("May 2024 – Oct 2024", en dash), so the site matches the CV. */
-const DATE_RANGE_PATTERN = new RegExp(`^${MONTH} – (${MONTH}|present)$`);
 const THREAD_ID_PATTERN = /^[a-z][a-z0-9-]*$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return (
-    Array.isArray(value) &&
-    value.length > 0 &&
-    value.every((item) => typeof item === "string" && item.trim().length > 0)
-  );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-function isHttpsUrl(value: unknown): value is string {
-  return isNonEmptyString(value) && /^https:\/\/\S+$/.test(value);
-}
 
 const REQUIRED_TEXT_FIELDS = [
   "name",
@@ -145,7 +131,7 @@ export function validateProfile(data: unknown): ProfileResult {
       return { ok: false, message: `${at}.org_note must be a non-empty string when provided` };
     }
     if (!isNonEmptyString(job.dates) || !DATE_RANGE_PATTERN.test(job.dates)) {
-      return { ok: false, message: `${at}.dates must look like "May 2024 – Oct 2024" or "Oct 2026 – present" (en dash)` };
+      return { ok: false, message: `${at}.dates must look like ${DATE_RANGE_HINT}` };
     }
     if (!isStringArray(job.highlights)) {
       return { ok: false, message: `${at}.highlights must be a non-empty array of strings` };
@@ -166,7 +152,7 @@ export function validateProfile(data: unknown): ProfileResult {
       }
     }
     if (!isNonEmptyString(school.dates) || !DATE_RANGE_PATTERN.test(school.dates)) {
-      return { ok: false, message: `${at}.dates must look like "Feb 2025 – Jul 2026" (en dash)` };
+      return { ok: false, message: `${at}.dates must look like ${DATE_RANGE_HINT}` };
     }
     if (school.note !== undefined && !isNonEmptyString(school.note)) {
       return { ok: false, message: `${at}.note must be a non-empty string when provided` };
