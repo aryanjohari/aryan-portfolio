@@ -40,13 +40,13 @@ Visitors should understand what a project does, see its stack and status, and tr
 | Document                                                   | Purpose                                                              |
 | ---------------------------------------------------------- | -------------------------------------------------------------------- |
 | [architecture.md](./architecture.md)                       | Data flow, build strategy, folder structure, security                |
-| [contract.md](./contract.md)                               | `portfolio.yaml` schema, validation, examples                        |
+| [contract.md](./archive/contract.md)                               | `portfolio.yaml` schema, validation, examples                        |
 | [create-portfolio-yaml.md](./create-portfolio-yaml.md)     | Cursor prompt to generate portfolio.yaml in project repos            |
-| [streamline-project-docs.md](./streamline-project-docs.md) | Cursor prompt to streamline GitHub + portfolio docs in project repos |
+| [streamline-project-docs.md](./archive/streamline-project-docs.md) | Cursor prompt to streamline GitHub + portfolio docs in project repos |
 | [ui.md](./ui.md)                                           | Design tokens, wireframes, components, responsive rules              |
-| [void-chrome-transitions.md](./void-chrome-transitions.md) | Morph-first home ↔ site chrome navigation (why + how)                |
+| [void-chrome-transitions.md](./archive/void-chrome-transitions.md) | Morph-first home ↔ site chrome navigation (why + how)                |
 | [registry.md](./registry.md)                               | How to add/remove projects and wire demos                            |
-| [v2-roadmap.md](./v2-roadmap.md)                           | v2 phases (homepage narrative, guide, remaining demos)               |
+| [v2-roadmap.md](./archive/v2-roadmap.md)                           | v2 phases (homepage narrative, guide, remaining demos)               |
 | [guide.md](./guide.md)                                     | Portfolio guide API, context build, env setup, testing               |
 | [ship-checklist.md](./ship-checklist.md)                   | Pre-deploy verification steps                                        |
 
@@ -67,6 +67,6 @@ Visitors should understand what a project does, see its stack and status, and tr
 - **Add a project:** [registry.md](./registry.md)
 - **Generate yaml for a project:** [create-portfolio-yaml.md](./create-portfolio-yaml.md)
 - **Change design:** [ui.md](./ui.md)
-- **Change data contract:** [contract.md](./contract.md)
+- **Change data contract:** [contract.md](./archive/contract.md)
 - **Understand build flow:** [architecture.md](./architecture.md)
 - **Pre-deploy:** [ship-checklist.md](./ship-checklist.md)

@@ -12,7 +12,7 @@ All design and architecture decisions live in [`docs/MASTER.md`](docs/MASTER.md)
 |-----|-------|
 | [docs/MASTER.md](docs/MASTER.md) | Vision, principles, doc index |
 | [docs/architecture.md](docs/architecture.md) | Data flow, build strategy |
-| [docs/contract.md](docs/contract.md) | `portfolio.yaml` schema |
+| [docs/archive/contract.md](docs/archive/contract.md) | `portfolio.yaml` schema |
 | [docs/ui.md](docs/ui.md) | Design tokens, wireframes |
 | [docs/guide.md](docs/guide.md) | Portfolio guide, Gemini setup |
 | [docs/registry.md](docs/registry.md) | Adding projects, wiring demos |
@@ -64,7 +64,7 @@ Place your PDF at `public/resume.pdf`. The nav and about page link to `/resume.p
 
 ## Adding a project
 
-1. Add `portfolio.yaml` to the project repo (see [docs/contract.md](docs/contract.md)).
+1. Add `portfolio.yaml` to the project repo (see [docs/archive/contract.md](docs/archive/contract.md)).
 2. Add an entry to [`src/data/registry.ts`](src/data/registry.ts) (see [docs/registry.md](docs/registry.md)).
 3. Run `npm run fetch:projects` or deploy — content is fetched at build time.
 
