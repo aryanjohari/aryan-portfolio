@@ -1,0 +1,41 @@
+/*
+ * Design tokens. Colours come from Phosphene's own scene palettes
+ * (src/look/scenePalettes.ts there): "paper" for light, "phosphor" for dark.
+ * The accent is darkened from Phosphene's #bf4030 (4.2:1 on paper) to pass
+ * WCAG AA for small text (5.3:1).
+ */
+:root {
+  --color-paper: #ece6d6;
+  --color-ink: #1b1b1f;
+  --color-muted: #5a564d;
+  --color-accent: #a8361f;
+  --color-rule: rgba(27, 27, 31, 0.22);
+
+  --font-body: var(--font-serif), Georgia, "Times New Roman", serif;
+  --font-label: var(--font-mono), ui-monospace, Menlo, monospace;
+
+  --type-label: 0.8125rem;
+  --type-body: 1.125rem;
+  --type-lede: 1.375rem;
+  --type-name: clamp(2.5rem, 9vw, 4.5rem);
+
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --space-5: 4rem;
+
+  --measure: 40rem;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #05100a;
+    --color-ink: #c9ffd6;
+    --color-muted: #7fae8c;
+    --color-accent: #5dff8a;
+    --color-rule: rgba(201, 255, 214, 0.2);
+    color-scheme: dark;
+  }
+}

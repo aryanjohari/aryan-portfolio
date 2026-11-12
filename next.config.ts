@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
         destination: "/",
         permanent: true,
       },
+      {
+        // Temporary, so links to /cv always follow wherever the current CV lives.
+        source: "/cv",
+        destination: "/resume.pdf",
+        permanent: false,
+      },
     ];
   },
 };

@@ -3,5 +3,5 @@ export default function ProjectsLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <main className="site-main site-main--project">{children}</main>;
+  return <main className="site-main">{children}</main>;
 }
