@@ -18,5 +18,5 @@ story:
   problem: I wanted photo looks that come out the same every time, where a typed recipe decides the pixels and not a model.
   built: Eight named look packs, semantic sliders and an optional talk box all edit one recipe document, which a WebGL2 compositor renders and exports as a PNG plus JSON.
   decision: The talk box is a structured router onto packs and sliders, never generated pixels, so every result can be rebuilt from its recipe.
-  learned: "TODO: Aryan to write (one or two sentences)"
+  learned: Writing down what Prism would refuse (generated pixels, campaign tooling) and a short spec before each build step is what kept a solo project small enough to finish. The version before it in the same repo, Stage, had drifted into a jobs API and campaign packs.
   next: Frozen at v1. The typed look document and validated talk router continue in Phosphene.
