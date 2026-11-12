@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Rubik_Dirt } from "next/font/google";
-import Script from "next/script";
+import { IBM_Plex_Mono } from "next/font/google";
 
-import { MotionScaffold } from "@/components/motion/MotionScaffold";
 import { SiteFooter } from "@/components/SiteFooter";
-import { VoidChrome } from "@/components/VoidChrome";
 
 import "./globals.css";
 
@@ -14,24 +11,11 @@ const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-mono",
 });
 
-const rubikDirt = Rubik_Dirt({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-display",
-});
-
 export const metadata: Metadata = {
   title: "Aryan Johari",
   description:
     "Graduate software engineer in Auckland. Systems, AI, and research. Open to junior / grad roles — no sponsorship required.",
 };
-
-/**
- * When theatre motion would be skipped (reduced-motion only), mark <html> so
- * CSS hides #boot-cover immediately — without removing the node (avoids
- * hydration mismatch). Boot runs on all other viewports.
- */
-const BOOT_COVER_GATE_SCRIPT = `(function(){try{if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.dataset.bootCoverSkip="1";}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -39,20 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${ibmPlexMono.variable} ${rubikDirt.variable} antialiased`}
-        suppressHydrationWarning
-      >
-        <Script
-          id="boot-cover-gate"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: BOOT_COVER_GATE_SCRIPT }}
-        />
-        <div id="boot-cover" aria-hidden="true" />
-        <MotionScaffold />
+    <html lang="en">
+      <body className={`${ibmPlexMono.variable} antialiased`}>
         <div className="site-shell">
-          <VoidChrome>{children}</VoidChrome>
+          {children}
           <SiteFooter />
         </div>
       </body>

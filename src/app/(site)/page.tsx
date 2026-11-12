@@ -1,6 +1,5 @@
 /**
- * Home stage lives in VoidChrome (name + ask + glyphs). Route keeps a marker
- * so deep links to `/` still resolve; page body is empty.
+ * Blank until v2 step 3 builds the home page from content/profile.yaml.
  */
 export default function Home() {
   return null;

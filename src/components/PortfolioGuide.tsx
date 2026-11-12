@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   FormEvent,
   startTransition,
@@ -13,16 +13,17 @@ import {
   type RefObject,
 } from "react";
 
-import { useVoidChromeNavigate } from "@/components/void-chrome-nav";
 import guideContext from "@/lib/guide-context.json";
 import {
   isResumePath,
   validateNavigateTo,
 } from "@/lib/guide-navigate";
 import type { SuggestedChip } from "@/lib/guide-schema";
-import {
-  prefersReducedMotion,
-} from "@/lib/motion";
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
 const SITE_PATH_PATTERN =
   /(\/(?:projects(?:\/[a-z0-9-]+)?|about|workshop|resume\.pdf))/g;
@@ -653,7 +654,7 @@ function PortfolioGuideInner({
   variant: PortfolioGuideVariant;
 }) {
   const pathname = usePathname() || "/";
-  const navigate = useVoidChromeNavigate();
+  const router = useRouter();
   const historyPanelId = useId();
   const historyTitleId = useId();
   const [message, setMessage] = useState("");
@@ -771,7 +772,7 @@ function PortfolioGuideInner({
       window.location.assign(destination);
       return;
     }
-    void navigate(destination);
+    router.push(destination);
   }
 
   /* Explicit go-intent: finish the whisper, then teleport. */

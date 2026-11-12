@@ -1,5 +1,3 @@
-import type { ArchitectureGraph } from "@/lib/architecture-graph";
-
 export type ProjectStatus = "active" | "wip" | "archived";
 
 export type PortfolioLinks = {
@@ -98,14 +96,6 @@ export type ProjectDiagramData = {
   source: "github" | "base";
   path?: string;
   mermaid?: string;
-  /**
-   * Owned graph IR when fetched from the project repo or loaded from a
-   * portfolio-local fixture. Site render should prefer this over `mermaid`.
-   */
-  graph?: ArchitectureGraph;
-  /** Where `graph` came from when present. */
-  graphSource?: "github" | "local";
-  graphPath?: string;
   /** Normalized walkthrough from portfolio.yaml when authored */
   walkthrough?: PortfolioWalkthroughStep[];
   /**
