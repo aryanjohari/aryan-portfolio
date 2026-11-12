@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test 'src/**/*.test.ts'",
+    "validate:content": "tsx scripts/validate-content.ts",
+    "prebuild": "npm run validate:content"
   },
   "dependencies": {
     "next": "16.2.1",
