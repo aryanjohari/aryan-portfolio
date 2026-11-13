@@ -9,7 +9,7 @@ role: Solo
 dates: Apr 2026 – Oct 2026
 stack: [TypeScript, React, WebGL2, Vitest]
 proves: Frontend craft and testing my own work
-proof: ["107 tests", "CI: lint, tests and build on every push", "Live demo"]
+proof: ["120 tests", "CI: lint, tests and build on main and PRs", "Live demo"]
 links:
   demo: https://image.arkhives.nz
   github: https://github.com/aryanjohari/web-image-editor
