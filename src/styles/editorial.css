@@ -78,6 +78,15 @@
 .next-link > a { font-size: clamp(1.8rem, 4vw, 3rem); text-decoration: none; }
 .next-link > a:hover { text-decoration: underline; }
 
+/* The project picture morphs between pages (SharedPicture); off when reduced motion is asked for */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 /* Phone: every block takes the full width, in source order */
 @media (max-width: 760px) {
   .grid > * { grid-column: 1 / -1 !important; grid-row: auto !important; }

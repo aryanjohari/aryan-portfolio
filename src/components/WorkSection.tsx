@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Epigraph } from "@/components/Epigraph";
 import { Picture } from "@/components/Picture";
+import { SharedPicture } from "@/components/SharedPicture";
 import type { HomeProjects } from "@/lib/home-sections";
 import type { Project } from "@/lib/portfolio-schema";
 import { proofLine } from "@/lib/project-display";
@@ -39,7 +40,9 @@ export function WorkSection({ projects, epigraph }: { projects: HomeProjects; ep
       {lead.map((project, index) => (
         <article key={project.slug} className={`feature grid${index % 2 === 1 ? " flip" : ""}`}>
           <div className="feature-media">
-            <Picture src={project.face} label={project.title} className="land" />
+            <SharedPicture slug={project.slug}>
+              <Picture src={project.face} label={project.title} className="land" />
+            </SharedPicture>
           </div>
           <div className="feature-text">
             <p className="number">{number(index, project)}</p>
@@ -56,7 +59,9 @@ export function WorkSection({ projects, epigraph }: { projects: HomeProjects; ep
       <div className="minor grid">
         {minor.map((project, index) => (
           <article key={project.slug}>
-            <Picture src={project.face} label={project.title} className="land" />
+            <SharedPicture slug={project.slug}>
+              <Picture src={project.face} label={project.title} className="land" />
+            </SharedPicture>
             <p className="number section-no">{number(lead.length + index, project)}</p>
             <h3>
               <Link href={`/projects/${project.slug}`}>{project.title}</Link>

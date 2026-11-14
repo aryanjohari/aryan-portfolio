@@ -2,6 +2,7 @@ import Link from "next/link";
 import ReactMarkdown, { type Components } from "react-markdown";
 
 import { Picture } from "@/components/Picture";
+import { SharedPicture } from "@/components/SharedPicture";
 import { type Project, STORY_HEADINGS, STORY_PARTS } from "@/lib/portfolio-schema";
 import { factsLine } from "@/lib/project-display";
 
@@ -48,7 +49,9 @@ export function ProjectPage({ project, number, next }: { project: Project; numbe
         </div>
       </section>
 
-      <Picture src={project.face} label={project.title} className="wide-shot" />
+      <SharedPicture slug={project.slug}>
+        <Picture src={project.face} label={project.title} className="wide-shot" />
+      </SharedPicture>
 
       <ul className="project-facts">
         {factsLine(project).map((fact) => (
