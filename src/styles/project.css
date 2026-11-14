@@ -29,11 +29,12 @@
 .story-text li + li { margin-top: 0.4rem; }
 .story-text li::marker { color: var(--color-accent); }
 
-/* The decision's first line is set large, like a pull quote */
-.story-decision .story-text > p:first-child {
+/* A decision that opens with a line in **bold** gets that line set large, like a pull quote */
+.story-decision .story-text > p.pull:first-child {
   padding-top: var(--space-2);
   border-top: 1px solid var(--color-ink);
   font-size: clamp(1.6rem, 3vw, 2.3rem);
   font-style: italic;
   line-height: 1.2;
 }
+.story-decision .story-text > p.pull:first-child > strong { font-weight: 400; }

@@ -1,9 +1,18 @@
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 
 import { Picture } from "@/components/Picture";
 import { type Project, STORY_HEADINGS, STORY_PARTS } from "@/lib/portfolio-schema";
 import { factsLine } from "@/lib/project-display";
+
+/** A paragraph that is only **bold** text becomes a pull line (styled large when it opens the decision). */
+const markdownComponents: Components = {
+  p: ({ node, ...props }) => {
+    const children = node?.children ?? [];
+    const onlyBold = children.length === 1 && children[0].type === "element" && children[0].tagName === "strong";
+    return <p className={onlyBold ? "pull" : undefined} {...props} />;
+  },
+};
 
 /** Layout follows mockups/project.html. `number` is the project's place on the home page. */
 export function ProjectPage({ project, number, next }: { project: Project; number: number; next?: Project }) {
@@ -22,7 +31,7 @@ export function ProjectPage({ project, number, next }: { project: Project; numbe
         <div className="right-5 project-why">
           {project.why && (
             <>
-              <h2 className="section-no">Why I made it</h2>
+              <h2 className="section-no">{project.tier === "in-progress" ? "Why I'm building it" : "Why I made it"}</h2>
               <p>{project.why}</p>
             </>
           )}
@@ -55,7 +64,7 @@ export function ProjectPage({ project, number, next }: { project: Project; numbe
                 {String(index + 1).padStart(2, "0")} · {STORY_HEADINGS[part]}
               </h2>
               <div className="mid-7 story-text">
-                <ReactMarkdown>{story[part]}</ReactMarkdown>
+                <ReactMarkdown components={markdownComponents}>{story[part]}</ReactMarkdown>
               </div>
             </section>
           ))}
