@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { Profile } from "@/lib/profile-schema";
 
 export function SiteHeader({ name, links }: { name: string; links: Profile["links"] }) {
@@ -18,6 +19,9 @@ export function SiteHeader({ name, links }: { name: string; links: Profile["link
           </li>
           <li>
             <a href={links.github}>GitHub</a>
+          </li>
+          <li>
+            <ThemeToggle />
           </li>
         </ul>
       </nav>

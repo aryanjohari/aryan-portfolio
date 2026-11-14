@@ -4,6 +4,7 @@ import { IBM_Plex_Mono, Newsreader } from "next/font/google";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getProfile } from "@/lib/profile";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 
 import "./globals.css";
 
@@ -35,7 +36,11 @@ export default function RootLayout({
   const profile = getProfile();
 
   return (
-    <html lang="en">
+    // The boot script may set data-theme before React loads, so the attribute can differ from the server's HTML.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body className={`${newsreader.variable} ${ibmPlexMono.variable}`}>
         <a className="skip-link" href="#main">
           Skip to content
