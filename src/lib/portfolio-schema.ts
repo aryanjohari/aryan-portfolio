@@ -15,7 +15,7 @@ import {
 export const PROJECT_TIERS = ["featured", "in-progress", "archive"] as const;
 export const PROJECT_STATES = ["live", "frozen", "wip"] as const;
 export const CODE_VISIBILITIES = ["public", "private"] as const;
-export const STORY_PARTS = ["problem", "built", "decision", "learned", "next"] as const;
+export const STORY_PARTS = ["problem", "built", "decision", "learned", "limits", "next"] as const;
 export type StoryPart = (typeof STORY_PARTS)[number];
 
 /** The "## " heading each story part uses in a project's Markdown file, and on its page. */
@@ -24,6 +24,7 @@ export const STORY_HEADINGS: Record<StoryPart, string> = {
   built: "What I built",
   decision: "The key decision",
   learned: "What I learned",
+  limits: "What it can't do",
   next: "What's next",
 };
 
@@ -164,7 +165,12 @@ export function validateProject(slug: string, data: unknown): ProjectResult {
 
   return {
     ok: true,
-    project: { ...(data as Omit<Project, "slug">), slug, status: { ...(status as Project["status"]), as_of: asOf } },
+    project: {
+      ...(data as Omit<Project, "slug">),
+      slug,
+      links: links as Project["links"],
+      status: { ...(status as Project["status"]), as_of: asOf },
+    },
   };
 }
 

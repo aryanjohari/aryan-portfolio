@@ -18,7 +18,7 @@ function validYaml() {
     proof: ["107 tests"],
     links: { github: "https://github.com/aryanjohari/web-image-editor" },
     visibility: { code: "public" },
-    story: { problem: "p", built: "b", decision: "d", learned: "l", next: "n" } as Record<string, string> | undefined,
+    story: { problem: "p", built: "b", decision: "d", learned: "l", limits: "x", next: "n" } as Record<string, string> | undefined,
   };
 }
 
@@ -71,4 +71,12 @@ test("rejects a project whose thread is not in the profile", () => {
   const result = validateProjectSet([project("prism", { thread: "games" })], ["web", "ai"]);
   assert.equal(result.ok, false);
   assert.match(!result.ok ? result.message : "", /thread "games" is not in profile.yaml threads/);
+});
+
+test("gives a project with no links an empty links object, so pages can read links.demo safely", () => {
+  const noLinks: Partial<ReturnType<typeof validYaml>> = { ...validYaml(), visibility: { code: "private" } };
+  delete noLinks.links;
+  const result = validateProject("gstf", noLinks);
+  assert.ok(result.ok);
+  assert.deepEqual(result.project.links, {});
 });

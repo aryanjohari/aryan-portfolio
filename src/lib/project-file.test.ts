@@ -39,6 +39,10 @@ No generated pixels.
 
 Write the spec first.
 
+## What it can't do
+
+- One person only.
+
 ## What's next
 
 Frozen.

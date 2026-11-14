@@ -1,0 +1,69 @@
+/**
+ * The site's longer words: content/home.md (headline + short bio) and
+ * content/story.md (the long story in chapters). Pure parsers; file reads
+ * live in site-text-files.ts.
+ */
+
+import { splitFrontmatter } from "./markdown-file";
+import { isNonEmptyString, isRecord } from "./schema-helpers";
+
+export type HomeText = { headline: string; bio: string };
+
+export type StoryChapter = {
+  title: string;
+  /** Optional first line in italics, e.g. "*Mumbai · 2021 – 2024*". */
+  label?: string;
+  body: string;
+};
+
+export type StoryText = { title: string; summary: string; chapters: StoryChapter[] };
+
+type Result<T> = { ok: true; value: T } | { ok: false; message: string };
+
+export function parseHomeFile(text: string): Result<HomeText> {
+  const file = splitFrontmatter(text);
+  if (!file.ok) return file;
+  if (!isRecord(file.data) || !isNonEmptyString(file.data.headline)) {
+    return { ok: false, message: "home.md needs a headline in its frontmatter" };
+  }
+  const bio = file.body.trim();
+  if (bio.length === 0) {
+    return { ok: false, message: "home.md needs the short bio as its body" };
+  }
+  return { ok: true, value: { headline: file.data.headline, bio } };
+}
+
+const LABEL_PATTERN = /^\*([^*\n]+)\*\s*(?:\n|$)/;
+
+export function parseStoryFile(text: string): Result<StoryText> {
+  const file = splitFrontmatter(text);
+  if (!file.ok) return file;
+  if (!isRecord(file.data) || !isNonEmptyString(file.data.title) || !isNonEmptyString(file.data.summary)) {
+    return { ok: false, message: "story.md needs a title and a summary in its frontmatter" };
+  }
+
+  const chunks = file.body.split(/^## +/m);
+  if (chunks[0].trim().length > 0) {
+    return { ok: false, message: "story.md text must sit under a ## chapter heading" };
+  }
+
+  const chapters: StoryChapter[] = [];
+  for (const chunk of chunks.slice(1)) {
+    const newline = chunk.indexOf("\n");
+    const title = (newline === -1 ? chunk : chunk.slice(0, newline)).trim();
+    let rest = newline === -1 ? "" : chunk.slice(newline + 1).trim();
+
+    const label = LABEL_PATTERN.exec(rest);
+    if (label) rest = rest.slice(label[0].length).trim();
+
+    if (rest.length === 0) {
+      return { ok: false, message: `story.md chapter "${title}" is empty` };
+    }
+    chapters.push(label ? { title, label: label[1].trim(), body: rest } : { title, body: rest });
+  }
+
+  if (chapters.length === 0) {
+    return { ok: false, message: "story.md needs at least one ## chapter" };
+  }
+  return { ok: true, value: { title: file.data.title, summary: file.data.summary, chapters } };
+}

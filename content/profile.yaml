@@ -25,6 +25,7 @@ experience:
     org: 9horsemen
     org_note: early-stage startup
     dates: Oct 2026 – present
+    hidden: true # on hold for the home page (14 Nov 2026); still in the CV and guide
     highlights:
       - Built the admin app's AI assistant, with safeguards that strip contact and ID details and quote customer-entered text before it reaches the model.
       - Added social posting to the Expo admin app, including photo capture and a before-and-after composer.
@@ -34,23 +35,27 @@ experience:
     dates: Jul 2025 – Jul 2026
     highlights:
       - Looked after three New Zealand websites and explained search data in plain language so non-technical partners could decide what to fix first.
+    taught: "TODO: a niche New Zealand business and how its customers search"
   - role: Junior Website Developer
     org: KRIL Digital
     org_note: digital marketing agency, Mumbai
     dates: May 2024 – Oct 2024
     highlights:
       - Took about 20 client websites (WordPress, React, Shopify) from brief to live site.
+    taught: "TODO: marketing and branding, from inside an agency"
   - role: Full Stack Developer
     org: Koverify
     org_note: Mumbai
     dates: Aug 2023 – Dec 2023
     highlights:
       - Owned three in-house wholesale clothing websites and built Snug Stitch, a React, Express and MongoDB catalogue app.
+    taught: "TODO: how fashion wholesale works"
 education:
   - degree: Master of Applied Technology (Computing)
     school: Unitec
     dates: Feb 2025 – Jul 2026
     note: GPA 7.667 / 9.0; thesis (A-), paper in preparation
+    taught: "TODO: AI research, the models and the maths"
   - degree: BSc Computer Science
     school: Thakur College, Mumbai
     dates: Sep 2021 – Apr 2024
@@ -58,3 +63,11 @@ education:
 certifications:
   - AWS Certified Developer – Associate
 referees: Available on request
+# Quotes at the head of home-page sections; placeholders until Aryan picks his own (14 Nov 2026).
+epigraphs:
+  - section: work
+    quote: What I cannot create, I do not understand.
+    author: Richard Feynman
+  - section: experience
+    quote: The purpose of computing is insight, not numbers.
+    author: Richard Hamming

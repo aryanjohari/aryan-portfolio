@@ -27,6 +27,7 @@ function validProfile() {
         org: "9horsemen",
         dates: "Oct 2026 – present",
         highlights: ["Built the admin app's AI assistant."],
+        taught: "How a startup ships.",
       },
     ],
     education: [{ degree: "BSc Computer Science", school: "Thakur College, Mumbai", dates: "Sep 2021 – Apr 2024" }],
@@ -60,4 +61,25 @@ test("rejects two threads with the same id, since projects reference threads by 
   profile.threads[1].id = "web";
   const result = validateProfile(profile);
   assert.deepEqual(result, { ok: false, message: 'threads[1].id "web" is used twice' });
+});
+
+test("requires the 'taught' line for a job on the home page, but not for a hidden one", () => {
+  const shown = validProfile();
+  delete (shown.experience[0] as { taught?: string }).taught;
+  assert.deepEqual(validateProfile(shown), {
+    ok: false,
+    message: "experience[0].taught is required for a job shown on the home page",
+  });
+
+  const hidden = validProfile();
+  delete (hidden.experience[0] as { taught?: string }).taught;
+  assert.equal(validateProfile({ ...hidden, experience: [{ ...hidden.experience[0], hidden: true }] }).ok, true);
+});
+
+test("rejects an epigraph for a section the home page does not have", () => {
+  const result = validateProfile({
+    ...validProfile(),
+    epigraphs: [{ section: "footer", quote: "Simplicity is prerequisite for reliability.", author: "Edsger Dijkstra" }],
+  });
+  assert.deepEqual(result, { ok: false, message: "epigraphs[0].section must be one of: work, experience" });
 });

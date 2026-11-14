@@ -4,19 +4,8 @@
  * Pure: the caller reads the file.
  */
 
-import { parse } from "yaml";
-
+import { splitFrontmatter } from "./markdown-file";
 import { type ProjectResult, STORY_HEADINGS, type StoryPart, validateProject } from "./portfolio-schema";
-
-const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
-
-export function splitFrontmatter(text: string): { ok: true; data: unknown; body: string } | { ok: false; message: string } {
-  const match = FRONTMATTER_PATTERN.exec(text);
-  if (!match) {
-    return { ok: false, message: "File must start with a --- frontmatter block that ends with ---" };
-  }
-  return { ok: true, data: parse(match[1]), body: match[2] };
-}
 
 const PART_BY_HEADING = new Map(
   (Object.entries(STORY_HEADINGS) as [StoryPart, string][]).map(([part, heading]) => [heading.toLowerCase(), part]),

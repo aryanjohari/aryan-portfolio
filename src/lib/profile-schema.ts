@@ -25,6 +25,10 @@ export type ProfileExperience = {
   org_note?: string;
   dates: string;
   highlights: string[];
+  /** The industry this job taught; shown on the home page. Required unless the job is hidden. */
+  taught?: string;
+  /** Kept in the spine (CV, guide) but left off the home page. */
+  hidden?: boolean;
 };
 
 export type ProfileEducation = {
@@ -32,6 +36,16 @@ export type ProfileEducation = {
   school: string;
   dates: string;
   note?: string;
+  taught?: string;
+};
+
+export const EPIGRAPH_SECTIONS = ["work", "experience"] as const;
+
+/** A short quote at the head of a home-page section. */
+export type ProfileEpigraph = {
+  section: (typeof EPIGRAPH_SECTIONS)[number];
+  quote: string;
+  author: string;
 };
 
 export type Profile = {
@@ -47,6 +61,7 @@ export type Profile = {
   education: ProfileEducation[];
   certifications: string[];
   referees: string;
+  epigraphs?: ProfileEpigraph[];
 };
 
 export type ProfileResult = { ok: true; profile: Profile } | { ok: false; message: string };
@@ -136,6 +151,12 @@ export function validateProfile(data: unknown): ProfileResult {
     if (!isStringArray(job.highlights)) {
       return { ok: false, message: `${at}.highlights must be a non-empty array of strings` };
     }
+    if (job.hidden !== undefined && typeof job.hidden !== "boolean") {
+      return { ok: false, message: `${at}.hidden must be true or false when provided` };
+    }
+    if (job.hidden !== true && !isNonEmptyString(job.taught)) {
+      return { ok: false, message: `${at}.taught is required for a job shown on the home page` };
+    }
   }
 
   if (!Array.isArray(data.education) || data.education.length === 0) {
@@ -154,13 +175,35 @@ export function validateProfile(data: unknown): ProfileResult {
     if (!isNonEmptyString(school.dates) || !DATE_RANGE_PATTERN.test(school.dates)) {
       return { ok: false, message: `${at}.dates must look like ${DATE_RANGE_HINT}` };
     }
-    if (school.note !== undefined && !isNonEmptyString(school.note)) {
-      return { ok: false, message: `${at}.note must be a non-empty string when provided` };
+    for (const key of ["note", "taught"] as const) {
+      if (school[key] !== undefined && !isNonEmptyString(school[key])) {
+        return { ok: false, message: `${at}.${key} must be a non-empty string when provided` };
+      }
     }
   }
 
   if (!isStringArray(data.certifications)) {
     return { ok: false, message: "Field certifications must be a non-empty array of strings" };
+  }
+
+  if (data.epigraphs !== undefined) {
+    if (!Array.isArray(data.epigraphs)) {
+      return { ok: false, message: "Field epigraphs must be an array when provided" };
+    }
+    const sections = new Set<string>();
+    for (const [index, epigraph] of data.epigraphs.entries()) {
+      const at = `epigraphs[${index}]`;
+      if (!isRecord(epigraph) || !isNonEmptyString(epigraph.quote) || !isNonEmptyString(epigraph.author)) {
+        return { ok: false, message: `${at} needs a quote and an author` };
+      }
+      if (!(EPIGRAPH_SECTIONS as readonly unknown[]).includes(epigraph.section)) {
+        return { ok: false, message: `${at}.section must be one of: ${EPIGRAPH_SECTIONS.join(", ")}` };
+      }
+      if (sections.has(epigraph.section as string)) {
+        return { ok: false, message: `${at}.section "${epigraph.section}" already has an epigraph` };
+      }
+      sections.add(epigraph.section as string);
+    }
   }
 
   return { ok: true, profile: data as Profile };
