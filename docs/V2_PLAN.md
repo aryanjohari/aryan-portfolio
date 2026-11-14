@@ -1,17 +1,19 @@
 # Portfolio v2 plan (branch `v2-simple`)
 
-Written 13 Nov 2026. Goal: by Mon 16 Nov the site is **simple, fast, honest and consistent** with the CV and LinkedIn. It's built from one spine file (`content/profile.yaml`) plus a `portfolio.yaml` in each project repo.
+Written 13 Nov 2026. Goal: by Mon 16 Nov the site is **simple, fast, honest and consistent** with the CV and LinkedIn. It's built from one spine file (`content/profile.yaml`) plus local Markdown files for the bio, the story and each project (§15; the per-repo `portfolio.yaml` was dropped on 14 Nov).
 
 **Claude in this repo: read this whole file first. Before deleting anything, list exactly what you will delete and keep, and wait for Aryan's OK.**
 
 **Vision (added 13 Nov, after design research): see §14.** It refines §5–§8; where they disagree, §14 wins.
+
+**Content model (14 Nov): see §15.** Everything is local to this repo; it replaces the cross-repo fetch in §6, §10 and §14.
 
 ---
 
 ## 1. Principles
 
 1. **5-second test.** A recruiter sees name, headline, what I build and a CV link without clicking, waiting or scrolling.
-2. **One source of truth.** Every fact on the site comes from `content/profile.yaml` or a project's `portfolio.yaml`. Nothing is hard-coded in components.
+2. **One source of truth.** Every fact on the site comes from `content/profile.yaml` or a file under `content/` (§15). Nothing is hard-coded in components.
 3. **Honest by default.** Only claim what a repo or the spine can prove. Status stamps carry a date. Unverified = `TODO`, never guessed.
 4. **One creative signature, added last.** Everything works without it.
 5. **Fast.** Readable with JavaScript off. Motion turns off for people who've asked their device to reduce it. Loads in under 2 seconds on a phone.
@@ -126,6 +128,8 @@ referees: Available on request
 
 ## 6. Project contract v2 (`portfolio.yaml` in each repo, read from `main`)
 
+> **Superseded on 14 Nov by §15.** The fields below still describe what a project needs, but they now live in `content/projects/<slug>.md` in this repo, not in each repo.
+
 ```yaml
 title: Prism
 summary: One plain sentence a recruiter understands   # ≤120 chars
@@ -210,6 +214,8 @@ story:                                               # 1–2 sentences each
 
 ## 10. Build order (each step ends with a working build)
 
+> Historical. §13 is the live order; steps 4 and 8 (fetch from repos, deploy hook) were dropped on 14 Nov (§15).
+
 1. **Branch + clean-up.** Create `v2-simple`, run the deletions in §3, and remove the old prebuild steps. ✔ Build passes and shows a blank home page.
 2. **Spine + schemas.** Add `content/profile.yaml` (§5), the schemas and the prebuild validation. ✔ A bad field fails the build.
 3. **Home with no projects.** Hero, experience, about, footer from the spine, with the design tokens and fonts. ✔ 5-second test passes on a phone.
@@ -253,17 +259,18 @@ Every phase ends with `npm run build` and `npm run lint` passing (plus `npm test
 | P3 Home from the spine | #311 | here | Done (Lighthouse moved to the launch gate) |
 | P4a Contract v2, fetch, entries, story page | #312 | here | Done |
 | **S1** Home page: bio (Default/Long) + work list, content and UI together | #320 | here | Live on the branch in the layout Aryan picked, checked by him; phone number gone |
-| **S2** Prism story page: schema split + story + page layout | #321 | here | `/projects/prism` from the split schema, story edited and layout checked by Aryan |
-| P4b Prism repo: facts-only `portfolio.yaml` + CLAUDE.md contract | #313 | Prism (ask first) | A change on Prism's `main` shows after a rebuild |
-| **S3** Other project pages, one at a time | #314 | here + 4 repos (ask first) | Every page live and checked by Aryan |
+| **S1b** Story page (`/story`) | #329 | here | `/story` from `content/story.md` in the `mockups/story.html` layout, checked by Aryan |
+| **S2** Prism story page: `content/projects/prism.md` + story + page layout; remove the fetch code | #321 | here | `/projects/prism` from the Markdown file, story edited and layout checked by Aryan |
+| ~~P4b Prism repo `portfolio.yaml`~~ | #313 | — | Dropped 14 Nov (§15) |
+| **S3** Other project pages, one at a time | #314 | here | Every page live and checked by Aryan |
 | **S4** (optional) Job notes behind the bio links | #322 | here | Chosen jobs have a short page, or Aryan skips it |
 | P6 Guide → `AskNote` | #315 | here | Context-builder tests pass; hidden with no key |
 | P7 Tracking | #316 | here | `?ref=test` visit shows; Search Console verified |
-| P8 (optional) Deploy hook | #317 | Vercel + repos | Push to a project's `main` rebuilds the site |
+| ~~P8 (optional) Deploy hook~~ | #317 | — | Dropped 14 Nov (§15) |
 | P9 Phosphene art | #318 | here | Same data gives the same art; works with JS off (may move earlier if the mockup uses it) |
 | Launch gate | #319 | here | CV check, no `TODO` in production, Lighthouse under 2 s, 5-second test on a real phone, merged |
 
-Order: S1 → S2 → P4b → S3 → S4 → P6 → P7 → P9 → launch gate. **One page at a time:** each slice writes the content, mocks it, lets Aryan pick, and builds it, so content and UI are decided together.
+Order: S1 → S1b → S2 → S3 → S4 → P6 → P7 → P9 → launch gate. **One page at a time:** each slice writes the content, mocks it, lets Aryan pick, and builds it, so content and UI are decided together.
 
 ---
 
@@ -273,6 +280,19 @@ Order: S1 → S2 → P4b → S3 → S4 → P6 → P7 → P9 → launch gate. **O
 
 - **Decided:** story-led, short and simple; text-first; nothing generated by AI at build time; content reviewed by Aryan; site first, then essays (blog code kept), then networking.
 - **Not decided (options for the S1 mockup, #320):** two columns with a picture column (e.g. Mumbai and Auckland as a Phosphene engraving); a Default/Long bio (must work with JS off); "proves" with proof and limits beside each project; dated status; a link to the v1 void site.
-- **Schema split:** each project repo's `portfolio.yaml` holds only facts that change with its code (`stack`, `status` + `as_of`, `proof`, `limits`, `links`). This repo holds curation and story (`content/projects.yaml`: `title`, `summary`, `tier`, `thread`, `proves`, `story` with problem / built / learned; list order is display order). Private and archive projects are fully local.
+- ~~**Schema split:** facts in each project repo, curation and story here.~~ Dropped 14 Nov: everything is local (§15).
 - **Later, not for launch:** essays (Writing section hidden while empty), a Lee-style Notes section of topic pages (#325), networking (#324), the interdisciplinary angle (#323).
 - **Privacy:** everything committed here is public. Raw notes and evidence stay out of the repo (`~/CV` or a gitignored `notes/`).
+
+---
+
+## 15. Content model: local only (14 Nov)
+
+**Decided 14 Nov: no auto-update from project repos.** Most projects are frozen, and editing one file here takes a minute. Fetching needed a `portfolio.yaml` in every repo, branches and merges across repos, and a deploy hook: many moving parts to save that minute.
+
+- **`content/profile.yaml`:** facts about Aryan (links, jobs, education). Gains the home-page fields in S1: per-job `taught` line and a way to hide a job (9horsemen, on hold), plus the epigraphs.
+- **`content/home.md`** (short bio) and **`content/story.md`** (the long story): plain Markdown, rendered with `react-markdown`.
+- **`content/projects/<slug>.md`:** one file per project. Frontmatter = facts (`title`, `summary`, `tier`, `order`, `dates`, `role`, `stack`, `status` + `as_of`, `proof`, `links`, `picture`). Body = the story (problem, what I built, key decision and its cost, what I learned, what it can't do, next). Frontmatter is parsed with the existing `yaml` package (no new dependency) and validated in prebuild: a missing field or bad value fails the build.
+- **Removed:** `scripts/fetch-projects.ts`, `src/lib/fetch-project.ts` and its tests, and `content/projects.yaml` (order moves into each file). Deleted in S2 when Prism moves to Markdown, after listing them for Aryan's OK. P4b and P8 are dropped.
+- **Privacy:** only finished, checked text is committed. Drafts stay in the gitignored `drafts/`; phone numbers, client details and raw notes never go in.
+- **Layout:** `mockups/` (home-editorial, project, story) is the north star. Layout changes go there first, then into the site.
