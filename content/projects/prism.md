@@ -37,7 +37,7 @@ The picture is drawn on your GPU. When you export, you get the full-size PNG, th
 
 ## The key decision
 
-Browser only, maths only. No generated pixels.
+**Browser only, maths only. No generated pixels.**
 
 I knew from the start I didn't want an image model repainting the photo. The point was to change pictures with maths I wrote myself, running in the browser. So when I added a talk box, it doesn't draw anything: it turns your words into a look and some slider values, the app checks them, and the same maths draws the result. Every picture can be rebuilt from its recipe.
 
