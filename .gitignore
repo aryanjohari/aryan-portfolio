@@ -41,7 +41,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# generated at build time from content/ (scripts/build-guide-context.ts)
+# generated at build time from content/ (scripts/build-ask-index.ts)
 /src/lib/generated/
 
 # Unedited drafts stay off the public repo

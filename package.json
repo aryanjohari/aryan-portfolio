@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test": "tsx --test 'src/**/*.test.ts'",
     "validate:content": "tsx scripts/validate-content.ts",
-    "prebuild": "npm run validate:content"
+    "prebuild": "npm run validate:content && npm run build:ask",
+    "predev": "npm run build:ask",
+    "build:ask": "tsx scripts/build-ask-index.ts"
   },
   "dependencies": {
     "next": "16.2.1",
