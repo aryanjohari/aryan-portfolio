@@ -1,7 +1,4 @@
-# Which projects the site shows. Each entry is either:
-#   repo: owner/name  → portfolio.yaml (and its face image) fetched from that repo's main branch
-#   neither           → content/projects/<slug>.yaml in this repo (private work, or not migrated yet)
-# Tier, order and every other fact live in the project's own yaml.
+# Which projects the site shows; each one is content/projects/<slug>.yaml.
+# Tier, order and every other fact live in the project's own file.
 projects:
-  # Local until P4b moves this file to aryanjohari/web-image-editor as portfolio.yaml.
   - slug: prism

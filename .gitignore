@@ -41,9 +41,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# fetched project content (scripts/fetch-projects.ts)
-/.cache/
-/public/fetched/
+# generated at build time from content/ (scripts/build-guide-context.ts)
+/src/lib/generated/
 
 # Unedited drafts stay off the public repo
 /drafts/

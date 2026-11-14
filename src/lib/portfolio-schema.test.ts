@@ -74,9 +74,9 @@ test("rejects a project whose thread is not in the profile", () => {
 });
 
 test("reads the project index and rejects a slug listed twice", () => {
-  assert.deepEqual(validateProjectIndex({ projects: [{ slug: "prism", repo: "aryanjohari/web-image-editor" }] }), {
+  assert.deepEqual(validateProjectIndex({ projects: [{ slug: "prism" }] }), {
     ok: true,
-    entries: [{ slug: "prism", repo: "aryanjohari/web-image-editor" }],
+    entries: [{ slug: "prism" }],
   });
   assert.deepEqual(validateProjectIndex({ projects: [{ slug: "prism" }, { slug: "prism" }] }), {
     ok: false,

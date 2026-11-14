@@ -21,42 +21,33 @@ All design and architecture decisions live in [`docs/MASTER.md`](docs/MASTER.md)
 
 ```bash
 npm install
-cp .env.example .env.local   # optional: GITHUB_TOKEN, PORTFOLIO_FETCH_SKIP, GEMINI_API_KEY
-npm run fetch:projects       # fetch portfolio.yaml from GitHub (optional locally)
-npm run dev
+cp .env.example .env.local   # optional: GEMINI_API_KEY
+npm run dev                  # builds the guide context from content/ first
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### Dev without GitHub fetch
-
 ```bash
-PORTFOLIO_FETCH_SKIP=true npm run dev
-```
-
-Uses mock data from `src/lib/mock-projects.ts` instead of fetched content.
-
-```bash
-npm run build   # runs fetch:projects via prebuild, then next build
+npm test        # node:test unit tests
+npm run build   # prebuild validates content/ and builds the guide context, then next build
 npm run start   # serve production build
 ```
+
+All content lives in `content/` in this repo (see `docs/V2_PLAN.md` §15). Nothing is fetched from other repos.
 
 ## Environment variables
 
 | Variable | Purpose |
 |----------|---------|
-| `GITHUB_TOKEN` | GitHub API token for fetching `portfolio.yaml` from private repos. Public repos work without it. |
-| `PORTFOLIO_FETCH_SKIP` | Set to `true` to skip fetch and use mock data. |
 | `GEMINI_API_KEY` | Google Gemini API key for `/api/guide`. Server-side only — required for the portfolio guide. |
 
 See [`.env.example`](.env.example) for template values.
 
 ## Vercel deployment
 
-1. Add `GITHUB_TOKEN` in Vercel project settings (Production + Preview).
-2. Add `GEMINI_API_KEY` for the portfolio guide (Production + Preview).
-3. `prebuild` runs `fetch:projects` and `build:guide-context` automatically on each deploy.
-4. Tokens are used only at build time or on the server — never exposed to the client.
+1. Add `GEMINI_API_KEY` for the portfolio guide (Production + Preview).
+2. `prebuild` validates `content/` and builds the guide context on each deploy.
+3. The key is used only on the server, never exposed to the client.
 
 ## Resume
 
@@ -64,10 +55,10 @@ Place your PDF at `public/resume.pdf`. The nav and about page link to `/resume.p
 
 ## Adding a project
 
-1. Add `portfolio.yaml` to the project repo (see [docs/archive/contract.md](docs/archive/contract.md)).
-2. Add an entry to [`src/data/registry.ts`](src/data/registry.ts) (see [docs/registry.md](docs/registry.md)).
-3. Run `npm run fetch:projects` or deploy — content is fetched at build time.
+1. Add `content/projects/<slug>.yaml` (fields: see `src/lib/portfolio-schema.ts`).
+2. List the slug in `content/projects.yaml`.
+3. Run `npm run build`: a missing or bad field fails the build.
 
 ## Current phase
 
-Build-time GitHub fetch for `portfolio.yaml` is live. Route split: `/` (guide home) and `/workshop` (project table). Portfolio Guide uses Gemini via `/api/guide`. Iframe demos are wired for background-studio and sound-visualiser. API proxies and exhibit assets remain for Phase C.
+v2 rebuild on branch `v2-simple`; see `docs/V2_PLAN.md` §13 for the phases. Layout mockups live in `mockups/`.

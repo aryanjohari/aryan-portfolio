@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { extname, resolve } from "node:path";
+import { resolve } from "node:path";
 
 import { parse } from "yaml";
 
@@ -14,9 +14,6 @@ import {
 
 const ROOT = process.cwd();
 export const PROJECT_INDEX_PATH = resolve(ROOT, "content/projects.yaml");
-/** scripts/fetch-projects.ts writes repo projects here; gitignored. */
-export const FETCH_CACHE_DIR = resolve(ROOT, ".cache/projects");
-export const FETCHED_PUBLIC_DIR = resolve(ROOT, "public/fetched");
 
 export function readProjectIndex(): ProjectIndexEntry[] {
   const result = validateProjectIndex(parse(readFileSync(PROJECT_INDEX_PATH, "utf8")));
@@ -26,22 +23,10 @@ export function readProjectIndex(): ProjectIndexEntry[] {
   return result.entries;
 }
 
-/** Site path a fetched face image is saved under, keeping the source file's extension. */
-export function fetchedFacePath(slug: string, repoFacePath: string): string {
-  return `/fetched/${slug}/face${extname(repoFacePath).toLowerCase()}`;
-}
-
-function yamlPathFor(entry: ProjectIndexEntry): string {
-  return entry.repo
-    ? resolve(FETCH_CACHE_DIR, `${entry.slug}.yaml`)
-    : resolve(ROOT, "content/projects", `${entry.slug}.yaml`);
-}
-
 function loadProject(entry: ProjectIndexEntry): Project {
-  const path = yamlPathFor(entry);
+  const path = resolve(ROOT, "content/projects", `${entry.slug}.yaml`);
   if (!existsSync(path)) {
-    const hint = entry.repo ? " (run npm run fetch:projects)" : "";
-    throw new Error(`Missing project file for ${entry.slug}: ${path}${hint}`);
+    throw new Error(`Missing project file for ${entry.slug}: ${path}`);
   }
 
   const result = validateProject(entry.slug, parse(readFileSync(path, "utf8")));
@@ -50,13 +35,8 @@ function loadProject(entry: ProjectIndexEntry): Project {
   }
 
   const project = result.project;
-  if (project.face) {
-    // Repo projects name a path in their repo; local ones name a site path under public/.
-    const sitePath = entry.repo ? fetchedFacePath(entry.slug, project.face) : project.face;
-    if (!existsSync(resolve(ROOT, "public", `.${sitePath}`))) {
-      throw new Error(`${entry.slug}: face image not found at public${sitePath}`);
-    }
-    project.face = sitePath;
+  if (project.face && !existsSync(resolve(ROOT, "public", `.${project.face}`))) {
+    throw new Error(`${entry.slug}: face image not found at public${project.face}`);
   }
   return project;
 }

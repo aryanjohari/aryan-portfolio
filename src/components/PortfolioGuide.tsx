@@ -13,12 +13,11 @@ import {
   type RefObject,
 } from "react";
 
-import guideContext from "@/lib/guide-context.json";
 import {
   isResumePath,
   validateNavigateTo,
 } from "@/lib/guide-navigate";
-import type { SuggestedChip } from "@/lib/guide-schema";
+import { DEFAULT_SUGGESTED_CHIPS, type SuggestedChip } from "@/lib/guide-schema";
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return true;
@@ -38,7 +37,7 @@ const WHISPER_MAX_CHARS = 360;
 const SESSION_CAP_MESSAGE =
   "That’s enough for this visit — close the tab or clear history to ask again later.";
 
-const HOME_SUGGESTED_CHIPS = guideContext.suggestedChips as SuggestedChip[];
+const HOME_SUGGESTED_CHIPS: SuggestedChip[] = DEFAULT_SUGGESTED_CHIPS;
 
 type TranscriptTurn = {
   id: string;

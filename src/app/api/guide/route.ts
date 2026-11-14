@@ -1,4 +1,4 @@
-import guideContext from "@/lib/guide-context.json";
+import guideContext from "@/lib/generated/guide-context.json";
 import { validateNavigateTo } from "@/lib/guide-navigate";
 import {
   buildProjectPageMeta,

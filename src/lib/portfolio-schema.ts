@@ -1,6 +1,6 @@
 /**
  * Project contract v2: one `portfolio.yaml` per project (docs/V2_PLAN.md §6).
- * Pure: fetching and file reads live in the caller.
+ * Pure: file reads live in the caller.
  */
 
 import {
@@ -23,7 +23,7 @@ export type ProjectState = (typeof PROJECT_STATES)[number];
 export type ProjectStory = Record<(typeof STORY_PARTS)[number], string>;
 
 export type Project = {
-  /** From content/projects.yaml, not the yaml file, so a repo can't rename itself. */
+  /** From content/projects.yaml, not the project file itself. */
   slug: string;
   title: string;
   summary: string;
@@ -197,10 +197,9 @@ export function validateProjectSet(
   return { ok: true };
 }
 
-export type ProjectIndexEntry = { slug: string; repo?: string };
+export type ProjectIndexEntry = { slug: string };
 
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
-const REPO_PATTERN = /^[\w.-]+\/[\w.-]+$/;
 
 /** Validates content/projects.yaml, the list of which projects the site shows. */
 export function validateProjectIndex(
@@ -219,10 +218,7 @@ export function validateProjectIndex(
     if (entries.some((existing) => existing.slug === entry.slug)) {
       return { ok: false, message: `${at}.slug "${entry.slug}" is listed twice` };
     }
-    if (entry.repo !== undefined && (!isNonEmptyString(entry.repo) || !REPO_PATTERN.test(entry.repo))) {
-      return { ok: false, message: `${at}.repo must look like owner/name` };
-    }
-    entries.push(entry.repo === undefined ? { slug: entry.slug } : { slug: entry.slug, repo: entry.repo });
+    entries.push({ slug: entry.slug });
   }
 
   return { ok: true, entries };
