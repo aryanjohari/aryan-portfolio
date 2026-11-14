@@ -1,0 +1,198 @@
+/*
+ * Home page, ported from mockups/editorial.css. Tailwind's reset zeroes
+ * margins and list styles, so spacing here is always set explicitly.
+ */
+
+/* A 12-column grid so blocks can sit off-centre, with empty space beside them */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: var(--space-3);
+}
+.left-3 { grid-column: 1 / 4; }
+.mid-5 { grid-column: 4 / 9; }
+.mid-7 { grid-column: 4 / 11; }
+.left-7 { grid-column: 1 / 8; }
+.right-5 { grid-column: 8 / 13; }
+
+.section-no {
+  font-family: var(--font-label);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-ink) 80%, var(--color-paper));
+}
+
+.proof,
+.links {
+  font-family: var(--font-label);
+  font-size: var(--type-label);
+  letter-spacing: 0.02em;
+}
+.proof { color: var(--color-muted); }
+.links { display: flex; gap: var(--space-2); margin: 0.4rem 0; }
+
+/* Pictures: real files, or hatched frames until they exist */
+.photo {
+  display: grid;
+  place-items: center;
+  padding: var(--space-2);
+  border: 1px solid var(--color-rule);
+  background:
+    repeating-linear-gradient(135deg, transparent 0 6px, var(--color-rule) 6px 7px),
+    color-mix(in srgb, var(--color-accent) 10%, var(--color-paper));
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--color-muted);
+}
+.photo-image { display: block; width: 100%; height: auto; object-fit: cover; border: 1px solid var(--color-rule); }
+.land { aspect-ratio: 3 / 2; }
+
+/* 01 · Opener: the headline set large like a magazine opener, portrait beside it */
+.opener { padding: 7rem 0 3rem; align-items: center; }
+.opener h1 {
+  margin-top: 0.75rem;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+.opener h1 em { color: var(--color-accent); }
+
+.hero-bio { margin-top: 1.75rem; max-width: 34rem; }
+.hero-bio p { font-size: clamp(1.15rem, 1.6vw, 1.35rem); line-height: 1.45; }
+.hero-bio p + p { margin-top: var(--space-2); }
+.hero-links { margin-top: 1.25rem; }
+.story-link { font-family: var(--font-label); font-size: 0.9rem; }
+.contact-line { margin-top: var(--space-1); font-family: var(--font-label); font-size: 0.85rem; color: var(--color-muted); }
+
+/* Pinned to the top so it doesn't jump when the text beside it wraps */
+.portrait { align-self: start; }
+.portrait svg { display: block; width: 100%; height: auto; max-height: 70vh; filter: var(--glow); }
+.portrait path { fill: none; stroke: var(--color-ink); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.note { margin-top: var(--space-1); font-family: var(--font-label); font-size: 0.75rem; color: var(--color-muted); }
+
+/* Inks in once on load; the shading comes in after the outline, like an engraver finishing a plate */
+@media (prefers-reduced-motion: no-preference) {
+  .portrait .ink { stroke-dasharray: 1; animation: ink 2s ease-out both; }
+  .portrait .ink.hatch { animation-duration: 0.8s; animation-delay: 1.8s; }
+}
+@keyframes ink {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Epigraph: small and quiet, under its section label */
+.epigraph { margin: 0.75rem 0 2.5rem; max-width: 24rem; }
+.epigraph blockquote { font-size: 1.05rem; font-style: italic; line-height: 1.4; color: var(--color-muted); }
+.epigraph figcaption {
+  margin-top: 0.3rem;
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.epigraph figcaption::before { content: "— "; }
+
+/* 02 · Selected work: two large rows on alternating sides, then three across */
+.work-ed { padding-top: 3rem; border-top: 1px solid var(--color-ink); }
+.work-ed h3 a { color: var(--color-ink); text-decoration: none; }
+.work-ed h3 a:hover { text-decoration: underline; }
+.feature-text > p + p,
+.minor article > p { margin-top: 0.5rem; }
+
+.feature { padding: 3rem 0; border-bottom: 1px solid var(--color-rule); align-items: center; row-gap: 1.25rem; }
+.feature .number { font-family: var(--font-label); font-size: 0.8rem; color: var(--color-accent); }
+.feature h3 { margin: 0.25rem 0 0.5rem; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 400; line-height: 1; }
+.feature .feature-media { grid-column: 1 / 8; }
+.feature .feature-text { grid-column: 9 / 13; }
+.feature.flip .feature-media { grid-column: 6 / 13; grid-row: 1; }
+.feature.flip .feature-text { grid-column: 1 / 5; grid-row: 1; }
+
+.minor { padding: 2.5rem 0; row-gap: 2rem; border-bottom: 1px solid var(--color-rule); }
+.minor article { grid-column: span 4; }
+.minor article .photo,
+.minor article .photo-image { margin-bottom: 0.9rem; }
+.minor h3 { margin: 0.25rem 0; font-size: 1.5rem; font-weight: 400; }
+.minor .archive { grid-column: 1 / -1; }
+.archive ul { margin-top: var(--space-2); }
+.archive li + li { margin-top: 0.25rem; }
+
+details > summary { cursor: pointer; }
+.archive summary {
+  font-family: var(--font-label);
+  font-size: 0.85rem;
+  color: var(--color-accent);
+  list-style: "▸ " inside; /* inside, so the arrow lines up with the text above */
+}
+.archive details[open] > summary { list-style: "▾ "; }
+
+/* 03 · Experience: one line per job, opens in place */
+.experience { padding: 4rem 0 1rem; align-items: start; row-gap: 1.25rem; }
+.job { border-top: 1px solid var(--color-rule); }
+.job:last-child { border-bottom: 1px solid var(--color-rule); }
+.job > summary {
+  display: grid;
+  grid-template-columns: 11rem 1fr auto;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: 0.9rem 0;
+  list-style: none;
+  font-size: 1.1rem;
+}
+.job > summary::-webkit-details-marker { display: none; }
+.job > summary::after { content: "+"; font-family: var(--font-label); color: var(--color-accent); }
+.job[open] > summary::after { content: "–"; }
+.job-dates { font-family: var(--font-label); font-size: 0.8rem; color: var(--color-muted); }
+.job-org { color: var(--color-muted); }
+
+/* Picture on the left, words on the right */
+.job-body {
+  display: grid;
+  grid-template-columns: 12rem 1fr;
+  gap: 0 1.25rem;
+  align-items: start;
+  margin: 0 0 1.25rem 12rem;
+}
+.job-photo { grid-row: 1 / 4; font-size: 0.65rem; }
+.job-body p { margin-bottom: var(--space-1); font-size: 1rem; }
+.industry { font-family: var(--font-label); font-size: var(--type-label); color: var(--color-accent); }
+.industry-text { font-family: var(--font-body); font-size: 1rem; color: var(--color-ink); }
+
+/* 04 · Now: the one tinted band, the palette used more instead of a new colour */
+.now-band {
+  margin: 4rem 0 0;
+  /* Side padding keeps the label off the tint's edge (the mockup had none) */
+  padding: 3rem var(--space-3);
+  border-top: 1px solid var(--color-accent);
+  border-bottom: 1px solid var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 9%, var(--color-paper));
+}
+.now-band .grid { row-gap: var(--space-2); }
+.now-band li + li { margin-top: 0.75rem; }
+.dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-left: 0.3rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+  filter: var(--glow);
+}
+
+/* Phone: every block takes the full width, in source order */
+@media (max-width: 760px) {
+  .grid > * { grid-column: 1 / -1 !important; grid-row: auto !important; }
+  .opener { padding: 3rem 0 2rem; row-gap: 2rem; }
+  .portrait { max-width: 75%; justify-self: center; }
+
+  .job > summary { grid-template-columns: 1fr auto; gap: 0.2rem var(--space-2); }
+  .job-dates,
+  .job-title { grid-column: 1; }
+  .job > summary::after { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+  .job-body { grid-template-columns: 1fr; margin-left: 0; }
+  .job-photo { grid-row: auto; margin-bottom: 0.75rem; }
+}

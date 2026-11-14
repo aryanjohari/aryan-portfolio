@@ -1,8 +1,9 @@
 @import "tailwindcss";
 @import "../styles/tokens.css";
+@import "../styles/home.css";
 @config "../../tailwind.config.ts";
 
-/* Print-catalogue layout: one column, wide margins, thin rules, no cards. */
+/* Editorial layout (mockups/home-editorial.html): wide page, thin rules, no cards. */
 
 html {
   background: var(--color-paper);
@@ -29,16 +30,29 @@ a:hover {
   text-decoration-thickness: 2px;
 }
 
-a:focus-visible {
+a:focus-visible,
+summary:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
   border-radius: 2px;
 }
 
 .site-shell {
-  max-width: calc(var(--measure) + 2 * var(--space-3));
+  max-width: var(--page-width);
   margin: 0 auto;
-  padding: var(--space-5) var(--space-3) var(--space-4);
+  padding: 0 var(--space-2) var(--space-5);
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: -3rem;
+  font-family: var(--font-label);
+  font-size: var(--type-label);
+}
+
+.skip-link:focus {
+  top: var(--space-1);
 }
 
 .label {
@@ -48,18 +62,65 @@ a:focus-visible {
   color: var(--color-muted);
 }
 
-/* Hero */
+/* Header: name on the left, a few links on the right */
 
-.hero {
-  padding-bottom: var(--space-4);
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--color-rule);
+  font-family: var(--font-label);
+  font-size: var(--type-label);
+  letter-spacing: 0.02em;
 }
 
-.hero-name {
-  margin-top: var(--space-1);
-  font-size: var(--type-name);
+.masthead-name {
+  color: var(--color-ink);
   font-weight: 500;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.masthead nav ul {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Footer */
+
+.site-footer {
+  margin-top: var(--space-5);
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-rule);
+  font-family: var(--font-label);
+  font-size: var(--type-label);
+  color: var(--color-muted);
+}
+
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+
+/* Reading pages (projects, blog, 404): one narrow column. */
+
+.site-main {
+  max-width: var(--measure);
+  margin: var(--space-5) auto 0;
+}
+
+.site-main p + p {
+  margin-top: var(--space-2);
+}
+
+.page-heading {
+  margin-top: var(--space-1);
+  margin-bottom: var(--space-3);
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 .hero-tagline {
@@ -68,17 +129,6 @@ a:focus-visible {
   font-style: italic;
   line-height: 1.4;
 }
-
-.hero-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
-  margin-top: var(--space-3);
-  font-family: var(--font-label);
-  font-size: var(--type-label);
-}
-
-/* Sections and numbered entries */
 
 .section {
   padding-top: var(--space-3);
@@ -92,40 +142,6 @@ a:focus-visible {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.entries {
-  margin-top: var(--space-3);
-}
-
-.entry + .entry {
-  margin-top: var(--space-4);
-}
-
-.entry-title {
-  margin-top: 0.25rem;
-  font-size: 1.25rem;
-  font-weight: 500;
-  line-height: 1.3;
-}
-
-.entry-note {
-  color: var(--color-muted);
-  font-weight: 400;
-}
-
-.entry-points {
-  margin-top: var(--space-1);
-  padding-left: 1.1em;
-  list-style: "– ";
-}
-
-.entry-points li + li {
-  margin-top: 0.35rem;
-}
-
-.about-pitch {
-  margin-top: var(--space-3);
 }
 
 .facts {
@@ -147,36 +163,6 @@ a:focus-visible {
   }
 }
 
-/* Footer */
-
-.site-footer {
-  margin-top: var(--space-5);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-rule);
-}
-
-.site-footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
-  font-family: var(--font-label);
-  font-size: var(--type-label);
-}
-
-/* Simple pages (404, blog) */
-
-.page-heading {
-  margin-top: var(--space-1);
-  margin-bottom: var(--space-3);
-  font-size: 2rem;
-  font-weight: 500;
-  line-height: 1.2;
-}
-
-.site-main p + p {
-  margin-top: var(--space-2);
-}
-
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -186,17 +172,7 @@ a:focus-visible {
   white-space: nowrap;
 }
 
-/* Projects */
-
-.entry-number {
-  font-family: var(--font-label);
-  font-size: 0.85em;
-  color: var(--color-muted);
-}
-
-.entry-title a {
-  color: inherit;
-}
+/* Project pages */
 
 .project-face {
   display: block;
@@ -204,11 +180,6 @@ a:focus-visible {
   height: auto;
   margin-bottom: var(--space-2);
   border: 1px solid var(--color-rule);
-}
-
-.project-entry > p,
-.project-proves {
-  margin-top: var(--space-1);
 }
 
 .stamp {
