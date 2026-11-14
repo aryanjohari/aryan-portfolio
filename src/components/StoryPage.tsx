@@ -1,16 +1,9 @@
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 
 import { ProjectLinks } from "@/components/ProjectLinks";
 import { StatusStamp } from "@/components/StatusStamp";
-import { type Project, STORY_PARTS } from "@/lib/portfolio-schema";
-
-const STORY_HEADINGS: Record<(typeof STORY_PARTS)[number], string> = {
-  problem: "The problem",
-  built: "What I built",
-  decision: "The key decision",
-  learned: "What I learned",
-  next: "What's next",
-};
+import { type Project, STORY_HEADINGS, STORY_PARTS } from "@/lib/portfolio-schema";
 
 export function StoryPage({ project }: { project: Project }) {
   const { visibility, story } = project;
@@ -55,7 +48,9 @@ export function StoryPage({ project }: { project: Project }) {
             <h2 id={`story-${part}`} className="section-heading">
               {STORY_HEADINGS[part]}
             </h2>
-            <p className="story-text">{story[part]}</p>
+            <div className="story-text">
+              <ReactMarkdown>{story[part]}</ReactMarkdown>
+            </div>
           </section>
         ))}
     </article>

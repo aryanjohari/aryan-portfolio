@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { type Project, validateProject, validateProjectIndex, validateProjectSet } from "./portfolio-schema";
+import { type Project, validateProject, validateProjectSet } from "./portfolio-schema";
 
 function validYaml() {
   return {
@@ -71,15 +71,4 @@ test("rejects a project whose thread is not in the profile", () => {
   const result = validateProjectSet([project("prism", { thread: "games" })], ["web", "ai"]);
   assert.equal(result.ok, false);
   assert.match(!result.ok ? result.message : "", /thread "games" is not in profile.yaml threads/);
-});
-
-test("reads the project index and rejects a slug listed twice", () => {
-  assert.deepEqual(validateProjectIndex({ projects: [{ slug: "prism" }] }), {
-    ok: true,
-    entries: [{ slug: "prism" }],
-  });
-  assert.deepEqual(validateProjectIndex({ projects: [{ slug: "prism" }, { slug: "prism" }] }), {
-    ok: false,
-    message: 'projects[1].slug "prism" is listed twice',
-  });
 });

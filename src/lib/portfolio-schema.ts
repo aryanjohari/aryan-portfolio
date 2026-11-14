@@ -16,14 +16,24 @@ export const PROJECT_TIERS = ["featured", "in-progress", "archive"] as const;
 export const PROJECT_STATES = ["live", "frozen", "wip"] as const;
 export const CODE_VISIBILITIES = ["public", "private"] as const;
 export const STORY_PARTS = ["problem", "built", "decision", "learned", "next"] as const;
+export type StoryPart = (typeof STORY_PARTS)[number];
+
+/** The "## " heading each story part uses in a project's Markdown file, and on its page. */
+export const STORY_HEADINGS: Record<StoryPart, string> = {
+  problem: "The problem",
+  built: "What I built",
+  decision: "The key decision",
+  learned: "What I learned",
+  next: "What's next",
+};
 
 export type ProjectTier = (typeof PROJECT_TIERS)[number];
 export type ProjectState = (typeof PROJECT_STATES)[number];
 
-export type ProjectStory = Record<(typeof STORY_PARTS)[number], string>;
+export type ProjectStory = Record<StoryPart, string>;
 
 export type Project = {
-  /** From content/projects.yaml, not the project file itself. */
+  /** The file name, content/projects/<slug>.md. */
   slug: string;
   title: string;
   summary: string;
@@ -197,29 +207,4 @@ export function validateProjectSet(
   return { ok: true };
 }
 
-export type ProjectIndexEntry = { slug: string };
-
-const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
-
-/** Validates content/projects.yaml, the list of which projects the site shows. */
-export function validateProjectIndex(
-  data: unknown,
-): { ok: true; entries: ProjectIndexEntry[] } | { ok: false; message: string } {
-  if (!isRecord(data) || !Array.isArray(data.projects) || data.projects.length === 0) {
-    return { ok: false, message: "projects.yaml needs a non-empty projects list" };
-  }
-
-  const entries: ProjectIndexEntry[] = [];
-  for (const [index, entry] of data.projects.entries()) {
-    const at = `projects[${index}]`;
-    if (!isRecord(entry) || !isNonEmptyString(entry.slug) || !SLUG_PATTERN.test(entry.slug)) {
-      return { ok: false, message: `${at}.slug must be lowercase letters, digits or dashes` };
-    }
-    if (entries.some((existing) => existing.slug === entry.slug)) {
-      return { ok: false, message: `${at}.slug "${entry.slug}" is listed twice` };
-    }
-    entries.push({ slug: entry.slug });
-  }
-
-  return { ok: true, entries };
-}
+export const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;

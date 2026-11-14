@@ -55,9 +55,8 @@ Place your PDF at `public/resume.pdf`. The nav and about page link to `/resume.p
 
 ## Adding a project
 
-1. Add `content/projects/<slug>.yaml` (fields: see `src/lib/portfolio-schema.ts`).
-2. List the slug in `content/projects.yaml`.
-3. Run `npm run build`: a missing or bad field fails the build.
+1. Add `content/projects/<slug>.md`: facts in the frontmatter (fields: `src/lib/portfolio-schema.ts`), the story as `## ` sections (headings: `STORY_HEADINGS` there).
+2. Run `npm run build`: a missing or bad field, or an unknown heading, fails the build.
 
 ## Current phase
 
