@@ -29,12 +29,9 @@ async function embedAll(texts: string[], apiKey: string, model: string): Promise
 }
 
 async function main() {
-  const sections = buildAskSections({
-    profile: getProfile(),
-    projects: getProjects(),
-    home: getHomeText(),
-    story: getStoryText(),
-  });
+  const profile = getProfile();
+  const projects = getProjects();
+  const sections = buildAskSections({ profile, projects, home: getHomeText(), story: getStoryText() });
 
   const { apiKey, embeddingModel } = askSettings();
   let vectors: number[][] | null = null;
@@ -53,6 +50,10 @@ async function main() {
     embeddingModel: vectors ? embeddingModel : null,
     sections,
     vectors,
+    demos: projects.flatMap((project) =>
+      project.links.demo ? [{ slug: project.slug, title: project.title, url: project.links.demo }] : [],
+    ),
+    contactEmail: profile.links.email,
   };
   mkdirSync(dirname(OUTPUT), { recursive: true });
   writeFileSync(OUTPUT, `${JSON.stringify(index)}\n`);

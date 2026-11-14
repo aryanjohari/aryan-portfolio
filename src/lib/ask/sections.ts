@@ -143,4 +143,8 @@ export type AskIndex = {
   sections: AskSection[];
   /** One vector per section, same order; null when the build had no API key (keyword search only). */
   vectors: number[][] | null;
+  /** The only demos an answer may link to. */
+  demos: { slug: string; title: string; url: string }[];
+  /** The only address an email draft may go to. */
+  contactEmail: string;
 };
