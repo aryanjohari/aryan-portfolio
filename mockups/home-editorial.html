@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home, editorial · mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="editorial.css">
+  <script src="theme.js" defer></script>
+</head>
+<body>
+<div class="wide">
+
+  <!-- Ask: the existing AI chat (/api/guide). Real one hides itself with JS off or no API key.
+       Phone: "Ask" in the header opens a bottom sheet (#ask target). Desktop: slim input in the middle of the header. -->
+  <header class="masthead ed-masthead">
+    <a class="name" href="home-editorial.html">Aryan Johari</a>
+
+    <form class="ask" id="ask" onsubmit="return false" aria-label="Ask about my work">
+      <div class="sheet-head">
+        <label class="section-no" for="ask-input">Ask about my work</label>
+        <a class="sheet-close" href="#">Close ✕</a>
+      </div>
+      <div class="ask-row">
+        <input id="ask-input" type="text" placeholder="Ask about my work…" autocomplete="off">
+        <button type="submit">Ask →</button>
+      </div>
+      <div class="ask-panel">
+        <div class="chips">
+          <button type="button">What are you best at?</button>
+          <button type="button">What was the hardest bug?</button>
+          <button type="button">Are you open to roles in Auckland?</button>
+        </div>
+        <div class="answer">
+          <span class="section-no">Sample answer</span>
+          <p class="placeholder">A short answer in two or three sentences, drawn only from my project pages.</p>
+          <p class="source">From: <a href="project.html">Prism · What I learned</a></p>
+        </div>
+      </div>
+    </form>
+
+    <nav>
+      <a class="ask-link" href="#ask">Ask</a>
+      <a href="#work">Work</a>
+      <a href="mailto:hello@example.com">Email</a>
+      <a href="https://github.com/aryanjohari">GitHub</a>
+      <button class="theme-toggle" type="button" hidden>◐ phosphor</button>
+    </nav>
+  </header>
+
+  <!-- 01 · Portrait hero. PLACEHOLDER drawing: the real one is Aryan's photo run through Phosphene, exported as SVG. -->
+  <section class="opener grid">
+    <div class="left-7">
+      <span class="section-no">No. 01 · Auckland, 2026</span>
+      <h1>I build software, and every job has taught me a <em>new industry</em>.</h1>
+
+      <!-- Short bio lives in the hero; the long story is its own page (story.html) -->
+      <div class="lead hero-bio">
+        <p class="placeholder">Short bio, 2–3 sentences: who I am, what I build, and what I'm looking for. Links open my own pages, like <a href="project.html">Prism</a>.</p>
+      </div>
+      <p class="hero-links">
+        <a class="story-link" href="story.html">Read the long story →</a>
+      </p>
+      <p class="contact-line"><a href="#">CV</a> · <a href="mailto:hello@example.com">Email</a> · <a href="https://github.com/aryanjohari">GitHub</a> · <a href="#">LinkedIn</a></p>
+    </div>
+    <figure class="hero portrait right-5" aria-label="Line-drawn portrait of Aryan, made with Phosphene">
+      <svg viewBox="0 0 300 375" role="img" aria-hidden="true">
+        <!-- hair and face -->
+        <path class="ink" pathLength="1" d="M92 132 C 82 70 128 40 165 48 C 202 55 222 92 208 136"/>
+        <path class="ink" pathLength="1" d="M150 62 C 102 62 86 110 90 150 C 95 200 120 236 150 236 C 180 236 205 200 210 150 C 214 110 198 62 150 62"/>
+        <!-- features -->
+        <path class="ink" pathLength="1" d="M116 146 q 11 -7 22 0 M 162 146 q 11 -7 22 0"/>
+        <path class="ink" pathLength="1" d="M151 152 L 145 186 q 6 5 12 0"/>
+        <path class="ink" pathLength="1" d="M134 206 q 16 8 32 0"/>
+        <!-- neck, collar, shoulders -->
+        <path class="ink" pathLength="1" d="M130 230 L 128 266 M 170 230 L 172 266"/>
+        <path class="ink" pathLength="1" d="M128 266 L 150 302 L 172 266"/>
+        <path class="ink" pathLength="1" d="M128 266 C 90 276 48 292 34 375 M 172 266 C 210 276 252 292 266 375"/>
+        <!-- engraved shading, drawn last -->
+        <path class="ink hatch" pathLength="1" d="M200 160 l -12 26 M 204 170 l -12 26 M 206 182 l -12 24 M 202 198 l -10 20"/>
+        <path class="ink hatch" pathLength="1" d="M60 330 l 20 -30 M 70 345 l 22 -32 M 82 358 l 22 -32 M 96 370 l 20 -28"/>
+        <path class="ink hatch" pathLength="1" d="M206 300 l 18 26 M 216 296 l 20 30 M 228 296 l 20 32"/>
+      </svg>
+      <figcaption class="note">Fig. 1 · Me, drawn by <a href="#">Phosphene</a></figcaption>
+    </figure>
+  </section>
+
+  <!-- 02 · Selected work: label first, then a small epigraph under it -->
+  <section class="work-ed" id="work">
+    <span class="section-no">No. 02 · Selected work</span>
+    <figure class="epigraph">
+      <blockquote>“What I cannot create, I do not understand.”</blockquote>
+      <figcaption>Richard Feynman</figcaption>
+    </figure>
+
+    <article class="feature grid">
+      <figure class="feature-media" style="margin:0">
+        <a href="project.html"><div class="photo land vt-prism">Prism: one exported image</div></a>
+      </figure>
+      <div class="feature-text">
+        <span class="number">01 · Apr – Oct 2026</span>
+        <h3><a href="project.html">Prism</a></h3>
+        <p class="placeholder">One plain line: what it is, for whom.</p>
+        <div class="links"><a href="#">Try it</a><a href="#">Code</a></div>
+        <p class="proof">Live · 120 tests · frozen at v1</p>
+      </div>
+    </article>
+
+    <article class="feature flip grid">
+      <figure class="feature-media" style="margin:0">
+        <a href="#"><div class="photo land">PII Gateway: playground, before / after</div></a>
+      </figure>
+      <div class="feature-text">
+        <span class="number">02 · 2026</span>
+        <h3><a href="#">PII Gateway</a></h3>
+        <p class="placeholder">One plain line.</p>
+        <div class="links"><a href="#">Try it</a><a href="#">Code</a></div>
+        <p class="proof">Live demo · runs in Docker</p>
+      </div>
+    </article>
+
+    <!-- Smaller projects: three across on desktop, each with its own picture -->
+    <div class="minor grid">
+      <article>
+        <a href="#"><div class="photo land">ADA: how it works (diagram)</div></a>
+        <span class="number section-no">03 · Apr – Jul 2026</span>
+        <h3><a href="#">ADA</a></h3>
+        <p class="placeholder">One plain line.</p>
+        <div class="links"><a href="#">Try it</a><a href="#">Code</a></div>
+        <p class="proof">Live (planned) · rebuilt as ADA v2</p>
+      </article>
+      <article>
+        <a href="#"><div class="photo land">Sound Visualiser: one frame</div></a>
+        <span class="number section-no">04 · Mar – Oct 2026</span>
+        <h3><a href="#">Sound Visualiser</a></h3>
+        <p class="placeholder">One plain line.</p>
+        <div class="links"><a href="#">Try it</a><a href="#">Code</a></div>
+        <p class="proof">Live · frozen at v1</p>
+      </article>
+      <article>
+        <a href="#"><div class="photo land">GSTF: timing-test chart</div></a>
+        <span class="number section-no">05 · 2025 – 2026</span>
+        <h3><a href="#">GSTF</a></h3>
+        <p class="placeholder">One plain line.</p>
+        <p class="proof">Master's thesis · paper in preparation</p>
+      </article>
+      <article class="archive">
+        <details>
+          <summary>Archive (3)</summary>
+          <div class="proof">
+            <p>Tahi Pulse · 2026</p>
+            <p>Social Upload · 2026</p>
+            <p>Snug Stitch · 2023</p>
+          </div>
+        </details>
+      </article>
+    </div>
+  </section>
+
+  <!-- 03 · Experience: facts from content/profile.yaml; each row opens in place (works with JS off).
+       9horsemen left out for now (on hold, 14 Nov 2026). -->
+  <section class="experience grid" id="experience">
+    <div class="left-3">
+      <span class="section-no">No. 03 · Experience</span>
+      <figure class="epigraph">
+        <blockquote>“The purpose of computing is insight, not numbers.”</blockquote>
+        <figcaption>Richard Hamming</figcaption>
+      </figure>
+    </div>
+    <div class="mid-7">
+      <details class="job">
+        <summary>
+          <span class="job-dates">Jul 2025 – Jul 2026</span>
+          <span class="job-title">SEO Specialist <span class="job-org">· Specialist Support Services, Auckland</span></span>
+        </summary>
+        <div class="job-body">
+          <div class="photo land job-photo">Screenshot of a site I worked on (if public)</div>
+          <p class="placeholder">What I did, 2–3 lines.</p>
+          <p class="industry">Taught me: <span class="placeholder">a niche New Zealand business and how its customers search.</span></p>
+        </div>
+      </details>
+      <details class="job">
+        <summary>
+          <span class="job-dates">May – Oct 2024</span>
+          <span class="job-title">Junior Website Developer <span class="job-org">· KRIL Digital, Mumbai</span></span>
+        </summary>
+        <div class="job-body">
+          <div class="photo land job-photo">Screenshot of a client site (with permission)</div>
+          <p class="placeholder">What I did, 2–3 lines.</p>
+          <p class="industry">Taught me: <span class="placeholder">marketing and branding, from inside an agency.</span></p>
+        </div>
+      </details>
+      <details class="job">
+        <summary>
+          <span class="job-dates">Aug – Dec 2023</span>
+          <span class="job-title">Full Stack Developer <span class="job-org">· Koverify, Mumbai</span></span>
+        </summary>
+        <div class="job-body">
+          <div class="photo land job-photo">Snug Stitch catalogue app</div>
+          <p class="placeholder">What I did, 2–3 lines.</p>
+          <p class="industry">Taught me: <span class="placeholder">how fashion wholesale works.</span></p>
+        </div>
+      </details>
+      <details class="job">
+        <summary>
+          <span class="job-dates">Feb 2025 – Jul 2026</span>
+          <span class="job-title">Master's, AI thesis <span class="job-org">· Unitec, Auckland</span></span>
+        </summary>
+        <div class="job-body">
+          <div class="photo land job-photo">Unitec, or a thesis figure</div>
+          <p class="placeholder">Thesis in one line, link to <a href="#">GSTF</a>.</p>
+          <p class="industry">Taught me: <span class="placeholder">AI research, the models and the maths.</span></p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- 04 · Now: the one tinted band -->
+  <section class="now-band">
+    <div class="grid">
+      <div class="left-3"><span class="section-no">No. 04 · Now<span class="dot"></span></span></div>
+      <div class="mid-5">
+        <p><a href="#">ADA v2</a> <span class="placeholder">· one line</span></p>
+        <p><a href="#">Phosphene</a> <span class="placeholder">· one line</span></p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p><a href="#">View source</a> · <a href="#">Email</a> · <a href="#">GitHub</a> · <a href="#">LinkedIn</a></p>
+  </footer>
+
+</div>
+</body>
+</html>

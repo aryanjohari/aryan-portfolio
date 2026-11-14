@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home · mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <script src="theme.js" defer></script>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <a class="name" href="index.html">Aryan Johari</a>
+    <nav>
+      <a href="#work">Work</a>
+      <a href="mailto:hello@example.com">Email</a>
+      <a href="https://github.com/aryanjohari">GitHub</a>
+      <button class="theme-toggle" type="button" hidden>◐ phosphor</button>
+    </nav>
+  </header>
+
+  <!-- HERO: placeholder drawing. The real one is a Phosphene line drawing exported as SVG. -->
+  <figure class="hero" aria-label="Line drawing: Mumbai on the left, Auckland on the right, joined by a route">
+    <svg viewBox="0 0 800 220" role="img" aria-hidden="true">
+      <!-- sea -->
+      <path class="ink" pathLength="1" d="M0 190 Q 100 184 200 190 T 400 190 T 600 190 T 800 190"/>
+      <path class="ink" pathLength="1" d="M20 202 Q 120 197 220 202 T 420 202 T 620 202 T 790 202"/>
+      <path class="ink" pathLength="1" d="M60 213 Q 160 209 260 213 T 460 213 T 660 213 T 760 213"/>
+      <!-- Mumbai: an arch with domes -->
+      <path class="ink" pathLength="1" d="M70 185 V 110 H 210 V 185"/>
+      <path class="ink" pathLength="1" d="M115 185 V 150 Q 140 115 165 150 V 185"/>
+      <path class="ink" pathLength="1" d="M70 110 Q 90 80 110 110 M 170 110 Q 190 80 210 110 M 120 110 Q 140 70 160 110"/>
+      <path class="ink" pathLength="1" d="M80 125 H 200 M80 135 H 110 M170 135 H 200"/>
+      <!-- Auckland: tower and a volcano -->
+      <path class="ink" pathLength="1" d="M640 185 L 650 70 L 660 185"/>
+      <path class="ink" pathLength="1" d="M638 85 H 662 M641 95 H 659"/>
+      <path class="ink" pathLength="1" d="M650 70 V 30"/>
+      <path class="ink" pathLength="1" d="M540 185 Q 600 135 610 140 Q 620 135 700 185"/>
+      <path class="ink" pathLength="1" d="M690 185 H 760 V 150 H 790 V 185"/>
+      <!-- the route between them -->
+      <path class="ink accent" pathLength="1" d="M140 70 Q 400 -10 650 30"/>
+      <circle class="accent" cx="650" cy="30" r="4"/>
+    </svg>
+    <figcaption class="caption mono"><span>Mumbai</span><span>Auckland</span></figcaption>
+  </figure>
+
+  <section class="bio">
+    <p class="placeholder">Short bio, 3–4 sentences: who I am, what I build, that every job taught me a new industry, and what I'm looking for. Links in it open my own pages, like <a href="project.html">Prism</a>.</p>
+    <details>
+      <summary>Read the long story</summary>
+      <div>
+        <p class="placeholder">The uncle and Notepad.</p>
+        <p class="placeholder">Mumbai: Koverify, KRIL.</p>
+        <p class="placeholder">Auckland: the Master's, GSTF, the SEO job.</p>
+        <p class="placeholder">My own projects, then what I'm doing now.</p>
+      </div>
+    </details>
+  </section>
+
+  <aside class="later">
+    <span class="label">Later slice · Notepad box</span>
+    <div class="notepad">
+      <pre>&lt;h1&gt;Hello&lt;/h1&gt;</pre>
+      <div class="rendered">Hello</div>
+    </div>
+  </aside>
+
+  <section class="work" id="work">
+    <h2 class="label">Work</h2>
+
+    <article class="row">
+      <div>
+        <span class="dates">Apr – Oct 2026</span>
+        <a href="project.html"><div class="still vt-prism">still</div></a>
+      </div>
+      <div>
+        <h3><a href="project.html">Prism</a></h3>
+        <p class="placeholder">One plain line: what it is, for whom.</p>
+        <div class="links"><a href="#">Try it</a><a href="#">Code</a></div>
+        <p class="proof">Live · 120 tests · frozen at v1</p>
+      </div>
+    </article>
+
+    <article class="row">
+      <div><span class="dates">Mar – Oct 2026</span><div class="still">still</div></div>
+      <div>
+        <h3><a href="#">Sound Visualiser</a></h3>
+        <p class="placeholder">One plain line.</p>
+        <div class="links"><a href="#">Code</a></div>
+        <p class="proof">Frozen at v1</p>
+      </div>
+    </article>
+
+    <article class="row">
+      <div><span class="dates">2026</span><div class="still">still</div></div>
+      <div>
+        <h3><a href="#">PII Gateway</a></h3>
+        <p class="placeholder">One plain line.</p>
+        <div class="links"><a href="#">Try it</a><a href="#">Code</a></div>
+        <p class="proof">Live demo · runs in Docker</p>
+      </div>
+    </article>
+
+    <article class="row">
+      <div><span class="dates">Apr – Jul 2026</span><div class="still">still</div></div>
+      <div>
+        <h3><a href="#">ADA</a></h3>
+        <p class="placeholder">One plain line.</p>
+        <div class="links"><a href="#">Code</a></div>
+        <p class="proof">Frozen, rebuilt as ADA v2</p>
+      </div>
+    </article>
+
+    <article class="row">
+      <div><span class="dates">2025 – 2026</span><div class="still">chart</div></div>
+      <div>
+        <h3><a href="#">GSTF</a></h3>
+        <p class="placeholder">One plain line.</p>
+        <p class="proof">Master's thesis · paper in preparation</p>
+      </div>
+    </article>
+
+    <article class="row now">
+      <div><span class="dates">Now<span class="dot"></span></span></div>
+      <div>
+        <p><a href="#">ADA v2</a> <span class="placeholder">· one line</span></p>
+        <p><a href="#">Phosphene</a> <span class="placeholder">· one line</span></p>
+      </div>
+    </article>
+
+    <article class="row">
+      <div></div>
+      <details>
+        <summary>Archive (3)</summary>
+        <div class="proof">
+          <p>Tahi Pulse · 2026</p>
+          <p>Social Upload · 2026</p>
+          <p>Snug Stitch · 2023</p>
+        </div>
+      </details>
+    </article>
+  </section>
+
+  <footer>
+    <p><a href="#">View source</a> · <a href="#">Email</a> · <a href="#">GitHub</a> · <a href="#">LinkedIn</a></p>
+  </footer>
+
+</div>
+</body>
+</html>

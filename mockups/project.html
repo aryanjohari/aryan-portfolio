@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prism · mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="editorial.css">
+  <script src="theme.js" defer></script>
+</head>
+<body>
+<div class="wide">
+
+  <!-- Same header as home: Ask in the middle on desktop, bottom sheet on phone -->
+  <header class="masthead ed-masthead">
+    <a class="name" href="home-editorial.html">← Aryan Johari</a>
+
+    <form class="ask" id="ask" onsubmit="return false" aria-label="Ask about my work">
+      <div class="sheet-head">
+        <label class="section-no" for="ask-input">Ask about Prism</label>
+        <a class="sheet-close" href="#">Close ✕</a>
+      </div>
+      <div class="ask-row">
+        <input id="ask-input" type="text" placeholder="Ask about Prism…" autocomplete="off">
+        <button type="submit">Ask →</button>
+      </div>
+      <div class="ask-panel">
+        <div class="chips">
+          <button type="button">Why no generated pixels?</button>
+          <button type="button">What was hardest?</button>
+        </div>
+      </div>
+    </form>
+
+    <nav>
+      <a class="ask-link" href="#ask">Ask</a>
+      <a href="home-editorial.html#work">Work</a>
+      <a href="mailto:hello@example.com">Email</a>
+      <button class="theme-toggle" type="button" hidden>◐ phosphor</button>
+    </nav>
+  </header>
+
+  <!-- Opening: title set large, the one line, why, links -->
+  <section class="opener project-opener grid">
+    <div class="left-7">
+      <span class="section-no">Project 01 · Apr – Oct 2026</span>
+      <h1>Prism</h1>
+      <p class="project-line placeholder">One plain line, the same words as the home row.</p>
+    </div>
+    <div class="right-5 project-why">
+      <span class="section-no">Why I made it</span>
+      <p class="placeholder">One or two sentences, in my own words.</p>
+      <div class="links"><a href="#">Try it →</a><a href="#">Code</a></div>
+    </div>
+  </section>
+
+  <!-- The clip: still first, plays on click; still only with reduced motion -->
+  <figure class="clip" style="margin:0">
+    <div class="photo wide-shot vt-prism">
+      <span class="play">▶ Play clip · 15 s</span>
+    </div>
+    <figcaption class="note">Fig. 1 · Upload → pick a look → type "more grain" → export</figcaption>
+  </figure>
+
+  <p class="facts mono project-facts">
+    <span>Solo</span><span>TypeScript, React, WebGL2</span><span>120 tests</span><span>CI on every change</span><span>Frozen at v1</span>
+  </p>
+
+  <!-- The story: label on the left, text in a readable column -->
+  <div class="project-story">
+    <section class="grid">
+      <div class="left-3"><span class="section-no">01 · The problem</span></div>
+      <div class="mid-7"><p class="placeholder">Two short paragraphs.</p></div>
+    </section>
+
+    <section class="grid">
+      <div class="left-3"><span class="section-no">02 · What I built</span></div>
+      <div class="mid-7">
+        <p class="placeholder">What a user does, in plain words.</p>
+        <figure style="margin:1.5rem 0 0">
+          <div class="photo land">One exported image</div>
+          <figcaption class="note">Fig. 2 · Caption</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="left-3"><span class="section-no">03 · Key decision</span></div>
+      <div class="mid-7">
+        <p class="pull placeholder">The decision in one line, set large.</p>
+        <p class="placeholder">Why, and what it cost.</p>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="left-3"><span class="section-no">04 · What I learned</span></div>
+      <div class="mid-7"><p class="placeholder">What I'd do the same, and what surprised me.</p></div>
+    </section>
+
+    <section class="grid">
+      <div class="left-3"><span class="section-no">05 · What it can't do</span></div>
+      <div class="mid-7">
+        <ul class="limits placeholder"><li>Limit one</li><li>Limit two</li><li>Limit three</li></ul>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="left-3"><span class="section-no">06 · Next</span></div>
+      <div class="mid-7"><p class="placeholder">Where it went: <a href="#">Phosphene</a>.</p></div>
+    </section>
+  </div>
+
+  <!-- Next project, so readers keep moving instead of hitting a dead end -->
+  <nav class="next-project grid">
+    <div class="left-3"><span class="section-no">Next project</span></div>
+    <a class="mid-7" href="#">Sound Visualiser →</a>
+  </nav>
+
+  <footer>
+    <p><a href="home-editorial.html">← All work</a> · <a href="#">Email</a> · <a href="#">GitHub</a> · <a href="#">LinkedIn</a></p>
+  </footer>
+
+</div>
+</body>
+</html>

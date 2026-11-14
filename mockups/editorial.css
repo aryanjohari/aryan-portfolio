@@ -1,0 +1,239 @@
+/* Editorial variant of the home page. Loads after style.css and only adds to it. */
+
+.wide { max-width: 72rem; margin: 0 auto; padding: 0 1rem 4rem; }
+
+/* A 12-column grid so blocks can sit off-centre, with empty space beside them */
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 1.5rem; }
+.span-full { grid-column: 1 / -1; }
+.left-8 { grid-column: 1 / 9; }
+.right-7 { grid-column: 6 / 13; }
+.right-4 { grid-column: 9 / 13; }
+.left-3 { grid-column: 1 / 4; }
+.mid-5 { grid-column: 4 / 9; }
+.mid-7 { grid-column: 4 / 11; }
+.left-7 { grid-column: 1 / 8; }
+.right-5 { grid-column: 8 / 13; }
+
+.section-no { font-family: var(--mono); font-size: 0.82rem; letter-spacing: 0.14em; text-transform: uppercase; color: color-mix(in srgb, var(--ink) 80%, var(--paper)); font-weight: 500; }
+
+/* Opening: the bio's first line, set large like a magazine opener */
+.opener { padding: 7rem 0 3rem; }
+.opener h1 {
+  font-weight: 400; font-size: clamp(2.4rem, 6vw, 5rem); line-height: 1.02;
+  letter-spacing: -0.02em; margin: 0.75rem 0 0;
+}
+.opener h1 em { color: var(--accent); }
+.opener { align-items: center; }
+/* Pinned to the top so it doesn't jump down when the long story opens */
+.opener .portrait { margin: 0; align-self: start; }
+.opener .portrait svg { max-height: 70vh; }
+/* The shading comes in after the outline, like an engraver finishing a plate */
+@media (prefers-reduced-motion: no-preference) {
+  .portrait .ink { animation-duration: 2s; }
+  .portrait .ink.hatch { animation-duration: 0.8s; animation-delay: 1.8s; }
+}
+
+/* Ask, mobile first: a bottom sheet opened by the header's "Ask" link.
+   It uses :target, so it opens even with JS off (the real chat still needs JS to answer). */
+.ed-masthead { position: relative; }
+.ed-masthead .ask {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  max-height: 80vh; overflow-y: auto;
+  padding: 1rem 1rem 1.5rem;
+  background: var(--paper); border-top: 2px solid var(--accent);
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -12px 30px color-mix(in srgb, var(--ink) 18%, transparent);
+  font-family: var(--serif); font-size: 1rem; letter-spacing: 0;
+  transform: translateY(105%); transition: transform 0.25s ease-out;
+}
+.ed-masthead .ask:target { transform: none; }
+@media (prefers-reduced-motion: reduce) { .ed-masthead .ask { transition: none; } }
+.sheet-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sheet-close { font-family: var(--mono); font-size: 0.8rem; }
+.masthead nav a.ask-link { display: inline; font-weight: 500; }
+.ask-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.ask input {
+  flex: 1; min-width: 0; font: inherit; font-size: 1rem; color: var(--ink);
+  background: transparent; border: 0; border-bottom: 1px solid var(--ink); padding: 0.35rem 0;
+}
+.ask input::placeholder { color: var(--muted); font-style: italic; }
+.ask input:focus { outline: none; border-bottom-color: var(--accent); }
+.ask button {
+  font-family: var(--mono); font-size: 0.75rem; color: var(--ink); background: none; cursor: pointer;
+  border: 1px solid var(--rule); border-radius: 999px; padding: 0.25rem 0.7rem;
+}
+.ask button[type="submit"] { border-color: var(--accent); color: var(--accent); }
+.ask button:hover { border-color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+.answer { margin-top: 1.25rem; }
+.answer p { margin: 0.25rem 0; font-size: 1rem; }
+.answer .source { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
+
+/* Desktop: the same form sits in the middle of the header; chips and answer drop down on focus */
+@media (min-width: 761px) {
+  .ed-masthead { display: grid; grid-template-columns: 1fr minmax(16rem, 26rem) 1fr; }
+  .ed-masthead nav { justify-self: end; }
+  .ed-masthead .ask {
+    position: relative; left: auto; right: auto; bottom: auto; transform: none; transition: none;
+    max-height: none; overflow: visible; padding: 0; background: none;
+    border: 0; border-radius: 0; box-shadow: none;
+  }
+  .ed-masthead .ask-row { margin-top: 0; }
+  .sheet-head, .masthead nav a.ask-link { display: none; }
+  .ask-panel {
+    display: none; position: absolute; top: calc(100% + 0.75rem); left: -1rem; right: -1rem; z-index: 10;
+    padding: 1rem; background: var(--paper); border: 1px solid var(--rule); border-top: 2px solid var(--accent);
+    box-shadow: 0 12px 30px color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+  .ask:focus-within .ask-panel { display: block; }
+  .chips { margin-top: 0; }
+}
+
+/* Photos: placeholders for real ones, shown as paper + accent duotone */
+.photo {
+  position: relative; border: 1px solid var(--rule);
+  background:
+    repeating-linear-gradient(135deg, transparent 0 6px, var(--rule) 6px 7px),
+    color-mix(in srgb, var(--accent) 10%, var(--paper));
+  display: grid; place-items: center; color: var(--muted);
+  font-family: var(--mono); font-size: 0.75rem; text-align: center; padding: 1rem;
+}
+.photo.tall { aspect-ratio: 4 / 5; }
+.photo.wide-shot { aspect-ratio: 21 / 9; }
+.photo.land { aspect-ratio: 3 / 2; }
+figcaption.note { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
+
+/* Bio body in a narrow column, pushed right */
+.story-block { padding: 4rem 0; align-items: start; }
+.story-block { row-gap: 1.5rem; }
+.left-6 { grid-column: 1 / 7; }
+
+/* The bio as a lead paragraph: big and upright, between the headline and the work */
+.lead p { font-size: clamp(1.35rem, 2.2vw, 1.75rem); line-height: 1.45; margin: 0; }
+.lead .placeholder { font-style: normal; }
+
+/* The long story as steps on a thin line; the last one ("Now") gets the accent */
+.steps { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--rule); }
+.steps li { position: relative; padding: 0 0 1.1rem 1.5rem; }
+.steps li::before {
+  content: ""; position: absolute; left: -0.3rem; top: 0.55rem;
+  width: 0.55rem; height: 0.55rem; border-radius: 50%;
+  background: var(--paper); border: 1px solid var(--ink);
+}
+.steps li.step-now::before { background: var(--accent); border-color: var(--accent); filter: var(--glow); }
+/* Short bio in the hero, long story under it */
+.hero-bio { margin-top: 1.75rem; max-width: 34rem; }
+.hero-bio p { font-size: clamp(1.15rem, 1.6vw, 1.35rem); }
+.hero-links { margin: 1.25rem 0 0; }
+.story-link { font-family: var(--mono); font-size: 0.9rem; }
+.contact-line { margin: 0.5rem 0 0; font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+
+/* Epigraph: small and quiet, under its section label, so the label is read first */
+.epigraph { margin: 0.75rem 0 2.5rem; max-width: 24rem; }
+.epigraph blockquote { margin: 0; font-style: italic; font-size: 1.05rem; line-height: 1.4; color: var(--muted); }
+.epigraph figcaption { margin-top: 0.3rem; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.epigraph figcaption::before { content: "— "; }
+.step-when { display: block; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.step-now .step-when { color: var(--accent); }
+.step-title { font-size: 1.15rem; }
+.drop::first-letter {
+  float: left; font-size: 4.2rem; line-height: 0.85; padding: 0.35rem 0.6rem 0 0; color: var(--accent);
+}
+.pull {
+  font-size: clamp(1.6rem, 3vw, 2.3rem); line-height: 1.2; font-style: italic;
+  border-top: 1px solid var(--ink); padding-top: 1rem; margin: 0;
+}
+
+/* Selected work: big index numbers, alternating sides */
+.work-ed { padding-top: 3rem; border-top: 1px solid var(--ink); }
+.feature { padding: 3rem 0; border-bottom: 1px solid var(--rule); align-items: center; row-gap: 1.25rem; }
+.feature .number { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
+.feature h3 { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 400; margin: 0.25rem 0 0.5rem; line-height: 1; }
+.feature h3 a { color: var(--ink); text-decoration: none; }
+.feature.flip .feature-media { grid-column: 6 / 13; grid-row: 1; }
+.feature.flip .feature-text { grid-column: 1 / 5; grid-row: 1; }
+.feature .feature-media { grid-column: 1 / 8; }
+.feature .feature-text { grid-column: 9 / 13; }
+
+/* Project page */
+.project-opener { padding: 5rem 0 2.5rem; align-items: end; }
+.project-opener h1 { font-size: clamp(3rem, 9vw, 7rem); }
+.project-line { font-size: clamp(1.2rem, 2.2vw, 1.6rem); margin: 1rem 0 0; max-width: 34rem; }
+.project-why p { margin: 0.4rem 0 0.75rem; }
+.clip .photo { position: relative; }
+.play {
+  font-family: var(--mono); font-size: 0.85rem; color: var(--paper); background: var(--ink);
+  padding: 0.5rem 1rem; border-radius: 999px;
+}
+.project-facts { margin: 1.25rem 0 0; padding-bottom: 1.25rem; border-bottom: 1px solid var(--ink); }
+.project-story section { padding: 2.5rem 0; border-bottom: 1px solid var(--rule); align-items: start; row-gap: 0.75rem; }
+.project-story p { font-size: 1.15rem; margin: 0 0 1rem; }
+.project-story .pull { margin-bottom: 1.25rem; }
+.limits { margin: 0; padding-left: 1.2rem; font-size: 1.15rem; }
+.limits li::marker { color: var(--accent); }
+.next-project { padding: 3rem 0 0; align-items: baseline; }
+.next-project > a { font-size: clamp(1.8rem, 4vw, 3rem); text-decoration: none; }
+.next-project > a:hover { text-decoration: underline; }
+
+/* Smaller rows for the rest, two per line */
+.minor { padding: 2.5rem 0; row-gap: 2rem; border-bottom: 1px solid var(--rule); }
+.minor article { grid-column: span 4; }
+.minor article .photo { margin-bottom: 0.9rem; }
+.minor article.archive { grid-column: 1 / -1; }
+.minor h3 { font-size: 1.5rem; font-weight: 400; margin: 0.25rem 0; }
+.minor h3 a { color: var(--ink); text-decoration: none; }
+
+/* Experience: one line per job, opens in place */
+.experience { padding: 4rem 0 1rem; align-items: start; row-gap: 1.25rem; }
+.job { border-top: 1px solid var(--rule); }
+.job:last-child { border-bottom: 1px solid var(--rule); }
+.job > summary {
+  list-style: none; display: grid; grid-template-columns: 11rem 1fr auto; gap: 1rem; align-items: baseline;
+  padding: 0.9rem 0; font-family: var(--serif); font-size: 1.1rem; color: var(--ink);
+}
+.job > summary::-webkit-details-marker { display: none; }
+.job > summary::after { content: "+"; font-family: var(--mono); color: var(--accent); }
+.job[open] > summary::after { content: "–"; }
+.job-dates { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+.job-org { color: var(--muted); }
+/* Picture on the left, words on the right; it only loads once the row is opened */
+.job-body {
+  margin: 0 0 1.25rem 12rem; display: grid; grid-template-columns: 12rem 1fr; gap: 0 1.25rem; align-items: start;
+}
+.job-photo { grid-row: 1 / 4; font-size: 0.65rem; }
+.job-body p { margin: 0 0 0.5rem; font-size: 1rem; }
+.industry { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
+.industry .placeholder { font-family: var(--serif); font-size: 1rem; }
+@media (max-width: 760px) {
+  .job > summary { grid-template-columns: 1fr auto; gap: 0.2rem 1rem; }
+  .job-dates { grid-column: 1; }
+  .job-title { grid-column: 1; }
+  .job > summary::after { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+  .job-body { margin-left: 0; grid-template-columns: 1fr; }
+  .job-photo { grid-row: auto; margin-bottom: 0.75rem; }
+}
+
+/* "Now": the one tinted band, the palette used more instead of a new colour */
+.now-band {
+  background: color-mix(in srgb, var(--accent) 9%, var(--paper));
+  border-top: 1px solid var(--accent); border-bottom: 1px solid var(--accent);
+  padding: 3rem 0; margin: 4rem 0 2rem;
+}
+.now-band h2 { font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 400; margin: 0.5rem 0 0; line-height: 1.1; }
+.now-band p { margin: 0 0 0.75rem; }
+
+@media (max-width: 760px) {
+  .grid > * { grid-column: 1 / -1 !important; grid-row: auto !important; }
+  .opener { padding: 3rem 0 2rem; row-gap: 2rem; }
+  .opener .portrait { max-width: 75%; justify-self: center; }
+  .story-block { padding: 2.5rem 0; row-gap: 1.5rem; }
+}
+
+/* Story page: four chapters on a thin line, "Now" in the accent */
+.chapters { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ink); }
+.chapters > li { padding: 3rem 0; border-bottom: 1px solid var(--rule); align-items: start; row-gap: 0.75rem; }
+.chapters h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 400; line-height: 1.15; margin: 0 0 0.75rem; }
+.chapters p { font-size: 1.15rem; margin: 0; }
+.chapter-when { display: block; margin-top: 0.3rem; font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+.chapter-photo { margin: 1.5rem 0 0; }
+.chapter-now .section-no { color: var(--accent); }

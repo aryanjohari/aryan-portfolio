@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The long story · mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="editorial.css">
+  <script src="theme.js" defer></script>
+</head>
+<body>
+<div class="wide">
+
+  <!-- Same header as the other pages -->
+  <header class="masthead ed-masthead">
+    <a class="name" href="home-editorial.html">← Aryan Johari</a>
+
+    <form class="ask" id="ask" onsubmit="return false" aria-label="Ask about my work">
+      <div class="sheet-head">
+        <label class="section-no" for="ask-input">Ask about my story</label>
+        <a class="sheet-close" href="#">Close ✕</a>
+      </div>
+      <div class="ask-row">
+        <input id="ask-input" type="text" placeholder="Ask about my story…" autocomplete="off">
+        <button type="submit">Ask →</button>
+      </div>
+      <div class="ask-panel">
+        <div class="chips">
+          <button type="button">Why did you move to Auckland?</button>
+          <button type="button">Why an AI thesis?</button>
+        </div>
+      </div>
+    </form>
+
+    <nav>
+      <a class="ask-link" href="#ask">Ask</a>
+      <a href="home-editorial.html#work">Work</a>
+      <a href="mailto:hello@example.com">Email</a>
+      <button class="theme-toggle" type="button" hidden>◐ phosphor</button>
+    </nav>
+  </header>
+
+  <section class="opener project-opener grid">
+    <div class="left-7">
+      <span class="section-no">The long story</span>
+      <h1>From Notepad to Auckland.</h1>
+      <p class="project-line placeholder">One line: software fits any industry, and each job taught me a new one.</p>
+    </div>
+  </section>
+
+  <!-- Four chapters on one line, the same steps the home page used to hold -->
+  <ol class="chapters">
+    <li class="grid">
+      <div class="left-3">
+        <span class="section-no">01 · Where it started</span>
+      </div>
+      <div class="mid-7">
+        <h2>Notepad, my uncle's PC</h2>
+        <p class="placeholder">A paragraph: the uncle, typing here and the page changing there; sci-fi, space, wanting to do that.</p>
+      </div>
+    </li>
+
+    <li class="grid">
+      <div class="left-3">
+        <span class="section-no">02 · Mumbai</span>
+        <span class="chapter-when">2023 – 2024</span>
+      </div>
+      <div class="mid-7">
+        <h2>Koverify, then KRIL Digital</h2>
+        <p class="placeholder">A paragraph: CS degree, three wholesale clothing shops and a catalogue app, then about 20 client sites at an agency.</p>
+        <figure class="chapter-photo">
+          <div class="photo land">Mumbai, or a site from then</div>
+          <figcaption class="note">Fig. 1 · Caption</figcaption>
+        </figure>
+      </div>
+    </li>
+
+    <li class="grid">
+      <div class="left-3">
+        <span class="section-no">03 · Auckland</span>
+        <span class="chapter-when">2025 – 2026</span>
+      </div>
+      <div class="mid-7">
+        <h2>Master's, <a href="#">GSTF</a>, and SEO</h2>
+        <p class="placeholder">A paragraph: why an AI thesis, what it found, and learning a niche NZ business through SEO.</p>
+        <figure class="chapter-photo">
+          <div class="photo land">Auckland, or the thesis chart</div>
+          <figcaption class="note">Fig. 2 · Caption</figcaption>
+        </figure>
+      </div>
+    </li>
+
+    <li class="grid chapter-now">
+      <div class="left-3">
+        <span class="section-no">04 · Now<span class="dot"></span></span>
+        <span class="chapter-when">2026</span>
+      </div>
+      <div class="mid-7">
+        <h2>My own projects, then <a href="#">ADA v2</a> and <a href="#">Phosphene</a></h2>
+        <p class="placeholder">A paragraph: <a href="project.html">Prism</a>, <a href="#">PII Gateway</a>, <a href="#">ADA</a>, <a href="#">Sound Visualiser</a>, and where I'm heading.</p>
+      </div>
+    </li>
+  </ol>
+
+  <nav class="next-project grid">
+    <div class="left-3"><span class="section-no">Next</span></div>
+    <a class="mid-7" href="home-editorial.html#work">See the work →</a>
+  </nav>
+
+  <footer>
+    <p><a href="home-editorial.html">← Home</a> · <a href="#">CV</a> · <a href="#">Email</a> · <a href="#">GitHub</a> · <a href="#">LinkedIn</a></p>
+  </footer>
+
+</div>
+</body>
+</html>

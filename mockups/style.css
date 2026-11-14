@@ -1,0 +1,152 @@
+/* Shared look for the mockups. Layout and feel only; the real site rebuilds this in Tailwind. */
+
+:root {
+  --paper: #ece6d6;
+  --ink: #1b1b1f;
+  --accent: #a8361f;
+  --muted: color-mix(in srgb, var(--ink) 60%, var(--paper));
+  --rule: color-mix(in srgb, var(--ink) 18%, var(--paper));
+  --glow: none;
+  --serif: "Newsreader", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+
+/* Phosphor mode: follows the OS when no choice is saved, or the toggle sets data-theme. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="paper"]) {
+    --paper: #05100a;
+    --ink: #c9ffd6;
+    --accent: #5dff8a;
+    --glow: drop-shadow(0 0 3px color-mix(in srgb, #5dff8a 55%, transparent));
+    color-scheme: dark;
+  }
+}
+:root[data-theme="phosphor"] {
+  --paper: #05100a;
+  --ink: #c9ffd6;
+  --accent: #5dff8a;
+  --glow: drop-shadow(0 0 3px color-mix(in srgb, #5dff8a 55%, transparent));
+  color-scheme: dark;
+}
+
+@view-transition {
+  navigation: auto;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+a { color: var(--accent); text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+
+.page { max-width: 52rem; margin: 0 auto; padding: 0 1rem 4rem; }
+
+.mono, .label, .masthead, .proof, .dates, footer {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+.label { text-transform: uppercase; color: var(--muted); letter-spacing: 0.12em; }
+
+/* Masthead */
+.masthead {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: 1.25rem 0; border-bottom: 1px solid var(--rule);
+}
+.masthead nav { display: flex; gap: 1rem; align-items: center; }
+.masthead .name { color: var(--ink); text-decoration: none; font-weight: 500; }
+.theme-toggle {
+  font: inherit; color: var(--ink); background: none; cursor: pointer;
+  border: 1px solid var(--rule); border-radius: 999px; padding: 0.1rem 0.6rem;
+}
+
+/* Hero: line drawing that inks itself in as you scroll */
+.hero { margin: 2.5rem 0 1.5rem; }
+.hero svg { width: 100%; height: auto; display: block; filter: var(--glow); }
+.hero path, .hero line, .hero circle { stroke: var(--ink); fill: none; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.hero .accent { stroke: var(--accent); }
+.hero .caption { display: flex; justify-content: space-between; color: var(--muted); margin-top: 0.5rem; }
+
+/* Inks in once on load. Scroll-driven was tried: the hero left the screen before it finished. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero .ink {
+    stroke-dasharray: 1;
+    animation: ink 1.6s ease-out both;
+  }
+  /* The route between the cities is drawn last. */
+  .hero .ink.accent { animation-duration: 0.9s; animation-delay: 1.4s; }
+  .hero circle.accent { animation: appear 0.3s 2.2s both; }
+}
+@keyframes ink { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes appear { from { opacity: 0; } }
+
+/* Bio */
+.bio p { margin: 0 0 1rem; max-width: 38rem; }
+.placeholder { color: var(--muted); font-style: italic; }
+details > summary { cursor: pointer; font-family: var(--mono); font-size: 0.85rem; color: var(--accent); list-style: "▸ "; }
+details[open] > summary { list-style: "▾ "; }
+details > div { margin-top: 1rem; }
+
+/* Later slice marker */
+.later {
+  margin: 2.5rem 0; padding: 1rem; border: 1px dashed var(--rule);
+}
+.notepad { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.75rem; }
+.notepad pre { margin: 0; padding: 0.75rem; border: 1px solid var(--rule); font-family: var(--mono); font-size: 0.85rem; white-space: pre-wrap; }
+.notepad .rendered { padding: 0.75rem; border: 1px solid var(--rule); font-size: 1.5rem; }
+
+/* Work list: dates and stills in the margin, like notes beside the text */
+.work { margin-top: 3rem; }
+.row {
+  display: grid; grid-template-columns: 10rem 1fr; gap: 1.5rem;
+  padding: 1.25rem 0; border-top: 1px solid var(--rule);
+}
+.row h3 { margin: 0; font-size: 1.3rem; font-weight: 500; }
+.row h3 a { color: var(--ink); text-decoration: none; }
+.row h3 a:hover { text-decoration: underline; }
+.row p { margin: 0.25rem 0; }
+.links { font-family: var(--mono); font-size: 0.85rem; display: flex; gap: 1rem; margin: 0.4rem 0; }
+.proof { color: var(--muted); }
+.dates { color: var(--muted); display: block; margin-bottom: 0.5rem; }
+
+.still {
+  aspect-ratio: 4 / 3; border: 1px solid var(--rule);
+  background:
+    repeating-linear-gradient(135deg, transparent 0 5px, var(--rule) 5px 6px);
+  display: grid; place-items: center; color: var(--muted);
+  font-family: var(--mono); font-size: 0.7rem;
+}
+.row.now .dates { color: var(--accent); }
+.dot { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--accent); filter: var(--glow); margin-left: 0.3rem; }
+
+footer { margin-top: 4rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); color: var(--muted); }
+footer p { margin: 0.25rem 0; }
+
+/* Project page */
+.project-head h1 { font-size: 2.6rem; font-weight: 400; margin: 2.5rem 0 0.25rem; line-height: 1.1; }
+.project-head .line { font-size: 1.3rem; margin: 0 0 1rem; }
+.project-head .still { aspect-ratio: 16 / 9; margin: 1.5rem 0 0.75rem; font-size: 0.8rem; }
+.facts { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; color: var(--muted); }
+.story section { display: grid; grid-template-columns: 10rem 1fr; gap: 1.5rem; padding: 1.5rem 0; border-top: 1px solid var(--rule); }
+.story h2 { margin: 0; font-family: var(--mono); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 400; }
+.story p, .story ul { margin: 0; max-width: 38rem; }
+
+/* The still morphs from the home row into the project header */
+.vt-prism { view-transition-name: prism-still; }
+
+/* Phone: the margin folds above each row */
+@media (max-width: 640px) {
+  .row, .story section { grid-template-columns: 1fr; gap: 0.5rem; }
+  .notepad { grid-template-columns: 1fr; }
+  .masthead nav a:not(.name) { display: none; }
+  .project-head h1 { font-size: 2rem; }
+}
