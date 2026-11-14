@@ -73,6 +73,11 @@
   letter-spacing: -0.02em;
 }
 
+/* "Next" link at the foot of a page, so readers keep moving instead of hitting a dead end */
+.next-link { padding-top: 3rem; align-items: baseline; }
+.next-link > a { font-size: clamp(1.8rem, 4vw, 3rem); text-decoration: none; }
+.next-link > a:hover { text-decoration: underline; }
+
 /* Phone: every block takes the full width, in source order */
 @media (max-width: 760px) {
   .grid > * { grid-column: 1 / -1 !important; grid-row: auto !important; }

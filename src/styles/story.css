@@ -11,7 +11,3 @@
 .chapter-text p + p { margin-top: var(--space-2); }
 .chapter-when { display: block; margin-top: 0.3rem; font-family: var(--font-label); font-size: 0.8rem; color: var(--color-muted); }
 .chapter-now .section-no { color: var(--color-accent); }
-
-.next-link { padding-top: 3rem; align-items: baseline; }
-.next-link > a { font-size: clamp(1.8rem, 4vw, 3rem); text-decoration: none; }
-.next-link > a:hover { text-decoration: underline; }

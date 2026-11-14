@@ -1,0 +1,39 @@
+/* Project pages (/projects/<slug>), ported from mockups/project.html. Shared pieces are in editorial.css. */
+
+.project-opener { padding: 5rem 0 2.5rem; align-items: end; row-gap: var(--space-3); }
+.project-opener h1 { font-size: clamp(3rem, 9vw, 7rem); }
+.project-line { max-width: 34rem; margin-top: var(--space-2); font-size: clamp(1.2rem, 2.2vw, 1.6rem); line-height: 1.4; }
+.project-why p { margin: 0.4rem 0 0.75rem; }
+.project-why .links { margin-top: var(--space-2); }
+
+.wide-shot { aspect-ratio: 21 / 9; }
+
+.project-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin-top: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-ink);
+  font-family: var(--font-label);
+  font-size: var(--type-label);
+  color: var(--color-muted);
+}
+
+/* The story: label on the left, text in a readable column */
+.project-story section { padding: 2.5rem 0; border-bottom: 1px solid var(--color-rule); align-items: start; row-gap: 0.75rem; }
+.story-text p,
+.story-text li { font-size: 1.15rem; }
+.story-text > * + * { margin-top: var(--space-2); }
+.story-text ul { padding-left: 1.2rem; list-style: disc; }
+.story-text li + li { margin-top: 0.4rem; }
+.story-text li::marker { color: var(--color-accent); }
+
+/* The decision's first line is set large, like a pull quote */
+.story-decision .story-text > p:first-child {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-ink);
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
+  font-style: italic;
+  line-height: 1.2;
+}

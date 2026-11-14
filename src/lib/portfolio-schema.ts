@@ -38,6 +38,8 @@ export type Project = {
   slug: string;
   title: string;
   summary: string;
+  /** "Why I made it", one or two sentences at the top of the project page. */
+  why?: string;
   thread: string;
   tier: ProjectTier;
   order: number;
@@ -84,6 +86,10 @@ export function validateProject(slug: string, data: unknown): ProjectResult {
 
   if (!isNonEmptyString(data.summary) || data.summary.length > SUMMARY_MAX_CHARS) {
     return fail(`summary must be one sentence of at most ${SUMMARY_MAX_CHARS} characters`);
+  }
+
+  if (!optionalString(data, "why")) {
+    return fail("why must be a non-empty string when provided");
   }
 
   if (!oneOf(data.tier, PROJECT_TIERS)) {

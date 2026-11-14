@@ -80,3 +80,14 @@ test("gives a project with no links an empty links object, so pages can read lin
   assert.ok(result.ok);
   assert.deepEqual(result.project.links, {});
 });
+
+test("accepts an optional 'why' line and rejects an empty one", () => {
+  const withWhy = validateProject("prism", { ...validYaml(), why: "I wanted to learn WebGL." });
+  assert.ok(withWhy.ok);
+  assert.equal(withWhy.project.why, "I wanted to learn WebGL.");
+
+  assert.deepEqual(validateProject("prism", { ...validYaml(), why: "" }), {
+    ok: false,
+    message: "prism: why must be a non-empty string when provided",
+  });
+});

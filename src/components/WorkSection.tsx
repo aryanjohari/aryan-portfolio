@@ -4,17 +4,8 @@ import { Epigraph } from "@/components/Epigraph";
 import { Picture } from "@/components/Picture";
 import type { HomeProjects } from "@/lib/home-sections";
 import type { Project } from "@/lib/portfolio-schema";
+import { proofLine } from "@/lib/project-display";
 import type { ProfileEpigraph } from "@/lib/profile-schema";
-
-const STATE_WORDS: Record<Project["status"]["state"], string> = {
-  live: "Live",
-  frozen: "Finished",
-  wip: "In progress",
-};
-
-function proofLine(project: Project): string {
-  return [STATE_WORDS[project.status.state], project.proof[0], project.status.note].filter(Boolean).join(" · ");
-}
 
 function TryLinks({ links }: { links: Project["links"] }) {
   if (!links.demo && !links.github) return null;
