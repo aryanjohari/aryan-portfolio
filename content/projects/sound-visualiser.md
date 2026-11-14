@@ -1,6 +1,6 @@
 ---
 title: Sound Visualiser
-summary: "TODO: Music visuals in the browser: play a song or use your mic, and a full-screen scene moves with it."
+summary: "Music visuals in the browser: play a song or use your mic, and a full-screen scene moves with it."
 thread: web
 tier: featured
 order: 4

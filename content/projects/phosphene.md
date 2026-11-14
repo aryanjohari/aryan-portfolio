@@ -1,6 +1,6 @@
 ---
 title: Phosphene
-summary: "TODO: Turns photos into line drawings and, later, art that moves with music."
+summary: "Turns photos into line drawings and, later, art that moves with music."
 thread: web
 tier: in-progress
 order: 2

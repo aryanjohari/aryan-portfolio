@@ -1,6 +1,6 @@
 ---
 title: GSTF
-summary: "TODO: Research on telling which tool made a deepfake video, not just whether it's fake."
+summary: "Research on telling which tool made a deepfake video, not just whether it's fake."
 thread: research
 tier: featured
 order: 5

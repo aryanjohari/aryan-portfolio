@@ -1,6 +1,6 @@
 ---
 title: ADA
-summary: "TODO: An AI agent on a Raspberry Pi that ran my SEO work, within limits I set."
+summary: "An AI agent on a Raspberry Pi that ran my SEO work, within limits I set."
 thread: ai
 tier: featured
 order: 3

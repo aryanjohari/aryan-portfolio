@@ -1,6 +1,6 @@
 ---
 title: PII Gateway
-summary: "TODO: Removes names, emails and other personal details from data before it's stored or sent to an AI."
+summary: "Removes names, emails and other personal details from data before it's stored or sent to an AI."
 thread: ai
 tier: featured
 order: 2

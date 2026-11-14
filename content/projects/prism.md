@@ -1,6 +1,6 @@
 ---
 title: Prism
-summary: A browser photo-styling tool where you pick a look, tune or describe it, and export the PNG with its recipe.
+summary: "Change a photo's look in your browser, then download it with the recipe that made it."
 thread: web
 tier: featured
 order: 1

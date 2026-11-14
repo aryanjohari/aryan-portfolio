@@ -1,6 +1,6 @@
 ---
 title: ADA v2
-summary: "TODO: A rebuild of ADA where every action goes through one checkpoint that checks it and keeps a receipt."
+summary: "A rebuild of ADA where every action goes through one checkpoint that checks it and keeps a receipt."
 thread: ai
 tier: in-progress
 order: 1
