@@ -1,0 +1,17 @@
+/* The long story (/story), ported from mockups/story.html. Shared pieces are in editorial.css. */
+
+.story-opener { padding: 5rem 0 2.5rem; align-items: end; }
+.story-summary { max-width: 34rem; margin-top: var(--space-2); font-size: clamp(1.2rem, 2.2vw, 1.6rem); }
+
+/* Four chapters, one per row; the last one ("Now") gets the accent */
+.chapters { border-top: 1px solid var(--color-ink); }
+.chapters > li { padding: 3rem 0; border-bottom: 1px solid var(--color-rule); align-items: start; row-gap: 0.75rem; }
+.chapters h2 { margin-bottom: 0.75rem; font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 400; line-height: 1.15; }
+.chapter-text p { font-size: 1.15rem; }
+.chapter-text p + p { margin-top: var(--space-2); }
+.chapter-when { display: block; margin-top: 0.3rem; font-family: var(--font-label); font-size: 0.8rem; color: var(--color-muted); }
+.chapter-now .section-no { color: var(--color-accent); }
+
+.next-link { padding-top: 3rem; align-items: baseline; }
+.next-link > a { font-size: clamp(1.8rem, 4vw, 3rem); text-decoration: none; }
+.next-link > a:hover { text-decoration: underline; }

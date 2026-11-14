@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { parseHomeFile, parseStoryFile } from "./site-text";
+import { parseHomeFile, parseStoryFile, splitChapterLabel } from "./site-text";
 
 test("reads the home headline from the frontmatter and the bio from the body", () => {
   const result = parseHomeFile("---\nheadline: I build software.\n---\n\nShort bio with a [link](/projects/prism).\n");
@@ -44,4 +44,10 @@ Two jobs.
 test("rejects story text that sits outside a chapter, instead of dropping it", () => {
   const result = parseStoryFile("---\ntitle: T\nsummary: S\n---\n\nStray paragraph.\n\n## One\n\nBody.\n");
   assert.deepEqual(result, { ok: false, message: "story.md text must sit under a ## chapter heading" });
+});
+
+test("splits a chapter label into the place and, when given, the years", () => {
+  assert.deepEqual(splitChapterLabel("Mumbai · 2021 – 2024"), { place: "Mumbai", when: "2021 – 2024" });
+  assert.deepEqual(splitChapterLabel("Where it started"), { place: "Where it started" });
+  assert.deepEqual(splitChapterLabel(undefined), {});
 });

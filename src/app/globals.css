@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "../styles/tokens.css";
+@import "../styles/editorial.css";
 @import "../styles/home.css";
+@import "../styles/story.css";
 @config "../../tailwind.config.ts";
 
 /* Editorial layout (mockups/home-editorial.html): wide page, thin rules, no cards. */

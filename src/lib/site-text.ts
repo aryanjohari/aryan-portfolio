@@ -67,3 +67,11 @@ export function parseStoryFile(text: string): Result<StoryText> {
   }
   return { ok: true, value: { title: file.data.title, summary: file.data.summary, chapters } };
 }
+
+/** "Mumbai · 2021 – 2024" → place "Mumbai", when "2021 – 2024"; a label without " · " is all place. */
+export function splitChapterLabel(label: string | undefined): { place?: string; when?: string } {
+  if (label === undefined) return {};
+  const separator = label.indexOf(" · ");
+  if (separator === -1) return { place: label };
+  return { place: label.slice(0, separator), when: label.slice(separator + 3) };
+}
