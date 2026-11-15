@@ -313,4 +313,4 @@ Replaces the old guide (about 2,000 lines: regex intents, context slicing, JSON 
 - **One question, one answer:** no chat history or memory, so a visitor can't plant instructions for later turns.
 - **Safety outside the code:** a Vercel firewall rate-limit rule and a Gemini spending cap (P6c). The in-memory rate limit was dropped: it doesn't hold across serverless instances.
 - **Live check, 15 Nov:** 9 questions, answers in 1.3–2.0 s, all by embedding search; phone number, prompt injection and off-topic questions declined. Two overreaches ("is excited", "has not worked at Google") fixed with one prompt rule.
-
+- **UI (P6b):** `src/components/AskBox.tsx` + `src/styles/ask.css`, from the mockup: header input and drop-down panel on desktop; "Ask" button and bottom sheet on phones (the phone header keeps only name, Ask and the theme switch). `src/lib/ask/client.ts` checks the reply's shape in the browser. Left out with no key; hidden with JS off. The phone sheet doesn't trap focus yet (P6c).
