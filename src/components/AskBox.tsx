@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useEffect, useId, useRef, useState } from "react";
+import { type FormEvent, type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 
 import type { AskReply } from "@/lib/ask/answer";
 import { QUESTION_MAX_CHARS } from "@/lib/ask/answer";
@@ -55,6 +55,22 @@ export function AskBox() {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
+  /** On a phone the open sheet covers the page, so Tab wraps around inside it instead of reaching hidden links. */
+  function keepFocusInSheet(event: KeyboardEvent<HTMLFormElement>) {
+    const isSheet = Boolean(triggerRef.current?.offsetParent);
+    if (!open || !isSheet || !rootRef.current) return;
+    const focusable = [...rootRef.current.querySelectorAll<HTMLElement>("a[href], button:not(:disabled), input")];
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   async function submit(text: string) {
     const trimmed = text.trim();
     if (!trimmed || status.kind === "loading") return;
@@ -92,6 +108,7 @@ export function AskBox() {
         onSubmit={onSubmit}
         onKeyDown={(event) => {
           if (event.key === "Escape") close();
+          if (event.key === "Tab") keepFocusInSheet(event);
         }}
       >
         <div className="sheet-head">
