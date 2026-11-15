@@ -4,6 +4,7 @@
 @import "../styles/home.css";
 @import "../styles/story.css";
 @import "../styles/project.css";
+@import "../styles/ask.css";
 @config "../../tailwind.config.ts";
 
 /* Editorial layout (mockups/home-editorial.html): wide page, thin rules, no cards. */
@@ -80,6 +81,7 @@ summary:focus-visible {
 }
 
 .masthead-name {
+  white-space: nowrap;
   color: var(--color-ink);
   font-weight: 500;
   text-decoration: none;
@@ -92,6 +94,7 @@ summary:focus-visible {
 }
 
 .theme-toggle {
+  white-space: nowrap;
   padding: 0.1rem 0.6rem;
   border: 1px solid var(--color-rule);
   border-radius: 999px;

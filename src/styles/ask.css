@@ -1,0 +1,149 @@
+/*
+ * The Ask box, ported from mockups/editorial.css. Phone first: a bottom sheet
+ * opened by the header's "Ask" button. Desktop: the same form sits in the
+ * middle of the header, and its panel drops down while it's open.
+ */
+
+.ask-trigger {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  font-weight: 500;
+  color: var(--color-accent);
+  background: none;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+/* Phone header (mockup): name, Ask and the theme switch; the other links are in the hero and footer */
+@media (max-width: 760px) {
+  .masthead.with-ask nav li:not(:last-child) { display: none; }
+}
+
+.ask {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  border-top: 2px solid var(--color-accent);
+  border-radius: 14px 14px 0 0;
+  background: var(--color-paper);
+  box-shadow: 0 -12px 30px color-mix(in srgb, var(--color-ink) 18%, transparent);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  letter-spacing: 0;
+  transform: translateY(105%);
+  visibility: hidden;
+  transition:
+    transform 0.25s ease-out,
+    visibility 0.25s;
+}
+.ask[data-open="true"] {
+  transform: none;
+  visibility: visible;
+  /* Visible at once when opening, so the input can take focus; hidden only after sliding away when closing */
+  transition:
+    transform 0.25s ease-out,
+    visibility 0s;
+}
+
+.sheet-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sheet-close {
+  padding: 0;
+  border: 0;
+  font-family: var(--font-label);
+  font-size: var(--type-label);
+  color: var(--color-accent);
+  background: none;
+  cursor: pointer;
+}
+
+.ask-row { display: flex; gap: var(--space-1); margin-top: var(--space-1); }
+.ask input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-ink);
+  font: inherit;
+  font-size: 1rem;
+  color: var(--color-ink);
+  background: transparent;
+}
+.ask input::placeholder { font-style: italic; color: var(--color-muted); }
+.ask input:focus { outline: none; border-bottom-color: var(--color-accent); }
+
+.ask-row button,
+.chips button {
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 999px;
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  color: var(--color-ink);
+  background: none;
+  cursor: pointer;
+}
+.ask-row button { border-color: var(--color-accent); color: var(--color-accent); }
+.ask-row button:disabled { opacity: 0.5; cursor: wait; }
+.chips button:hover { border-color: var(--color-accent); }
+.ask button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+.answer:not(:empty) { margin-top: 1.25rem; }
+.answer p { font-size: 1rem; }
+.answer p + p { margin-top: var(--space-1); }
+.ask-note { font-style: italic; color: var(--color-muted); }
+.source { font-family: var(--font-label); font-size: 0.75rem; color: var(--color-muted); }
+.ask-actions { display: flex; flex-wrap: wrap; gap: 0.4rem var(--space-2); font-family: var(--font-label); font-size: var(--type-label); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ask { transition: none; }
+}
+
+/* Desktop: the form sits in the header's middle column; the panel drops down while open */
+@media (min-width: 761px) {
+  .masthead.with-ask { display: grid; grid-template-columns: 1fr minmax(16rem, 26rem) 1fr; }
+  .masthead.with-ask nav { justify-self: end; }
+  .ask-trigger,
+  .sheet-head { display: none; }
+
+  .ask {
+    position: relative;
+    inset: auto;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    transform: none;
+    visibility: visible;
+    transition: none;
+  }
+  .ask-row { margin-top: 0; }
+
+  .ask-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    right: -1rem;
+    left: -1rem;
+    z-index: 10;
+    padding: var(--space-2);
+    border: 1px solid var(--color-rule);
+    border-top: 2px solid var(--color-accent);
+    background: var(--color-paper);
+    box-shadow: 0 12px 30px color-mix(in srgb, var(--color-ink) 12%, transparent);
+  }
+  .ask[data-open="true"] .ask-panel { display: block; }
+  .chips { margin-top: 0; }
+  .chips + .answer:empty { display: none; }
+}

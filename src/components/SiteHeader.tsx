@@ -1,14 +1,17 @@
 import Link from "next/link";
 
+import { AskBox } from "@/components/AskBox";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import type { Profile } from "@/lib/profile-schema";
 
-export function SiteHeader({ name, links }: { name: string; links: Profile["links"] }) {
+/** `askEnabled` is false when there is no Gemini key, so the Ask box is left out entirely. */
+export function SiteHeader({ name, links, askEnabled }: { name: string; links: Profile["links"]; askEnabled: boolean }) {
   return (
-    <header className="masthead">
+    <header className={askEnabled ? "masthead with-ask" : "masthead"}>
       <Link className="masthead-name" href="/">
         {name}
       </Link>
+      {askEnabled && <AskBox />}
       <nav aria-label="Site">
         <ul>
           <li>

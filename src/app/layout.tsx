@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Newsreader } from "next/font/google";
 
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { askSettings } from "@/lib/ask/gemini";
 import { getProfile } from "@/lib/profile";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 
@@ -34,19 +35,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const profile = getProfile();
+  const askEnabled = askSettings().apiKey !== undefined;
 
   return (
     // The boot script may set data-theme before React loads, so the attribute can differ from the server's HTML.
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        {/* The Ask box needs JS to answer, so with JS off it isn't shown at all. */}
+        {askEnabled && (
+          <noscript>
+            <style>{".ask, .ask-trigger { display: none !important; }"}</style>
+          </noscript>
+        )}
       </head>
       <body className={`${newsreader.variable} ${ibmPlexMono.variable}`}>
         <a className="skip-link" href="#main">
           Skip to content
         </a>
         <div className="site-shell">
-          <SiteHeader name={profile.name} links={profile.links} />
+          <SiteHeader name={profile.name} links={profile.links} askEnabled={askEnabled} />
           {children}
           <SiteFooter links={profile.links} />
         </div>
