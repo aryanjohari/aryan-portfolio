@@ -75,7 +75,8 @@ export async function generateJson(
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: [{ role: "user", parts: [{ text: userText }] }],
       generationConfig: {
-        temperature: 0.3,
+        // Low: answers should stick to the sections, not vary for style.
+        temperature: 0.2,
         maxOutputTokens: config.maxOutputTokens ?? 600,
         responseMimeType: "application/json",
         responseSchema,

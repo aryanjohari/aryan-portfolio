@@ -11,7 +11,8 @@
     "validate:content": "tsx scripts/validate-content.ts",
     "prebuild": "npm run validate:content && npm run build:ask",
     "predev": "npm run build:ask",
-    "build:ask": "tsx scripts/build-ask-index.ts"
+    "build:ask": "tsx scripts/build-ask-index.ts",
+    "eval:ask": "tsx --env-file=.env.local scripts/eval-ask.ts"
   },
   "dependencies": {
     "next": "16.2.1",
