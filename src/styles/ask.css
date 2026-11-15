@@ -100,6 +100,7 @@
 .answer p { font-size: 1rem; }
 .answer p + p { margin-top: var(--space-1); }
 .ask-note { font-style: italic; color: var(--color-muted); }
+.ask-how { margin-top: var(--space-2); font-family: var(--font-label); font-size: 0.75rem; }
 .source { font-family: var(--font-label); font-size: 0.75rem; color: var(--color-muted); }
 .ask-actions { display: flex; flex-wrap: wrap; gap: 0.4rem var(--space-2); font-family: var(--font-label); font-size: var(--type-label); }
 

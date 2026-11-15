@@ -12,7 +12,7 @@ import { embedTexts, askSettings } from "../src/lib/ask/gemini";
 import { type AskIndex, buildAskSections } from "../src/lib/ask/sections";
 import { getProfile } from "../src/lib/profile";
 import { getProjects } from "../src/lib/projects";
-import { getHomeText, getStoryText } from "../src/lib/site-text-files";
+import { getAskPageText, getHomeText, getStoryText } from "../src/lib/site-text-files";
 
 const OUTPUT = resolve(process.cwd(), "src/lib/generated/ask-index.json");
 /** Gemini's batch embedding call takes at most 100 texts. */
@@ -31,7 +31,7 @@ async function embedAll(texts: string[], apiKey: string, model: string): Promise
 async function main() {
   const profile = getProfile();
   const projects = getProjects();
-  const sections = buildAskSections({ profile, projects, home: getHomeText(), story: getStoryText() });
+  const sections = buildAskSections({ profile, projects, home: getHomeText(), story: getStoryText(), askPage: getAskPageText() });
 
   const { apiKey, embeddingModel } = askSettings();
   let vectors: number[][] | null = null;

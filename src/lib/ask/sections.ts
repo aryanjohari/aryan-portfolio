@@ -19,7 +19,16 @@ export type AskSection = {
   text: string;
 };
 
-export type AskContent = { profile: Profile; projects: Project[]; home: HomeText; story: StoryText };
+export type AskContent = {
+  profile: Profile;
+  projects: Project[];
+  home: HomeText;
+  story: StoryText;
+  /** content/ask.md, so the Ask box can explain itself. */
+  askPage: StoryText;
+};
+
+export const ASK_PAGE_URL = "/ask/how-it-works";
 
 /** "Notepad, my uncle's PC" → "notepad-my-uncles-pc" */
 function slugify(text: string): string {
@@ -114,7 +123,7 @@ function projectSections(project: Project): AskSection[] {
 }
 
 /** Every section of the public site. Throws if two sections would share an id, so citations stay unambiguous. */
-export function buildAskSections({ profile, projects, home, story }: AskContent): AskSection[] {
+export function buildAskSections({ profile, projects, home, story, askPage }: AskContent): AskSection[] {
   const sections: AskSection[] = [
     ...profileSections(profile),
     { id: "home#bio", title: "Short bio", url: "/", text: lines(home.headline, home.bio) },
@@ -125,6 +134,12 @@ export function buildAskSections({ profile, projects, home, story }: AskContent)
       text: lines(chapter.label, chapter.body),
     })),
     ...projects.flatMap(projectSections),
+    ...askPage.chapters.map((chapter) => ({
+      id: `ask#${slugify(chapter.title)}`,
+      title: `How the Ask box works · ${chapter.title}`,
+      url: ASK_PAGE_URL,
+      text: chapter.body,
+    })),
   ];
 
   const seen = new Set<string>();

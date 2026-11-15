@@ -6,6 +6,7 @@ import { type FormEvent, type KeyboardEvent, useEffect, useId, useRef, useState 
 import type { AskReply } from "@/lib/ask/answer";
 import { QUESTION_MAX_CHARS } from "@/lib/ask/answer";
 import { askQuestion } from "@/lib/ask/client";
+import { ASK_PAGE_URL } from "@/lib/ask/sections";
 
 const SUGGESTED_QUESTIONS = [
   "What's he best at?",
@@ -158,6 +159,11 @@ export function AskBox() {
             {status.kind === "failed" && <p className="ask-note">{status.message}</p>}
             {status.kind === "answered" && <AnswerView reply={status.reply} onNavigate={() => setOpen(false)} />}
           </div>
+          <p className="ask-how">
+            <Link href={ASK_PAGE_URL} onClick={() => setOpen(false)}>
+              How this works →
+            </Link>
+          </p>
         </div>
       </form>
     </>

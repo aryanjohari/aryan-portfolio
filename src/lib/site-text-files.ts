@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { type HomeText, parseHomeFile, parseStoryFile, type StoryText } from "@/lib/site-text";
+import { type HomeText, parseChapteredFile, parseHomeFile, parseStoryFile, type StoryText } from "@/lib/site-text";
 
 const CONTENT_DIR = resolve(process.cwd(), "content");
 
@@ -21,4 +21,9 @@ export function getHomeText(): HomeText {
 
 export function getStoryText(): StoryText {
   return load("story.md", parseStoryFile);
+}
+
+/** content/ask.md: the "How this works" page for the Ask box. */
+export function getAskPageText(): StoryText {
+  return load("ask.md", (text) => parseChapteredFile(text, "ask.md"));
 }

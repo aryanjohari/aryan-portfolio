@@ -1,6 +1,7 @@
 /**
  * The site's longer words: content/home.md (headline + short bio) and
- * content/story.md (the long story in chapters). Pure parsers; file reads
+ * content/story.md (the long story in chapters), content/ask.md (how the Ask
+ * box works, same shape as the story). Pure parsers; file reads
  * live in site-text-files.ts.
  */
 
@@ -35,16 +36,25 @@ export function parseHomeFile(text: string): Result<HomeText> {
 
 const LABEL_PATTERN = /^\*([^*\n]+)\*\s*(?:\n|$)/;
 
+/** Parses the long story; see parseChapteredFile. */
 export function parseStoryFile(text: string): Result<StoryText> {
+  return parseChapteredFile(text, "story.md");
+}
+
+/**
+ * A page of `## ` chapters under a title and summary: content/story.md and
+ * content/ask.md share this shape. `fileName` only names the file in errors.
+ */
+export function parseChapteredFile(text: string, fileName: string): Result<StoryText> {
   const file = splitFrontmatter(text);
   if (!file.ok) return file;
   if (!isRecord(file.data) || !isNonEmptyString(file.data.title) || !isNonEmptyString(file.data.summary)) {
-    return { ok: false, message: "story.md needs a title and a summary in its frontmatter" };
+    return { ok: false, message: `${fileName} needs a title and a summary in its frontmatter` };
   }
 
   const chunks = file.body.split(/^## +/m);
   if (chunks[0].trim().length > 0) {
-    return { ok: false, message: "story.md text must sit under a ## chapter heading" };
+    return { ok: false, message: `${fileName} text must sit under a ## chapter heading` };
   }
 
   const chapters: StoryChapter[] = [];
@@ -57,13 +67,13 @@ export function parseStoryFile(text: string): Result<StoryText> {
     if (label) rest = rest.slice(label[0].length).trim();
 
     if (rest.length === 0) {
-      return { ok: false, message: `story.md chapter "${title}" is empty` };
+      return { ok: false, message: `${fileName} chapter "${title}" is empty` };
     }
     chapters.push(label ? { title, label: label[1].trim(), body: rest } : { title, body: rest });
   }
 
   if (chapters.length === 0) {
-    return { ok: false, message: "story.md needs at least one ## chapter" };
+    return { ok: false, message: `${fileName} needs at least one ## chapter` };
   }
   return { ok: true, value: { title: file.data.title, summary: file.data.summary, chapters } };
 }

@@ -51,6 +51,7 @@ const content: AskContent = {
   projects: [prism, archived],
   home: { headline: "I build software.", bio: "Short bio." },
   story: { title: "From Notepad", summary: "One line.", chapters: [{ title: "Notepad, my uncle's PC", label: "Where it started", body: "It started here." }] },
+  askPage: { title: "How it works", summary: "One line.", chapters: [{ title: "What it can see", body: "Public text only." }] },
 };
 
 test("gives every section a stable, unique id and a link to the page it came from", () => {
@@ -63,6 +64,7 @@ test("gives every section a stable, unique id and a link to the page it came fro
   assert.equal(byId.get("prism#overview")?.url, "/projects/prism");
   assert.equal(byId.get("story#notepad-my-uncles-pc")?.url, "/story");
   assert.equal(byId.get("profile#job-kril-digital")?.url, "/#experience");
+  assert.equal(byId.get("ask#what-it-can-see")?.url, "/ask/how-it-works");
   // Archive projects have no page, so their overview points at the work list.
   assert.equal(byId.get("tahi-pulse#overview")?.url, "/#work");
   assert.equal(byId.has("tahi-pulse#decision"), false);

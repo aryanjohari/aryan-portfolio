@@ -10,7 +10,7 @@ import { relative, resolve } from "node:path";
 import { checkContent, type ContentFile } from "../src/lib/content-guards";
 import { getProfile } from "../src/lib/profile";
 import { getProjects } from "../src/lib/projects";
-import { getHomeText, getStoryText } from "../src/lib/site-text-files";
+import { getAskPageText, getHomeText, getStoryText } from "../src/lib/site-text-files";
 
 const CONTENT_DIR = resolve(process.cwd(), "content");
 
@@ -26,6 +26,7 @@ function readContentFiles(): ContentFile[] {
 try {
   getProfile();
   getHomeText();
+  getAskPageText();
   const story = getStoryText();
   const projects = getProjects();
 
@@ -43,7 +44,7 @@ try {
   }
 
   console.log(
-    `Validated profile.yaml, home.md, story.md (${story.chapters.length} chapters) and ${projects.length} project(s)`,
+    `Validated profile.yaml, home.md, story.md (${story.chapters.length} chapters), ask.md and ${projects.length} project(s)`,
   );
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { parseHomeFile, parseStoryFile, splitChapterLabel } from "./site-text";
+import { parseChapteredFile, parseHomeFile, parseStoryFile, splitChapterLabel } from "./site-text";
 
 test("reads the home headline from the frontmatter and the bio from the body", () => {
   const result = parseHomeFile("---\nheadline: I build software.\n---\n\nShort bio with a [link](/projects/prism).\n");
@@ -50,4 +50,11 @@ test("splits a chapter label into the place and, when given, the years", () => {
   assert.deepEqual(splitChapterLabel("Mumbai · 2021 – 2024"), { place: "Mumbai", when: "2021 – 2024" });
   assert.deepEqual(splitChapterLabel("Where it started"), { place: "Where it started" });
   assert.deepEqual(splitChapterLabel(undefined), {});
+});
+
+test("names the file it is parsing in errors, so ask.md problems point at ask.md", () => {
+  assert.deepEqual(parseChapteredFile("---\ntitle: How it works\nsummary: One line.\n---\n\nNo heading.\n", "ask.md"), {
+    ok: false,
+    message: "ask.md text must sit under a ## chapter heading",
+  });
 });
