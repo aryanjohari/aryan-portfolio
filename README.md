@@ -22,14 +22,14 @@ All design and architecture decisions live in [`docs/MASTER.md`](docs/MASTER.md)
 ```bash
 npm install
 cp .env.example .env.local   # optional: GEMINI_API_KEY
-npm run dev                  # builds the guide context from content/ first
+npm run dev                  # builds the Ask index from content/ first
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
 ```bash
 npm test        # node:test unit tests
-npm run build   # prebuild validates content/ and builds the guide context, then next build
+npm run build   # prebuild validates content/ and builds the Ask index, then next build
 npm run start   # serve production build
 ```
 
@@ -39,14 +39,16 @@ All content lives in `content/` in this repo (see `docs/V2_PLAN.md` §15). Nothi
 
 | Variable | Purpose |
 |----------|---------|
-| `GEMINI_API_KEY` | Google Gemini API key for `/api/guide`. Server-side only — required for the portfolio guide. |
+| `GEMINI_API_KEY` | Google Gemini API key for `/api/ask`. Server-side only. Without it the Ask box is off and the index has no embeddings (keyword search). |
+| `GEMINI_MODEL` | Optional. Answer model; default `gemini-3.5-flash-lite`. |
+| `GEMINI_EMBEDDING_MODEL` | Optional. Embedding model; default `gemini-embedding-2`. Changing it means re-checking `MIN_EMBEDDING_SCORE` in `src/lib/ask/retrieve.ts`. |
 
 See [`.env.example`](.env.example) for template values.
 
 ## Vercel deployment
 
-1. Add `GEMINI_API_KEY` for the portfolio guide (Production + Preview).
-2. `prebuild` validates `content/` and builds the guide context on each deploy.
+1. Add `GEMINI_API_KEY` for the Ask box (Production + Preview). The build uses it too, to embed the sections.
+2. `prebuild` validates `content/` and builds the Ask index on each deploy.
 3. The key is used only on the server, never exposed to the client.
 
 ## Resume

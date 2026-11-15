@@ -264,7 +264,11 @@ Every phase ends with `npm run build` and `npm run lint` passing (plus `npm test
 | ~~P4b Prism repo `portfolio.yaml`~~ | #313 | — | Dropped 14 Nov (§15) |
 | **S3** Other project pages, one at a time | #314 | here | Every page live and checked by Aryan |
 | **S4** (optional) Job notes behind the bio links | #322 | here | Chosen jobs have a short page, or Aryan skips it |
-| P6 Guide → `AskNote` | #315 | here | Context-builder tests pass; hidden with no key |
+| P6a Ask: sections, embeddings, `/api/ask` with 3 checked tools | #315 | here | Route tests pass; old guide deleted (§16) |
+| P6b Ask UI | #335 | here | Header input / phone sheet, sources and action buttons; hidden with JS off or no key |
+| P6c Ask safety and test questions | #336 | here | Results recorded; Vercel rate-limit rule and Gemini spending cap set |
+| P6d "How this works" page | #337 | here | Real test numbers and cost per question |
+| P6e (later) Voice | #338 | — | Decided after P6d |
 | P7 Tracking | #316 | here | `?ref=test` visit shows; Search Console verified |
 | ~~P8 (optional) Deploy hook~~ | #317 | — | Dropped 14 Nov (§15) |
 | P9 Phosphene art | #318 | here | Same data gives the same art; works with JS off (may move earlier if the mockup uses it) |
@@ -296,5 +300,17 @@ Order: S1 → S1b → S2 → S3 → S4 → P6 → P7 → P9 → launch gate. **O
 - **Removed:** `scripts/fetch-projects.ts`, `src/lib/fetch-project.ts` and its tests, and `content/projects.yaml` (order moves into each file). Deleted in S2 when Prism moves to Markdown, after listing them for Aryan's OK. P4b and P8 are dropped.
 - **Privacy:** only finished, checked text is committed. Drafts stay in the gitignored `drafts/`; phone numbers, client details and raw notes never go in.
 - **Guards (C4):** prebuild fails on anything that looks like a phone number, in every build. Text Aryan hasn't edited starts with `TODO`: a warning locally and in previews, an error in the production deploy (`VERCEL_ENV=production`).
-- **AI guide context:** generated at build time from `content/` only (`scripts/build-guide-context.ts`, gitignored output), so it holds nothing the site doesn't publish.
+- **Ask index:** generated at build time from `content/` only (`scripts/build-ask-index.ts`, gitignored output), so it holds nothing the site doesn't publish. See §16.
 - **Layout:** `mockups/` (home-editorial, project, story) is the north star. Layout changes go there first, then into the site.
+
+## 16. Ask box (P6, 15 Nov 2026)
+
+Replaces the old guide (about 2,000 lines: regex intents, context slicing, JSON repair, auto-navigation, a model-written "visit memory" sent back from the browser).
+
+- **Build:** `scripts/build-ask-index.ts` splits `content/` into ~60 sections with ids like `prism#decision` (`src/lib/ask/sections.ts`) and embeds each with `gemini-embedding-2` (768 dims). Hidden jobs are left out. No key: no vectors, keyword search.
+- **Per question** (`src/lib/ask/handle.ts`): check the question (1–300 chars), embed it, keep the top 4 sections scoring at least 0.60 (calibrated: matches 0.63–0.72, off-topic 0.51–0.58), send an index of every section plus those 4 in full, with the question fenced as data. Embedding failure falls back to keywords.
+- **Answer:** Gemini returns `{answer, sources, actions}` in a fixed schema. The model may only name a section id or project slug; `src/lib/ask/answer.ts` builds every link from the index (page, demo, `mailto:` to Aryan only), so made-up targets are dropped. The visitor clicks every action; nothing runs on its own.
+- **One question, one answer:** no chat history or memory, so a visitor can't plant instructions for later turns.
+- **Safety outside the code:** a Vercel firewall rate-limit rule and a Gemini spending cap (P6c). The in-memory rate limit was dropped: it doesn't hold across serverless instances.
+- **Live check, 15 Nov:** 9 questions, answers in 1.3–2.0 s, all by embedding search; phone number, prompt injection and off-topic questions declined. Two overreaches ("is excited", "has not worked at Google") fixed with one prompt rule.
+
