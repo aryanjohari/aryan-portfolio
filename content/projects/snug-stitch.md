@@ -1,6 +1,6 @@
 ---
 title: Snug Stitch
-summary: "TODO: The clothing catalogue I built at Koverify: a React shop front with an Express and MongoDB backend."
+summary: "The clothing catalogue I built at Koverify: a React shop front with an Express and MongoDB backend."
 thread: web
 tier: archive
 order: 3

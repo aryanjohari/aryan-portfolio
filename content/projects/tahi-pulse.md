@@ -1,6 +1,6 @@
 ---
 title: Tahi Pulse
-summary: "TODO: A hackathon app for checking guests in without keeping a copy of their ID."
+summary: "A hackathon app for checking guests in without keeping a copy of their ID."
 thread: web
 tier: archive
 order: 1

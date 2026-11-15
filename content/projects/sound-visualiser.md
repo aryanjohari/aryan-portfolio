@@ -19,7 +19,9 @@ visibility: { code: public }
 
 ## The problem
 
-TODO: the problem, in your words (the draft has no problem section; the "why" line covers part of it).
+Most music visualisers just jump with the volume: loud means big, quiet means small. That reacts to the sound, but it doesn't feel like the music. A ballad and a dance track end up looking the same, only bigger or smaller.
+
+I wanted visuals that follow the mood and the beat of a song, and change an image or a webcam feed to match it, all in the browser with nothing uploaded. That meant working out what the sound is doing (its energy, its mood, where the beats fall) before drawing anything.
 
 ## What I built
 

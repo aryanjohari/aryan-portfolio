@@ -1,6 +1,6 @@
 ---
 title: Social Upload
-summary: "TODO: A small self-hosted tool to post photos and videos to Instagram and Facebook from one screen."
+summary: "A small self-hosted tool to post photos and videos to Instagram and Facebook from one screen."
 thread: web
 tier: archive
 order: 2

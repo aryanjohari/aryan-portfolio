@@ -16,7 +16,9 @@ visibility: { code: private, cannot_show: "Private and not deployed yet" }
 
 ## The problem
 
-TODO: the problem, in your words (the draft has no problem section; the "why" line covers part of it). The draft's name note could open it: named after the light you see when you press on your closed eyes.
+A phosphene is the light you see when you close your eyes and press on them: patterns that come from inside, not from what you're looking at.
+
+I'd built two separate things: [Prism](/projects/prism), which changes how a photo looks, and [Sound Visualiser](/projects/sound-visualiser), which makes visuals move with music. Each one taught me half of what I wanted. I wanted one place where an image and a sound meet: a photo, and later a live webcam, turned into line art that moves with the music I'm playing. To get there, I first had to work out which maths actually turns pixels into good lines, and whether it can run fast enough to keep up with sound.
 
 ## What I built
 
@@ -40,7 +42,8 @@ What it cost: slower to get something on screen, and video isn't smooth at full 
 
 ## What I learned
 
-TODO: what you've learned so far, in your words (the draft has no section for this yet).
+- **Measure before you promise.** The timing study showed that 640×480 video takes about 30 ms just for analysis, before any drawing. Without measuring, I'd have promised smooth video it can't do yet.
+- **Plain code makes maths easy to compare.** Because edge detection, triangulation and contours are plain tested TypeScript, I could try one idea against another in minutes, not rewrite the page each time.
 
 ## What it can't do
 

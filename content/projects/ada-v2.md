@@ -16,7 +16,9 @@ visibility: { code: private, cannot_show: "Private for now, public later" }
 
 ## The problem
 
-TODO: the problem, in your words (the draft has no problem section; the "why" line covers part of it).
+ADA, the first version, started from the model. Each time I wanted it to do something new, I gave the model another tool, and after a while I couldn't say exactly what it was allowed to do or what it had done. That's fine for a demo. It's not fine for something that runs on my own machine all day.
+
+I wanted an assistant I could actually trust on the Pi: every action checked before it runs, a receipt for everything it did, and hard limits on what it can touch. The research I did on ADA showed that trust has to be built in from the start, not added at the end.
 
 ## What I built
 
@@ -39,7 +41,8 @@ There's no AI model in it yet. That's on purpose: the checkpoint, the receipts a
 
 ## What I learned
 
-TODO: what you've learned so far, in your words (the draft has no section for this yet).
+- **Building the boring part first is slower, but it changes everything after.** With the checkpoint and receipts in place, adding a tool means registering it, not trusting it.
+- **A learning track has to be time-boxed.** Learning Rust for the broker was worth it, but I kept it separate so it never blocked shipping.
 
 ## What it can't do
 
