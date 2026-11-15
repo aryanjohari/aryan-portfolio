@@ -4,7 +4,7 @@ summary: "TODO: The clothing catalogue I built at Koverify: a React shop front w
 thread: web
 tier: archive
 order: 3
-status: { state: frozen, as_of: 2026-11-14, note: "TODO: okay to link code written for Koverify?" }
+status: { state: frozen, as_of: 2026-11-14, note: "Built at Koverify; code shared with their OK" }
 role: Developer at Koverify
 dates: Aug 2023 – Dec 2023
 stack: [React, Express, MongoDB]

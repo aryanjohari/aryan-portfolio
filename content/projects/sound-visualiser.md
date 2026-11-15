@@ -10,7 +10,7 @@ role: Solo
 dates: Mar 2026 – Oct 2026
 stack: [TypeScript, Three.js, GLSL, Web Audio]
 proves: Real-time graphics and audio in the browser
-proof: ["TODO: 18 unit tests (run to confirm)", "CI: type checks, lint, tests and build", "Live demo"]
+proof: ["18 unit tests", "CI: type checks, lint, tests and build", "Live demo"]
 links:
   demo: https://music.arkhives.nz
   github: https://github.com/aryanjohari/sound-visualiser

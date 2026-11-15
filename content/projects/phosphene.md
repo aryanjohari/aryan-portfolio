@@ -10,7 +10,7 @@ role: Solo
 dates: Nov 2026 – present
 stack: [TypeScript, Canvas 2D, Vite, Vitest]
 proves: Creative engineering
-proof: ["TODO: test count (run the suite)", "CI"]
+proof: ["389 tests", "CI"]
 visibility: { code: private, cannot_show: "Private and not deployed yet" }
 ---
 

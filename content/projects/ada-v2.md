@@ -10,7 +10,7 @@ role: Solo
 dates: Oct 2026 – present
 stack: [Python, FastAPI, SQLite, Rust, Raspberry Pi]
 proves: Where I'm heading, governed AI systems
-proof: ["TODO: test count (run the suite)", "11 decision records", "CI"]
+proof: ["1,053 tests (1,008 Python, 45 Rust)", "11 decision records", "CI"]
 visibility: { code: private, cannot_show: "Private for now, public later" }
 ---
 

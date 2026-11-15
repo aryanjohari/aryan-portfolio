@@ -10,7 +10,7 @@ role: Solo
 dates: Apr 2026 – Jul 2026
 stack: [Python, Gemini, SQLite, Raspberry Pi]
 proves: AI agents with safety built in
-proof: ["TODO: test count on main (run the suite)", "CI", "Used on a real SEO job"]
+proof: ["TODO: 557 tests on main, but 16 fail in a clean copy (docs files missing from the repo). Fix those, or quote 541 passing", "CI", "Used on a real SEO job"]
 links:
   github: https://github.com/aryanjohari/ADA
 visibility: { code: public }
