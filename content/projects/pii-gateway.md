@@ -14,6 +14,7 @@ proof: ["250 tests, 92% coverage", "CI: lint, type checks, tests and Docker buil
 links:
   demo: https://pii-gateway.arkhives.nz
   github: https://github.com/aryanjohari/pii-gateway
+face: /projects/pii-gateway/face.jpg
 visibility: { code: public }
 ---
 

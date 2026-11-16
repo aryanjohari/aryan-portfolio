@@ -6,7 +6,8 @@
 .project-why p { margin: 0.4rem 0 0.75rem; }
 .project-why .links { margin-top: var(--space-2); }
 
-.wide-shot { aspect-ratio: 21 / 9; }
+/* Only the placeholder frame is wide; a real picture keeps its own shape so nothing is cut off. */
+.photo.wide-shot { aspect-ratio: 21 / 9; }
 
 .project-facts {
   display: flex;

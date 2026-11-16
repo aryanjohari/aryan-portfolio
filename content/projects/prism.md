@@ -14,6 +14,7 @@ proof: ["120 tests", "CI: lint, tests and build", "Live demo"]
 links:
   demo: https://image.arkhives.nz
   github: https://github.com/aryanjohari/web-image-editor
+face: /projects/prism/face.jpg
 visibility: { code: public }
 ---
 
