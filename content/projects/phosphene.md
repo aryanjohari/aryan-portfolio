@@ -11,6 +11,7 @@ dates: Nov 2026 – present
 stack: [TypeScript, Canvas 2D, Vite, Vitest]
 proves: Creative engineering
 proof: ["389 tests", "CI"]
+face: /projects/phosphene/face.jpg
 visibility: { code: private, cannot_show: "Private and not deployed yet" }
 ---
 
