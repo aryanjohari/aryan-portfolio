@@ -12,18 +12,8 @@
 
 /* Pinned to the top so it doesn't jump when the text beside it wraps */
 .portrait { align-self: start; }
-.portrait svg { display: block; width: 100%; height: auto; max-height: 70vh; filter: var(--glow); }
-.portrait path { fill: none; stroke: var(--color-ink); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-
-/* Inks in once on load; the shading comes in after the outline, like an engraver finishing a plate */
-@media (prefers-reduced-motion: no-preference) {
-  .portrait .ink { stroke-dasharray: 1; animation: ink 2s ease-out both; }
-  .portrait .ink.hatch { animation-duration: 0.8s; animation-delay: 1.8s; }
-}
-@keyframes ink {
-  from { stroke-dashoffset: 1; }
-  to { stroke-dashoffset: 0; }
-}
+/* Width follows the height cap, so a short screen shrinks the picture instead of cutting it */
+.portrait img { display: block; width: auto; max-width: 100%; height: auto; max-height: 70vh; border: 1px solid var(--color-rule); }
 
 /* Epigraph: small and quiet, under its section label */
 .epigraph { margin: 0.75rem 0 2.5rem; max-width: 24rem; }
