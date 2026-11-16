@@ -14,6 +14,7 @@ proof: ["18 unit tests", "CI: type checks, lint, tests and build", "Live demo"]
 links:
   demo: https://music.arkhives.nz
   github: https://github.com/aryanjohari/sound-visualiser
+face: /projects/sound-visualiser/face.jpg
 visibility: { code: public }
 ---
 
