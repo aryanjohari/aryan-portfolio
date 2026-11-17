@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+import { getProfile } from "@/lib/profile";
+
+export function generateMetadata(): Metadata {
+  return { title: `Page not found · ${getProfile().name}` };
+}
 
 export default function NotFound() {
   return (
