@@ -93,6 +93,11 @@ summary:focus-visible {
   gap: var(--space-2);
 }
 
+/* The theme toggle only renders after JS loads; reserve its height (line + padding + border) so the header doesn't grow then */
+.masthead nav li:last-child {
+  min-height: calc(1lh + 0.2rem + 2px);
+}
+
 .theme-toggle {
   white-space: nowrap;
   padding: 0.1rem 0.6rem;

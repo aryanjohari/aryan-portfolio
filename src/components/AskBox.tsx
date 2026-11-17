@@ -24,12 +24,15 @@ type Status = { kind: "idle" } | { kind: "loading" } | { kind: "answered"; reply
  */
 export function AskBox() {
   const [open, setOpen] = useState(false);
+  // True while the phone bottom sheet is showing; only then is the box a modal dialog.
+  const [isSheet, setIsSheet] = useState(false);
   const [question, setQuestion] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const rootRef = useRef<HTMLFormElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
+  const labelId = useId();
   // Set by the phone "Ask" button: the input is hidden until the sheet renders, so focus waits for that.
   const focusInputOnOpen = useRef(false);
 
@@ -95,77 +98,83 @@ export function AskBox() {
         aria-expanded={open}
         onClick={() => {
           focusInputOnOpen.current = true;
+          setIsSheet(true);
           setOpen(true);
         }}
       >
         Ask
       </button>
 
-      <form
-        ref={rootRef}
+      {/* A <form> can't take role="dialog", so this wrapper carries it while the phone sheet is open. */}
+      <div
         className="ask"
         data-open={open}
-        aria-label="Ask about Aryan's work"
-        onSubmit={onSubmit}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") close();
-          if (event.key === "Tab") keepFocusInSheet(event);
-        }}
+        {...(open && isSheet && { role: "dialog", "aria-modal": true, "aria-labelledby": labelId })}
       >
-        <div className="sheet-head">
-          <label className="section-no" htmlFor={inputId}>
-            Ask about my work
-          </label>
-          <button className="sheet-close" type="button" onClick={close}>
-            Close ✕
-          </button>
-        </div>
-
-        <div className="ask-row">
-          <input
-            ref={inputRef}
-            id={inputId}
-            type="text"
-            placeholder="Ask about my work…"
-            autoComplete="off"
-            maxLength={QUESTION_MAX_CHARS}
-            value={question}
-            onChange={(event) => {
-              setQuestion(event.target.value);
-              setOpen(true);
-            }}
-            // Click as well as focus: after Escape the input keeps focus, so a click must reopen it.
-            onFocus={() => setOpen(true)}
-            onClick={() => setOpen(true)}
-          />
-          <button type="submit" disabled={status.kind === "loading"}>
-            Ask →
-          </button>
-        </div>
-
-        <div className="ask-panel">
-          {status.kind === "idle" && (
-            <div className="chips">
-              {SUGGESTED_QUESTIONS.map((suggestion) => (
-                <button key={suggestion} type="button" onClick={() => void submit(suggestion)}>
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="answer" aria-live="polite">
-            {status.kind === "loading" && <p className="ask-note">Thinking…</p>}
-            {status.kind === "failed" && <p className="ask-note">{status.message}</p>}
-            {status.kind === "answered" && <AnswerView reply={status.reply} onNavigate={() => setOpen(false)} />}
+        <form
+          ref={rootRef}
+          aria-label="Ask about Aryan's work"
+          onSubmit={onSubmit}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") close();
+            if (event.key === "Tab") keepFocusInSheet(event);
+          }}
+        >
+          <div className="sheet-head">
+            <label id={labelId} className="section-no" htmlFor={inputId}>
+              Ask about my work
+            </label>
+            <button className="sheet-close" type="button" onClick={close}>
+              Close ✕
+            </button>
           </div>
-          <p className="ask-how">
-            <Link href={ASK_PAGE_URL} onClick={() => setOpen(false)}>
-              How this works →
-            </Link>
-          </p>
-        </div>
-      </form>
+
+          <div className="ask-row">
+            <input
+              ref={inputRef}
+              id={inputId}
+              type="text"
+              placeholder="Ask about my work…"
+              autoComplete="off"
+              maxLength={QUESTION_MAX_CHARS}
+              value={question}
+              onChange={(event) => {
+                setQuestion(event.target.value);
+                setOpen(true);
+              }}
+              // Click as well as focus: after Escape the input keeps focus, so a click must reopen it.
+              onFocus={() => setOpen(true)}
+              onClick={() => setOpen(true)}
+            />
+            <button type="submit" disabled={status.kind === "loading"}>
+              Ask →
+            </button>
+          </div>
+
+          <div className="ask-panel">
+            {status.kind === "idle" && (
+              <div className="chips">
+                {SUGGESTED_QUESTIONS.map((suggestion) => (
+                  <button key={suggestion} type="button" onClick={() => void submit(suggestion)}>
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="answer" aria-live="polite">
+              {status.kind === "loading" && <p className="ask-note">Thinking…</p>}
+              {status.kind === "failed" && <p className="ask-note">{status.message}</p>}
+              {status.kind === "answered" && <AnswerView reply={status.reply} onNavigate={() => setOpen(false)} />}
+            </div>
+            <p className="ask-how">
+              <Link href={ASK_PAGE_URL} onClick={() => setOpen(false)}>
+                How this works →
+              </Link>
+            </p>
+          </div>
+        </form>
+      </div>
     </>
   );
 }
