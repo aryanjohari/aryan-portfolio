@@ -13,6 +13,7 @@ proves: AI agents with safety built in
 proof: ["541 passing tests", "CI", "Used on a real SEO job"]
 links:
   github: https://github.com/aryanjohari/ADA
+face: /projects/ada/face.svg
 visibility: { code: public }
 ---
 

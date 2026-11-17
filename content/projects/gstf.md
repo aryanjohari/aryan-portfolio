@@ -11,6 +11,7 @@ dates: Feb 2025 – Jul 2026
 stack: [Python, PyTorch]
 proves: Research rigour
 proof: ["Master's thesis, graded A-", "Journal paper in preparation"]
+face: /projects/gstf/face.svg
 visibility: { code: private, cannot_show: "Code and paper stay private until the paper is submitted" }
 ---
 

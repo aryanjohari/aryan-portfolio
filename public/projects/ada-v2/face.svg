@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="ADA v2 architecture: the status page and a later model both call one gateway that checks input, policy and budget and writes a receipt, before reaching the Pi watchers, alert rules and a Rust power broker">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#1b1b1f"/>
+    </marker>
+  </defs>
+  <style>
+    .title { font: 34px Georgia, "Times New Roman", serif; fill: #1b1b1f; }
+    .sub { font: 16px ui-monospace, Menlo, Consolas, monospace; fill: #5a564d; }
+    .label { font: 600 19px ui-monospace, Menlo, Consolas, monospace; fill: #1b1b1f; }
+    .note { font: 15px ui-monospace, Menlo, Consolas, monospace; fill: #5a564d; }
+    .frame-label { font: 15px ui-monospace, Menlo, Consolas, monospace; fill: #a8361f; letter-spacing: 0.04em; }
+    .box { fill: #f5f0e3; stroke: #1b1b1f; stroke-width: 1.5; }
+    .later { fill: none; stroke: #5a564d; stroke-width: 1.5; stroke-dasharray: 6 5; }
+    .line { stroke: #1b1b1f; stroke-width: 1.5; fill: none; }
+  </style>
+
+  <rect width="1200" height="800" fill="#ece6d6"/>
+
+  <text class="title" x="60" y="82">ADA v2 · one checkpoint for everything</text>
+  <text class="sub" x="60" y="112">In progress on the Pi · no model calls yet</text>
+
+  <!-- Callers -->
+  <text class="frame-label" x="60" y="170">CALLERS</text>
+  <rect class="box" x="60" y="190" width="240" height="84"/>
+  <text class="label" x="78" y="225">Status page</text>
+  <text class="note" x="78" y="251">my devices only</text>
+
+  <rect class="later" x="60" y="330" width="240" height="110"/>
+  <text class="label" x="78" y="365" fill="#5a564d">Model · later</text>
+  <text class="note" x="78" y="391">judgement only:</text>
+  <text class="note" x="78" y="413">step limit, approval</text>
+
+  <path class="line" d="M300 232 H356" marker-end="url(#arrow)"/>
+  <path class="line" d="M300 385 H356" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+
+  <!-- Gateway -->
+  <rect x="360" y="150" width="300" height="410" fill="#f5f0e3" stroke="#a8361f" stroke-width="3"/>
+  <text class="frame-label" x="380" y="182">THE GATEWAY</text>
+  <text class="note" x="380" y="206">every call, every tool</text>
+  <rect class="box" x="384" y="230" width="252" height="56"/>
+  <text class="label" x="402" y="265">1 check input</text>
+  <rect class="box" x="384" y="306" width="252" height="56"/>
+  <text class="label" x="402" y="341">2 check policy</text>
+  <rect class="box" x="384" y="382" width="252" height="56"/>
+  <text class="label" x="402" y="417">3 check budget</text>
+  <rect class="box" x="384" y="458" width="252" height="56" stroke="#a8361f"/>
+  <text class="label" x="402" y="493" fill="#a8361f">4 write receipt</text>
+
+  <!-- Tools -->
+  <text class="frame-label" x="740" y="170">TOOLS · FIXED, TESTED CODE</text>
+  <rect class="box" x="740" y="190" width="400" height="84"/>
+  <text class="label" x="758" y="225">Pi watchers</text>
+  <text class="note" x="758" y="251">health, power, network, logs, ports</text>
+
+  <rect class="box" x="740" y="304" width="400" height="84"/>
+  <text class="label" x="758" y="339">Alert rules</text>
+  <text class="note" x="758" y="365">new device, file changed, failed login</text>
+
+  <rect class="box" x="740" y="418" width="400" height="84"/>
+  <text class="label" x="758" y="453">Power broker · Rust</text>
+  <text class="note" x="758" y="479">the only root part; one fixed job</text>
+
+  <path class="line" d="M660 232 H736" marker-end="url(#arrow)"/>
+  <path class="line" d="M660 346 H736" marker-end="url(#arrow)"/>
+  <path class="line" d="M660 460 H736" marker-end="url(#arrow)"/>
+
+  <!-- Storage -->
+  <rect class="box" x="360" y="610" width="780" height="84"/>
+  <text class="label" x="380" y="645">SQLite · kernel + receipts, one file per tool</text>
+  <text class="note" x="380" y="671">write actions stay dry-run until approvals exist</text>
+  <path class="line" d="M510 560 V606" marker-end="url(#arrow)"/>
+</svg>

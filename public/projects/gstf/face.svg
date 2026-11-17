@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="GSTF method: a video clip goes through an R(2+1)D model and an ArcFace stage to name which tool made it, then three tests: shuffled frames, one repeated frame, and an unseen dataset">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#1b1b1f"/>
+    </marker>
+  </defs>
+  <style>
+    .title { font: 34px Georgia, "Times New Roman", serif; fill: #1b1b1f; }
+    .sub { font: 16px ui-monospace, Menlo, Consolas, monospace; fill: #5a564d; }
+    .label { font: 600 19px ui-monospace, Menlo, Consolas, monospace; fill: #1b1b1f; }
+    .note { font: 15px ui-monospace, Menlo, Consolas, monospace; fill: #5a564d; }
+    .frame-label { font: 15px ui-monospace, Menlo, Consolas, monospace; fill: #a8361f; letter-spacing: 0.04em; }
+    .box { fill: #f5f0e3; stroke: #1b1b1f; stroke-width: 1.5; }
+    .line { stroke: #1b1b1f; stroke-width: 1.5; fill: none; }
+    .dashed { stroke: #5a564d; stroke-width: 1.5; fill: none; stroke-dasharray: 6 5; }
+  </style>
+
+  <rect width="1200" height="800" fill="#ece6d6"/>
+
+  <text class="title" x="60" y="82">GSTF · which tool made this fake?</text>
+  <text class="sub" x="60" y="112">Master's thesis method · deepfake attribution from video</text>
+
+  <!-- Pipeline -->
+  <text class="frame-label" x="60" y="180">THE MODEL</text>
+  <rect class="box" x="60" y="200" width="230" height="96"/>
+  <text class="label" x="78" y="238">Video clip</text>
+  <text class="note" x="78" y="266">FaceForensics++</text>
+
+  <rect class="box" x="340" y="200" width="230" height="96"/>
+  <text class="label" x="358" y="238">R(2+1)D</text>
+  <text class="note" x="358" y="266">space + time</text>
+
+  <rect class="box" x="620" y="200" width="230" height="96"/>
+  <text class="label" x="638" y="238">ArcFace</text>
+  <text class="note" x="638" y="266">groups each tool</text>
+
+  <rect x="900" y="200" width="240" height="96" fill="#f5f0e3" stroke="#a8361f" stroke-width="2.5"/>
+  <text class="label" x="918" y="238" fill="#a8361f">Which tool?</text>
+  <text class="note" x="918" y="266">Real, Deepfakes</text>
+  <text class="note" x="918" y="286">or Face2Face</text>
+
+  <path class="line" d="M290 248 H336" marker-end="url(#arrow)"/>
+  <path class="line" d="M570 248 H616" marker-end="url(#arrow)"/>
+  <path class="line" d="M850 248 H896" marker-end="url(#arrow)"/>
+
+  <!-- Tests -->
+  <text class="frame-label" x="60" y="400">THE TESTS</text>
+  <rect class="box" x="60" y="420" width="330" height="96"/>
+  <text class="label" x="78" y="458">Shuffle the frames</text>
+  <text class="note" x="78" y="486">does order matter?</text>
+
+  <rect class="box" x="435" y="420" width="330" height="96"/>
+  <text class="label" x="453" y="458">Repeat one frame</text>
+  <text class="note" x="453" y="486">does movement matter?</text>
+
+  <rect class="box" x="810" y="420" width="330" height="96"/>
+  <text class="label" x="828" y="458">Unseen dataset</text>
+  <text class="note" x="828" y="486">DFDM, never trained on</text>
+
+  <path class="dashed" d="M455 296 V340 H225 V416" marker-end="url(#arrow)"/>
+  <path class="dashed" d="M455 340 H600 V416" marker-end="url(#arrow)"/>
+  <path class="dashed" d="M600 340 H975 V416" marker-end="url(#arrow)"/>
+
+  <!-- The paper's point -->
+  <rect x="60" y="590" width="1080" height="120" fill="none" stroke="#a8361f" stroke-width="2"/>
+  <text class="frame-label" x="84" y="626">THE PAPER IN PROGRESS</text>
+  <text class="label" x="84" y="664">Split by source video, so one original never sits</text>
+  <text class="label" x="84" y="692">in both training and validation under different labels</text>
+</svg>

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="ADA architecture: inputs flow into a Raspberry Pi running chat, a background worker and a publishing workflow over one SQLite database per site, publishing to S3, all inside guardrails">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#1b1b1f"/>
+    </marker>
+  </defs>
+  <style>
+    .title { font: 34px Georgia, "Times New Roman", serif; fill: #1b1b1f; }
+    .sub { font: 16px ui-monospace, Menlo, Consolas, monospace; fill: #5a564d; }
+    .label { font: 600 19px ui-monospace, Menlo, Consolas, monospace; fill: #1b1b1f; }
+    .note { font: 15px ui-monospace, Menlo, Consolas, monospace; fill: #5a564d; }
+    .frame-label { font: 15px ui-monospace, Menlo, Consolas, monospace; fill: #a8361f; letter-spacing: 0.04em; }
+    .box { fill: #f5f0e3; stroke: #1b1b1f; stroke-width: 1.5; }
+    .line { stroke: #1b1b1f; stroke-width: 1.5; fill: none; }
+  </style>
+
+  <rect width="1200" height="800" fill="#ece6d6"/>
+
+  <text class="title" x="60" y="82">ADA · how it worked</text>
+  <text class="sub" x="60" y="112">An SEO agent on a Raspberry Pi at home, Apr–Jul 2026</text>
+
+  <!-- Inputs -->
+  <text class="frame-label" x="60" y="170">INPUTS</text>
+  <rect class="box" x="60" y="190" width="230" height="64"/>
+  <text class="label" x="80" y="229">Search Console</text>
+  <rect class="box" x="60" y="290" width="230" height="64"/>
+  <text class="label" x="80" y="329">RSS news</text>
+  <rect class="box" x="60" y="390" width="230" height="64"/>
+  <text class="label" x="80" y="429">Brand notes</text>
+
+  <path class="line" d="M290 222 H320 V370 H386" marker-end="url(#arrow)"/>
+  <path class="line" d="M290 322 H320"/>
+  <path class="line" d="M290 422 H320 V370"/>
+
+  <!-- The Pi -->
+  <rect x="360" y="150" width="540" height="410" fill="none" stroke="#a8361f" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text class="frame-label" x="376" y="176">RASPBERRY PI</text>
+
+  <rect class="box" x="390" y="196" width="225" height="80"/>
+  <text class="label" x="408" y="230">Chat</text>
+  <text class="note" x="408" y="256">talk, tools, plans</text>
+
+  <rect class="box" x="645" y="196" width="225" height="80"/>
+  <text class="label" x="663" y="230">Background worker</text>
+  <text class="note" x="663" y="256">works through goals</text>
+
+  <rect class="box" x="390" y="306" width="480" height="110"/>
+  <text class="label" x="408" y="342">Publishing workflow</text>
+  <text class="note" x="408" y="384">pick topic → draft → fact check → publish</text>
+
+  <rect class="box" x="390" y="446" width="480" height="84"/>
+  <text class="label" x="408" y="481">SQLite, one per site</text>
+  <text class="note" x="408" y="507">everything it knows, full-text search</text>
+
+  <path class="line" d="M630 416 V442" marker-end="url(#arrow)"/>
+
+  <!-- Output -->
+  <text class="frame-label" x="960" y="330">OUTPUT</text>
+  <rect class="box" x="960" y="346" width="180" height="80"/>
+  <text class="label" x="978" y="380">S3</text>
+  <text class="note" x="978" y="406">client sites</text>
+  <path class="line" d="M870 386 H956" marker-end="url(#arrow)"/>
+
+  <!-- Guardrails -->
+  <rect x="60" y="610" width="1080" height="120" fill="none" stroke="#a8361f" stroke-width="2"/>
+  <text class="frame-label" x="84" y="646">GUARDRAILS · AROUND EVERYTHING</text>
+  <text class="label" x="84" y="684">allow-listed commands · token budgets</text>
+  <text class="label" x="84" y="712">kill switch · fact check before publish</text>
+</svg>

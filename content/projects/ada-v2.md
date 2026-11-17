@@ -11,6 +11,7 @@ dates: Oct 2026 – present
 stack: [Python, FastAPI, SQLite, Rust, Raspberry Pi]
 proves: Where I'm heading, governed AI systems
 proof: ["1,053 tests (1,008 Python, 45 Rust)", "11 decision records", "CI"]
+face: /projects/ada-v2/face.svg
 visibility: { code: private, cannot_show: "Private for now, public later" }
 ---
 
