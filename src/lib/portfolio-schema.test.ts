@@ -91,3 +91,27 @@ test("accepts an optional 'why' line and rejects an empty one", () => {
     message: "prism: why must be a non-empty string when provided",
   });
 });
+
+test("accepts an optional .webm video when the project has a face for its poster", () => {
+  const result = validateProject("prism", {
+    ...validYaml(),
+    face: "/projects/prism/face.jpg",
+    video: "/projects/prism/loop.webm",
+  });
+  assert.ok(result.ok);
+  assert.equal(result.project.video, "/projects/prism/loop.webm");
+});
+
+test("rejects a video that is not a .webm file", () => {
+  assert.deepEqual(
+    validateProject("prism", { ...validYaml(), face: "/projects/prism/face.jpg", video: "/projects/prism/loop.mp4" }),
+    { ok: false, message: "prism: video must be a .webm file path when provided" },
+  );
+});
+
+test("rejects a video without a face, because the face is its poster", () => {
+  assert.deepEqual(validateProject("prism", { ...validYaml(), video: "/projects/prism/loop.webm" }), {
+    ok: false,
+    message: "prism: video needs a face, which is shown as its poster",
+  });
+});

@@ -15,6 +15,7 @@ links:
   demo: https://image.arkhives.nz
   github: https://github.com/aryanjohari/web-image-editor
 face: /projects/prism/face.jpg
+video: /projects/prism/loop.webm
 visibility: { code: public }
 ---
 

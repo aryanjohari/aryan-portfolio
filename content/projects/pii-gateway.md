@@ -15,6 +15,7 @@ links:
   demo: https://pii-gateway.arkhives.nz
   github: https://github.com/aryanjohari/pii-gateway
 face: /projects/pii-gateway/face.jpg
+video: /projects/pii-gateway/loop.webm
 visibility: { code: public }
 ---
 

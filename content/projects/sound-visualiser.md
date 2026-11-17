@@ -15,6 +15,7 @@ links:
   demo: https://music.arkhives.nz
   github: https://github.com/aryanjohari/sound-visualiser
 face: /projects/sound-visualiser/face.jpg
+video: /projects/sound-visualiser/loop.webm
 visibility: { code: public }
 ---
 

@@ -51,6 +51,8 @@ export type Project = {
   proof: string[];
   /** Site path of the face image once copied into public/, e.g. /projects/prism/face.png. */
   face?: string;
+  /** Site path of a short silent loop for the project page, e.g. /projects/prism/loop.webm. Needs a face as its poster. */
+  video?: string;
   links: { demo?: string; github?: string; story?: string };
   visibility: { code: (typeof CODE_VISIBILITIES)[number]; can_show?: string; cannot_show?: string };
   /** Required for featured and in-progress; archive projects are one line. */
@@ -130,6 +132,15 @@ export function validateProject(slug: string, data: unknown): ProjectResult {
 
   if (data.face !== undefined && !isNonEmptyString(data.face)) {
     return fail("face must be a file path when provided");
+  }
+
+  if (data.video !== undefined) {
+    if (!isNonEmptyString(data.video) || !data.video.endsWith(".webm")) {
+      return fail("video must be a .webm file path when provided");
+    }
+    if (data.face === undefined) {
+      return fail("video needs a face, which is shown as its poster");
+    }
   }
 
   const links = data.links ?? {};

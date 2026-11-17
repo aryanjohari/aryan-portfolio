@@ -24,6 +24,9 @@ function loadProject(fileName: string): Project {
   if (project.face && !existsSync(resolve(ROOT, "public", `.${project.face}`))) {
     throw new Error(`${slug}: face image not found at public${project.face}`);
   }
+  if (project.video && !existsSync(resolve(ROOT, "public", `.${project.video}`))) {
+    throw new Error(`${slug}: video not found at public${project.video}`);
+  }
   return project;
 }
 
