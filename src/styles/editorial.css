@@ -48,6 +48,10 @@
   text-align: center;
   color: var(--color-muted);
 }
+/* Title card: no hatching, so a project without a picture looks finished rather than missing */
+.title-card { display: flex; flex-direction: column; justify-content: center; gap: 0.5rem; background: color-mix(in srgb, var(--color-accent) 8%, var(--color-paper)); }
+.title-card-label { font-family: var(--font-body); font-size: clamp(1.4rem, 3vw, 2.25rem); line-height: 1.1; color: var(--color-ink); }
+.title-card-detail { max-width: 28ch; color: var(--color-muted); }
 .photo-image { display: block; width: 100%; height: auto; object-fit: cover; border: 1px solid var(--color-rule); }
 /* The project loop sits in a button (tap to pause); it should look like the picture, not a button */
 .video-toggle { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; }

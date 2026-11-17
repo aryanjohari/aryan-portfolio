@@ -5,7 +5,7 @@ import { Picture } from "@/components/Picture";
 import { ProjectVideo } from "@/components/ProjectVideo";
 import { SharedPicture } from "@/components/SharedPicture";
 import { type Project, STORY_HEADINGS, STORY_PARTS } from "@/lib/portfolio-schema";
-import { factsLine } from "@/lib/project-display";
+import { factsLine, proofLine } from "@/lib/project-display";
 
 /** A paragraph that is only **bold** text becomes a pull line (styled large when it opens the decision). */
 const markdownComponents: Components = {
@@ -54,7 +54,7 @@ export function ProjectPage({ project, number, next }: { project: Project; numbe
         {project.video && project.face ? (
           <ProjectVideo src={project.video} poster={project.face} className="wide-shot" />
         ) : (
-          <Picture src={project.face} label={project.title} className="wide-shot" />
+          <Picture src={project.face} label={project.title} detail={proofLine(project)} className="wide-shot" />
         )}
       </SharedPicture>
 

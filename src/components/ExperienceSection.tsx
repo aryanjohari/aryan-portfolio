@@ -23,7 +23,7 @@ export function ExperienceSection({ rows, epigraph }: { rows: ExperienceRow[]; e
               </span>
             </summary>
             <div className="job-body">
-              <Picture label={row.org} className="land job-photo" />
+              <Picture label={row.org} detail={row.title} className="land job-photo" />
               {row.did.map((line) => (
                 <p key={line}>{line}</p>
               ))}

@@ -41,7 +41,7 @@ export function WorkSection({ projects, epigraph }: { projects: HomeProjects; ep
         <article key={project.slug} className={`feature grid${index % 2 === 1 ? " flip" : ""}`}>
           <div className="feature-media">
             <SharedPicture slug={project.slug}>
-              <Picture src={project.face} label={project.title} className="land" />
+              <Picture src={project.face} label={project.title} detail={proofLine(project)} className="land" />
             </SharedPicture>
           </div>
           <div className="feature-text">
@@ -60,7 +60,7 @@ export function WorkSection({ projects, epigraph }: { projects: HomeProjects; ep
         {minor.map((project, index) => (
           <article key={project.slug}>
             <SharedPicture slug={project.slug}>
-              <Picture src={project.face} label={project.title} className="land" />
+              <Picture src={project.face} label={project.title} detail={proofLine(project)} className="land" />
             </SharedPicture>
             <p className="number section-no">{number(lead.length + index, project)}</p>
             <h3>

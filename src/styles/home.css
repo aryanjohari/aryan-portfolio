@@ -98,6 +98,7 @@ details > summary { cursor: pointer; }
   margin: 0 0 1.25rem 12rem;
 }
 .job-photo { grid-row: 1 / 4; font-size: 0.65rem; }
+.job-photo .title-card-label { font-size: 1.05rem; }
 .job-body p { margin-bottom: var(--space-1); font-size: 1rem; }
 .industry { font-family: var(--font-label); font-size: var(--type-label); color: var(--color-accent); }
 .industry-text { font-family: var(--font-body); font-size: 1rem; color: var(--color-ink); }
