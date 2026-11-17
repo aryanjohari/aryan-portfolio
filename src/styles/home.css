@@ -15,6 +15,15 @@
 /* Width follows the height cap, so a short screen shrinks the picture instead of cutting it */
 .portrait img { display: block; width: auto; max-width: 100%; height: auto; max-height: 70vh; border: 1px solid var(--color-rule); }
 
+/* One picture per theme, using the same selectors as tokens.css */
+.portrait .portrait-phosphor { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="paper"]) .portrait .portrait-paper { display: none; }
+  :root:not([data-theme="paper"]) .portrait .portrait-phosphor { display: block; }
+}
+:root[data-theme="phosphor"] .portrait .portrait-paper { display: none; }
+:root[data-theme="phosphor"] .portrait .portrait-phosphor { display: block; }
+
 /* Epigraph: small and quiet, under its section label */
 .epigraph { margin: 0.75rem 0 2.5rem; max-width: 24rem; }
 .epigraph blockquote { font-size: 1.05rem; font-style: italic; line-height: 1.4; color: var(--color-muted); }
