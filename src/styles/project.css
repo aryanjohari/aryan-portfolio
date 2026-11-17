@@ -6,6 +6,10 @@
 .project-why p { margin: 0.4rem 0 0.75rem; }
 .project-why .links { margin-top: var(--space-2); }
 
+/* "← All work": above the project number at the top, and after the next-project link at the foot */
+.back-link { margin-bottom: var(--space-1); }
+.back-link-foot { padding-top: 2.5rem; }
+
 /* Only the placeholder frame is wide; a real picture keeps its own shape so nothing is cut off. */
 .photo.wide-shot { aspect-ratio: 21 / 9; }
 

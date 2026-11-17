@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ReactMarkdown, { type Components } from "react-markdown";
 
+import { AllWorkLink } from "@/components/AllWorkLink";
 import { Picture } from "@/components/Picture";
 import { ProjectVideo } from "@/components/ProjectVideo";
 import { SharedPicture } from "@/components/SharedPicture";
@@ -24,6 +25,7 @@ export function ProjectPage({ project, number, next }: { project: Project; numbe
     <main id="main">
       <section className="opener project-opener grid" aria-labelledby="project-title">
         <div className="left-7">
+          <AllWorkLink />
           <p className="section-no">
             Project {String(number).padStart(2, "0")} · {project.dates}
           </p>
@@ -87,6 +89,7 @@ export function ProjectPage({ project, number, next }: { project: Project; numbe
           </Link>
         </nav>
       )}
+      <AllWorkLink className="back-link-foot" />
     </main>
   );
 }
