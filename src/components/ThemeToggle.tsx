@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-import { resolveTheme, type Theme, THEME_STORAGE_KEY } from "@/lib/theme";
+import { resolveTheme, type Theme, THEME_STORAGE_KEY, themeSwitchLabel } from "@/lib/theme";
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 const listeners = new Set<() => void>();
@@ -38,9 +38,10 @@ export function ThemeToggle() {
   if (theme === null) return null;
 
   const other: Theme = theme === "phosphor" ? "paper" : "phosphor";
+  const label = themeSwitchLabel(theme);
   return (
-    <button className="theme-toggle" type="button" onClick={() => setTheme(other)} aria-label={`Switch to the ${other} theme`}>
-      ◐ {other}
+    <button className="theme-toggle" type="button" onClick={() => setTheme(other)} aria-label={label.ariaLabel}>
+      ◐ {label.text}
     </button>
   );
 }

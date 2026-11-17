@@ -10,6 +10,12 @@ export function resolveTheme(saved: string | null, osDark: boolean): Theme {
   return osDark ? "phosphor" : "paper";
 }
 
+/** The switch names the theme it goes TO, in words visitors know (the internal names stay paper/phosphor). */
+export function themeSwitchLabel(current: Theme): { text: string; ariaLabel: string } {
+  const word = current === "phosphor" ? "light" : "dark";
+  return { text: word === "light" ? "Light" : "Dark", ariaLabel: `Switch to the ${word} theme` };
+}
+
 /**
  * Runs inline in <head>, before the page paints, so a saved theme doesn't flash
  * the other one first. Kept tiny and dependency-free; it only applies a valid saved value.
