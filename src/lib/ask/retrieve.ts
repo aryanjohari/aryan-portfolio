@@ -45,6 +45,25 @@ export function pickByEmbedding(
     .map((item) => item.section);
 }
 
+/** A section's page, without the #part, e.g. "/projects/prism#story-built" -> "/projects/prism". */
+export function pagePath(url: string): string {
+  return url.split("#")[0];
+}
+
+/** How many of the current page's sections lead the list: its overview and the next one. */
+const PAGE_SECTIONS = 2;
+
+/**
+ * Puts the page the visitor is reading first, so "this project" has its sections in front
+ * of the model even when the words of the question match something else. Pure.
+ */
+export function withPageFirst(picked: AskSection[], sections: AskSection[], page: string | undefined, limit: number): AskSection[] {
+  if (!page) return picked;
+  const onPage = sections.filter((section) => pagePath(section.url) === page).slice(0, PAGE_SECTIONS);
+  const rest = picked.filter((section) => !onPage.includes(section));
+  return [...onPage, ...rest].slice(0, limit);
+}
+
 /** Common words that would match every section and say nothing about the question. */
 const FILLER_WORDS = new Set(
   "a an and are about can could did do does for from have has he him his how i in is it me my of on or so tell that the this to was what when where which who why with you your".split(" "),

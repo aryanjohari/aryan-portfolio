@@ -8,7 +8,7 @@
 import { type AskReply, ANSWER_SCHEMA, checkAnswer, parseQuestion } from "./answer";
 import { type askSettings, embedTexts, generateJson } from "./gemini";
 import { buildUserText, SYSTEM_PROMPT } from "./prompt";
-import { MIN_EMBEDDING_SCORE, pickByEmbedding, pickByKeywords, SECTIONS_PER_QUESTION } from "./retrieve";
+import { MIN_EMBEDDING_SCORE, pagePath, pickByEmbedding, pickByKeywords, SECTIONS_PER_QUESTION, withPageFirst } from "./retrieve";
 import type { AskIndex, AskSection } from "./sections";
 
 export type AskResponse = AskReply & { retrieval: "embedding" | "keyword" };
@@ -46,8 +46,13 @@ export async function handleAsk(
   if (!parsed.ok) return { status: 400, body: { error: parsed.message } };
   if (!settings.apiKey) return { status: 503, body: { error: "The Ask box is switched off." } };
 
+  // The page comes from the visitor's browser, so it only counts if the site really has it.
+  const pageSection = parsed.page ? index.sections.find((section) => pagePath(section.url) === parsed.page) : undefined;
+  const page = pageSection && { path: pagePath(pageSection.url), title: pageSection.title };
+
   const { picked, retrieval } = await pickSections(parsed.question, index, settings.apiKey);
-  const userText = buildUserText(parsed.question, index.sections, picked, index.demos);
+  const sections = withPageFirst(picked, index.sections, page?.path, SECTIONS_PER_QUESTION);
+  const userText = buildUserText(parsed.question, index.sections, sections, index.demos, page);
 
   let raw: unknown;
   try {

@@ -40,6 +40,7 @@ export function buildUserText(
   allSections: AskSection[],
   pickedSections: AskSection[],
   demos: AllowedTargets["demos"],
+  page?: { path: string; title: string },
 ): string {
   const index = allSections.map((section) => `${section.id} — ${section.title}`).join("\n");
   const picked =
@@ -59,6 +60,6 @@ ${demoList}
 SECTIONS (full text of the most relevant):
 ${picked}
 
-QUESTION:
+${page ? `PAGE: the visitor is reading "${page.title}" (${page.path}). "This project" or "this page" means it.\n\n` : ""}QUESTION:
 <question>${fencedQuestion}</question>`;
 }

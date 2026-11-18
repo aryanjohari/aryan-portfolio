@@ -54,7 +54,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function parseQuestion(body: unknown): { ok: true; question: string } | { ok: false; message: string } {
+const PAGE_MAX_CHARS = 100;
+
+export function parseQuestion(
+  body: unknown,
+): { ok: true; question: string; page?: string } | { ok: false; message: string } {
   const raw = isRecord(body) ? body.question : undefined;
   if (typeof raw !== "string") return { ok: false, message: "Send a question as text." };
   const question = raw.replace(/\s+/g, " ").trim();
@@ -62,7 +66,10 @@ export function parseQuestion(body: unknown): { ok: true; question: string } | {
   if (question.length > QUESTION_MAX_CHARS) {
     return { ok: false, message: `Keep the question under ${QUESTION_MAX_CHARS} characters.` };
   }
-  return { ok: true, question };
+  // Only shaped like a site path here; handle.ts keeps it only if the site has that page.
+  const page = isRecord(body) ? body.page : undefined;
+  const isPath = typeof page === "string" && page.startsWith("/") && page.length <= PAGE_MAX_CHARS;
+  return isPath ? { ok: true, question, page } : { ok: true, question };
 }
 
 /** Plain text only, cut to a length: drops control characters except new lines. */

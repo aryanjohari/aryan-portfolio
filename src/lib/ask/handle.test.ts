@@ -95,3 +95,17 @@ test("a failed or malformed answer is a 502 with a friendly message, and the log
   assert.ok(logged.length > 0);
   assert.ok(logged.every((line) => !line.includes("my secret question")));
 });
+
+test("a page the site has puts its section first and names it; any other page is ignored", async () => {
+  // The question's meaning points at PII Gateway, but the visitor is on Prism's page.
+  fakeGemini({ questionVector: [0, 1], answer: { answer: "Prism.", sources: ["prism#overview"], actions: [] } });
+  await handleAsk({ question: "Tell me about this project", page: "/projects/prism" }, index, settings);
+  const prompt = sentPrompts[0];
+  assert.ok(prompt.includes("PAGE: the visitor is reading \\\"Prism\\\" (/projects/prism)."));
+  assert.ok(prompt.indexOf("Photo looks.") < prompt.indexOf("Removes personal details"));
+
+  sentPrompts = [];
+  await handleAsk({ question: "Tell me about this project", page: "/admin" }, index, settings);
+  assert.ok(!sentPrompts[0].includes("PAGE:"));
+  assert.ok(!sentPrompts[0].includes("Photo looks."));
+});

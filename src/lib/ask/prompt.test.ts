@@ -27,3 +27,10 @@ test("fences the visitor's question so it reads as data, and says when no sectio
   assert.equal(text.match(/<\/question>/g)?.length, 1);
   assert.ok(text.trimEnd().endsWith("</question>"));
 });
+
+test("names the page the visitor is reading only when there is one", () => {
+  const onPage = buildUserText("Tell me about this project", sections, [sections[0]], [], { path: "/projects/prism", title: "Prism" });
+  assert.ok(onPage.includes('PAGE: the visitor is reading "Prism" (/projects/prism).'));
+
+  assert.ok(!buildUserText("Hi", sections, [], []).includes("PAGE:"));
+});

@@ -40,13 +40,14 @@ function toReply(data: unknown): AskReply | undefined {
   };
 }
 
-export async function askQuestion(question: string): Promise<AskResult> {
+/** `page` is the path the visitor is reading, so "this project" can mean that page. */
+export async function askQuestion(question: string, page?: string): Promise<AskResult> {
   let response: Response;
   try {
     response = await fetch("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, page }),
     });
   } catch {
     return { ok: false, message: "Couldn't reach the site. Check your connection and try again." };

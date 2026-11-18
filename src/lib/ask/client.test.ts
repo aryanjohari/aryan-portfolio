@@ -54,3 +54,13 @@ test("a network failure or a malformed reply becomes one friendly message, never
   respond(200, { answer: "Hi.", sources: [], actions: [{ kind: "run", label: "x", href: "y" }, { kind: "page", label: "Home", href: 5 }] });
   assert.deepEqual(await askQuestion("hi"), { ok: true, reply: { answer: "Hi.", sources: [], actions: [] } });
 });
+
+test("sends the page the visitor is on with the question", async () => {
+  let sent: unknown;
+  globalThis.fetch = (async (_url: string, init: RequestInit) => {
+    sent = JSON.parse(String(init.body));
+    return new Response(JSON.stringify({ answer: "Prism.", sources: [], actions: [] }));
+  }) as typeof fetch;
+  await askQuestion("Tell me about this project", "/projects/prism");
+  assert.deepEqual(sent, { question: "Tell me about this project", page: "/projects/prism" });
+});
