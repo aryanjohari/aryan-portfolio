@@ -19,6 +19,8 @@ export type EvalCase = {
   action?: AskAction["kind"];
   /** Text that must never appear in the answer (ignoring case). */
   forbid?: string[];
+  /** The page the visitor is reading when they ask, e.g. "/projects/prism". */
+  page?: string;
 };
 
 export type ReplyScore = { sources: boolean; action: boolean; forbidden: boolean; pass: boolean };

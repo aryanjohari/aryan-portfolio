@@ -46,7 +46,7 @@ async function main() {
     }).map((s) => s.id);
 
     const started = Date.now();
-    const result = await handleAsk({ question: evalCase.question }, index, settings);
+    const result = await handleAsk({ question: evalCase.question, page: evalCase.page }, index, settings);
     const ms = Date.now() - started;
     rows.push({
       evalCase,
