@@ -24,6 +24,11 @@ export function askSettings(env: Record<string, string | undefined> = process.en
   };
 }
 
+/** The Ask box (and everything that opens it) only shows when there is a key to answer with. */
+export function isAskOn(env: Record<string, string | undefined> = process.env): boolean {
+  return askSettings(env).apiKey !== undefined;
+}
+
 async function post(call: string, body: unknown, { apiKey, timeoutMs = DEFAULT_TIMEOUT_MS }: GeminiConfig): Promise<unknown> {
   const response = await fetch(`${API_BASE}/${call}`, {
     method: "POST",

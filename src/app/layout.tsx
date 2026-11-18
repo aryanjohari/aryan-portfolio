@@ -3,8 +3,10 @@ import { IBM_Plex_Mono, Newsreader } from "next/font/google";
 
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { askSettings } from "@/lib/ask/gemini";
+import { isAskOn } from "@/lib/ask/gemini";
+import type { AskPages } from "@/lib/ask/suggestions";
 import { getProfile } from "@/lib/profile";
+import { getProjects } from "@/lib/projects";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 
 import "./globals.css";
@@ -35,7 +37,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const profile = getProfile();
-  const askEnabled = askSettings().apiKey !== undefined;
+  const askEnabled = isAskOn();
+  // Projects with a page of their own, so the Ask box can suggest questions about the one being read.
+  const askPages: AskPages = Object.fromEntries(
+    getProjects()
+      .filter((project) => project.story)
+      .map((project) => [`/projects/${project.slug}`, { title: project.title, hasDemo: Boolean(project.links.demo) }]),
+  );
 
   return (
     // The boot script may set data-theme before React loads, so the attribute can differ from the server's HTML.
@@ -45,7 +53,7 @@ export default function RootLayout({
         {/* The Ask box needs JS to answer, so with JS off it isn't shown at all. */}
         {askEnabled && (
           <noscript>
-            <style>{".ask, .ask-trigger { display: none !important; }"}</style>
+            <style>{".ask, .ask-trigger, .ask-invite { display: none !important; }"}</style>
           </noscript>
         )}
       </head>
@@ -54,7 +62,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <div className="site-shell">
-          <SiteHeader name={profile.name} links={profile.links} askEnabled={askEnabled} />
+          <SiteHeader name={profile.name} links={profile.links} askEnabled={askEnabled} askPages={askPages} />
           {children}
           <SiteFooter links={profile.links} />
         </div>

@@ -1,8 +1,10 @@
 import Link from "next/link";
 
+import { AskInvite } from "@/components/AskBox";
 import { Epigraph } from "@/components/Epigraph";
 import { Picture } from "@/components/Picture";
 import { SharedPicture } from "@/components/SharedPicture";
+import { isAskOn } from "@/lib/ask/gemini";
 import type { HomeProjects } from "@/lib/home-sections";
 import type { Project } from "@/lib/portfolio-schema";
 import { proofLine } from "@/lib/project-display";
@@ -90,6 +92,8 @@ export function WorkSection({ projects, epigraph }: { projects: HomeProjects; ep
           </div>
         )}
       </div>
+
+      {isAskOn() && <AskInvite lead="Not sure where to start?" question="Which project should I look at first?" />}
     </section>
   );
 }

@@ -2,9 +2,11 @@ import Link from "next/link";
 import ReactMarkdown, { type Components } from "react-markdown";
 
 import { AllWorkLink } from "@/components/AllWorkLink";
+import { AskInvite } from "@/components/AskBox";
 import { Picture } from "@/components/Picture";
 import { ProjectVideo } from "@/components/ProjectVideo";
 import { SharedPicture } from "@/components/SharedPicture";
+import { isAskOn } from "@/lib/ask/gemini";
 import { type Project, STORY_HEADINGS, STORY_PARTS } from "@/lib/portfolio-schema";
 import { factsLine, proofLine } from "@/lib/project-display";
 
@@ -80,6 +82,8 @@ export function ProjectPage({ project, number, next }: { project: Project; numbe
           ))}
         </div>
       )}
+
+      {isAskOn() && <AskInvite lead={`Still curious about ${project.title}?`} question={`Tell me more about ${project.title}`} />}
 
       {next && (
         <nav className="next-link grid" aria-label="Next project">

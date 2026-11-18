@@ -1,18 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { type FormEvent, type KeyboardEvent, useEffect, useEffectEvent, useId, useRef, useState } from "react";
 
 import type { AskReply } from "@/lib/ask/answer";
 import { QUESTION_MAX_CHARS } from "@/lib/ask/answer";
 import { askQuestion } from "@/lib/ask/client";
 import { ASK_PAGE_URL } from "@/lib/ask/sections";
+import { type AskPages, suggestionsFor } from "@/lib/ask/suggestions";
 
-const SUGGESTED_QUESTIONS = [
-  "What's he best at?",
-  "Which project should I look at first?",
-  "Is he open to roles in Auckland?",
-];
+/** Fired by an "Ask →" line elsewhere on the page; the Ask box opens and asks its question. */
+const ASK_EVENT = "ask:question";
 
 type Status = { kind: "idle" } | { kind: "loading" } | { kind: "answered"; reply: AskReply } | { kind: "failed"; message: string };
 
@@ -21,8 +20,10 @@ type Status = { kind: "idle" } | { kind: "loading" } | { kind: "answered"; reply
  * whose panel drops down on focus. Phone: an "Ask" button that opens the same
  * form as a bottom sheet. Every action is a link the visitor clicks; nothing
  * runs on its own. Hidden with JS off by a <noscript> style in the layout.
+ * Its suggestions and the page it sends with a question follow the page being read.
  */
-export function AskBox() {
+export function AskBox({ pages }: { pages: AskPages }) {
+  const pathname = usePathname() ?? "/";
   const [open, setOpen] = useState(false);
   // True while the phone bottom sheet is showing; only then is the box a modal dialog.
   const [isSheet, setIsSheet] = useState(false);
@@ -80,9 +81,38 @@ export function AskBox() {
     if (!trimmed || status.kind === "loading") return;
     setQuestion(trimmed);
     setStatus({ kind: "loading" });
-    const result = await askQuestion(trimmed);
+    const result = await askQuestion(trimmed, pathname);
     setStatus(result.ok ? { kind: "answered", reply: result.reply } : { kind: "failed", message: result.message });
   }
+
+  /** Phone: the "Ask AI" button is showing, and the form lives in a bottom sheet. */
+  const isPhone = () => Boolean(triggerRef.current?.offsetParent);
+
+  const askFromElsewhere = useEffectEvent((text: string) => {
+    if (isPhone()) setIsSheet(true);
+    setOpen(true);
+    // Desktop: focusing the header input brings the box into view.
+    if (!isPhone()) inputRef.current?.focus();
+    void submit(text);
+  });
+
+  const focusFromShortcut = useEffectEvent((event: globalThis.KeyboardEvent) => {
+    const target = event.target as HTMLElement | null;
+    const typing = target?.closest("input, textarea, select, [contenteditable='true']");
+    if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey || typing || isPhone()) return;
+    event.preventDefault();
+    inputRef.current?.focus();
+  });
+
+  useEffect(() => {
+    const onAsk = (event: Event) => askFromElsewhere((event as CustomEvent<{ question: string }>).detail.question);
+    window.addEventListener(ASK_EVENT, onAsk);
+    document.addEventListener("keydown", focusFromShortcut);
+    return () => {
+      window.removeEventListener(ASK_EVENT, onAsk);
+      document.removeEventListener("keydown", focusFromShortcut);
+    };
+  }, []);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -102,7 +132,7 @@ export function AskBox() {
           setOpen(true);
         }}
       >
-        Ask
+        Ask AI
       </button>
 
       {/* A <form> can't take role="dialog", so this wrapper carries it while the phone sheet is open. */}
@@ -145,7 +175,11 @@ export function AskBox() {
               // Click as well as focus: after Escape the input keeps focus, so a click must reopen it.
               onFocus={() => setOpen(true)}
               onClick={() => setOpen(true)}
+              aria-keyshortcuts="/"
             />
+            <kbd className="ask-kbd" aria-hidden="true">
+              /
+            </kbd>
             <button type="submit" disabled={status.kind === "loading"}>
               Ask →
             </button>
@@ -154,7 +188,7 @@ export function AskBox() {
           <div className="ask-panel">
             {status.kind === "idle" && (
               <div className="chips">
-                {SUGGESTED_QUESTIONS.map((suggestion) => (
+                {suggestionsFor(pathname, pages).map((suggestion) => (
                   <button key={suggestion} type="button" onClick={() => void submit(suggestion)}>
                     {suggestion}
                   </button>
@@ -222,5 +256,17 @@ function AnswerView({ reply, onNavigate }: { reply: AskReply; onNavigate: () => 
         </p>
       )}
     </>
+  );
+}
+
+/** An "Ask →" line for the end of a section: opens the Ask box and asks `question`. Hidden with JS off. */
+export function AskInvite({ lead, question }: { lead: string; question: string }) {
+  return (
+    <p className="ask-invite">
+      {lead}{" "}
+      <button type="button" onClick={() => window.dispatchEvent(new CustomEvent(ASK_EVENT, { detail: { question } }))}>
+        Ask →
+      </button>
+    </p>
   );
 }
