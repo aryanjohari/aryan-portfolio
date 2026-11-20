@@ -1,5 +1,6 @@
 "use client";
 
+import { getImageProps } from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
@@ -13,6 +14,8 @@ const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 export function ProjectVideo({ src, poster, className = "" }: { src: string; poster: string; className?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  // A poster can't take a srcset, so use one next/image WebP (1080px wide) instead of the full JPG.
+  const posterSrc = getImageProps({ src: poster, alt: "", width: 540, height: 360 }).props.src;
 
   function toggle() {
     const video = ref.current;
@@ -51,7 +54,7 @@ export function ProjectVideo({ src, poster, className = "" }: { src: string; pos
         ref={ref}
         className={`photo-image ${className}`}
         src={src}
-        poster={poster}
+        poster={posterSrc}
         width={1200}
         height={800}
         muted

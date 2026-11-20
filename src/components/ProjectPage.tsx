@@ -58,7 +58,7 @@ export function ProjectPage({ project, number, next }: { project: Project; numbe
         {project.video && project.face ? (
           <ProjectVideo src={project.video} poster={project.face} className="wide-shot" />
         ) : (
-          <Picture src={project.face} label={project.title} detail={proofLine(project)} className="wide-shot" />
+          <Picture src={project.face} label={project.title} detail={proofLine(project)} className="wide-shot" sizes="100vw" eager />
         )}
       </SharedPicture>
 
