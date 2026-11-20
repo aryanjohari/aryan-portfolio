@@ -34,21 +34,24 @@ experience:
     org: Specialist Support Services
     dates: Jul 2025 – Jul 2026
     highlights:
-      - Looked after three New Zealand websites and explained search data in plain language so non-technical partners could decide what to fix first.
+      - Looked after three New Zealand websites, with day-to-day updates, new pages, and content written from keyword research.
+      - Grew their monthly search impressions from 1,080 to 5,555 in 11 months, and explained the search data in plain language so non-technical partners could decide what to fix first.
     taught: "a niche New Zealand business and how its customers search"
   - role: Junior Website Developer
     org: KRIL Digital
     org_note: digital marketing agency, Mumbai
     dates: May 2024 – Oct 2024
     highlights:
-      - Took about 20 client websites (WordPress, React, Shopify) from brief to live site.
+      - Took about 20 client websites (WordPress, React, Shopify) from brief to live site, for industrial, education and events clients, and kept them updated after launch.
+      - Across those sites, pages loaded about 70% faster, with 45% more search visibility and 30% higher click-through.
     taught: "marketing and branding, from inside an agency"
   - role: Full Stack Developer
     org: Koverify
     org_note: Mumbai
     dates: Aug 2023 – Dec 2023
     highlights:
-      - Owned three in-house wholesale clothing websites and built Snug Stitch, a React, Express and MongoDB catalogue app.
+      - Looked after the online shops of three wholesale clothing brands on WordPress and WooCommerce, covering the catalogue, SEO, Paytm payments and speed.
+      - Built Snug Stitch, a catalogue app with a React front end, an Express and MongoDB API, and a login-protected admin for adding and editing products.
     taught: "how fashion wholesale works"
 education:
   - degree: Master of Applied Technology (Computing)
